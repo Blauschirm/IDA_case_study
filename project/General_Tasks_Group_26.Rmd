@@ -1,5 +1,5 @@
 ---
-title: "case_study_allg"
+title: "General Tasks Group 26"
 output: html_document
 ---
 
@@ -65,13 +65,17 @@ bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_
 
 ```
 
-# Aufgabe 2: Warum ist es sinnvoll, die Ihnen bereitgestellten Daten in separaten Dateien abzulegen und nicht alles in einer riesigen Tabelle abzuspeichern? Wie nennt sich das zugrunde liegende Datenbankkonzept? Wie nennt sich das zugrunde liegende Datenbankkonzept?
+# Aufgabe 2
+
+Warum ist es sinnvoll, die Ihnen bereitgestellten Daten in separaten Dateien abzulegen und nicht alles in einer riesigen Tabelle abzuspeichern? Wie nennt sich das zugrunde liegende Datenbankkonzept? Wie nennt sich das zugrunde liegende Datenbankkonzept?
 
 Damit dies zum einen redundanz verhindert, denn wenn man alles in einer langen Tabelle abspeichert, dann werden viele Werte mehrfach in der Tabelle auftauchen. Und zum anderen ist die Laufzeit beim Suchen von Werten in einer großen langen Tabelle sehr schlecht, denn angenommen man sucht einen Wert der als aller letzes in der Tabelle gespeichert ist, dann müsste man die komplette Tabelle durchgehen nur um den einen Wert zu extrahieren.
 Dieses Konzept nennt sich Relationale Datenbank.
 
 
-# Aufgabe 3: Wie viele der Komponenten K7 landeten in Fahrzeugen, die in Köln zugelassen wurden?
+# Aufgabe 3
+
+Wie viele der Komponenten K7 landeten in Fahrzeugen, die in Köln zugelassen wurden?
 ```{r}
 #Zulassungen nach Koeln filtern
 zulassungen_koeln <- zulassungen_aller_Fahrzeuge %>%
@@ -94,7 +98,9 @@ anzahl <- sum(zugelassene_k7_fahrzeuge$n)
 Es wurden `r anzahl` der Komponenten K7 in Fahrzeugen verbaut, die in Köln zugelassen wurden.
 
 
-# Aufgabe 4: Welche Datentypen haben die Attribute der Zulassungstabelle „Zulassungen_aller_Fahrzeuge“?
+# Aufgabe 4
+
+Welche Datentypen haben die Attribute der Zulassungstabelle „Zulassungen_aller_Fahrzeuge“?
 ```{r}
 str(zulassungen_aller_Fahrzeuge)
 ```
@@ -104,13 +110,17 @@ Das Attribut von *Gemeinden* hat den Datentypen *col_character*.
 Das Attribut von *Zulassung* hat den Datentypen *col_date*.
 
 
-# Aufgabe 5: Sie wollen Ihre Applikation veröffentlichen. Warum ist es gerade dann sinnvoll die Datensätze auf der Datenbank eines Servers abzulegen? Warum können Sie die Datensätze nicht auf Ihrem persönlichen Computer ablegen? Nennen Sie eine einfache Möglichkeit Ihre Applikation ihrem Kundenkreis zugänglich zu machen?
+# Aufgabe 5
+
+Sie wollen Ihre Applikation veröffentlichen. Warum ist es gerade dann sinnvoll die Datensätze auf der Datenbank eines Servers abzulegen? Warum können Sie die Datensätze nicht auf Ihrem persönlichen Computer ablegen? Nennen Sie eine einfache Möglichkeit Ihre Applikation ihrem Kundenkreis zugänglich zu machen?
 
 Angenommen die Applikation würde auf diese Datensätze zugreifen müssen. Wenn diese Datensätze dann nur lokal auf meinem persönlichen Cmputer gespeichert sind, dann sind diese Datensätze nicht immer zugreifbar für die veröffentlichte Applikation, denn mein Computer ist nicht 24h lang aktiv.
 Meine Applikation kann auf einer Webseite oder in einem App-Store dem Kundenkreis zugänglich gemacht werden.
 
 
-# Aufgabe 6: Am 11.08.2010 hat es einen Unfall mit Fahrerflucht gegeben. Von dem Kennzeichen des Unfallwagens fehlt jede Spur. Die Polizei bittet Sie um Hilfe, da Sie für das Kraftfahrtbundesamt arbeiten und fragt, wo das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ zugelassen wurde.
+# Aufgabe 6
+
+Am 11.08.2010 hat es einen Unfall mit Fahrerflucht gegeben. Von dem Kennzeichen des Unfallwagens fehlt jede Spur. Die Polizei bittet Sie um Hilfe, da Sie für das Kraftfahrtbundesamt arbeiten und fragt, wo das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ zugelassen wurde.
 
 ```{r}
 bestandteil_k4_112_1121_23 <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
