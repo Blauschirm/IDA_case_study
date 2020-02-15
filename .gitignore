@@ -40,6 +40,7 @@ vignettes/*.pdf
 
 # Ordner mit den Rohdaten
 /Daten
+/Data
 
 
 README.html
