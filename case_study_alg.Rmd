@@ -1,0 +1,126 @@
+---
+title: "case_study_allg"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import der benötigten Bibliotheken
+```{r}
+if(!require(magrittr)){
+  install.packages("magrittr")
+}
+library(magrittr)
+
+if(!require(tidyverse)){
+  install.packages("tidyverse")
+}
+library(tidyverse)
+
+if(!require(readr)){
+  install.packages("readr")
+}
+library(readr)
+
+if(!require(ggplot2)){
+  install.packages("ggplot2")
+}
+library(ggplot2)
+```
+
+# Daten einlesen:
+
+
+```{r}
+# Logistikverzug und Zulassungen einlesen
+komponente_k7 <- read_csv2("Data/Logistikverzug/Komponente_K7.csv" )%>%
+  select(-X1)
+
+logistikverzug_k7 <- read_csv("Data/Logistikverzug/Logistikverzug_K7.csv") %>%
+  select(-X1)
+
+zulassungen_aller_Fahrzeuge <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
+  select(-X1)
+
+#Bestandteile der Fahrzeuge einlesen
+bestandteile_oem1_typ11 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv") %>%
+  select(-X1)
+  
+bestandteile_oem1_typ12 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv") %>%
+  select(-X1)
+
+bestandteile_oem2_typ21 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv") %>%
+  select(-X1)
+
+bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv") %>%
+  select(-X1)
+
+```
+
+# Aufgabe 1
+
+```{r}
+
+```
+
+# Aufgabe 2: Warum ist es sinnvoll, die Ihnen bereitgestellten Daten in separaten Dateien abzulegen und nicht alles in einer riesigen Tabelle abzuspeichern? Wie nennt sich das zugrunde liegende Datenbankkonzept? Wie nennt sich das zugrunde liegende Datenbankkonzept?
+
+Damit dies zum einen redundanz verhindert, denn wenn man alles in einer langen Tabelle abspeichert, dann werden viele Werte mehrfach in der Tabelle auftauchen. Und zum anderen ist die Laufzeit beim Suchen von Werten in einer großen langen Tabelle sehr schlecht, denn angenommen man sucht einen Wert der als aller letzes in der Tabelle gespeichert ist, dann müsste man die komplette Tabelle durchgehen nur um den einen Wert zu extrahieren.
+Dieses Konzept nennt sich Relationale Datenbank.
+
+
+# Aufgabe 3: Wie viele der Komponenten K7 landeten in Fahrzeugen, die in Köln zugelassen wurden?
+```{r}
+#Zulassungen nach Koeln filtern
+zulassungen_koeln <- zulassungen_aller_Fahrzeuge %>%
+  filter(Gemeinden == "KOELN") %>%
+  select(-Zulassung)
+
+#join bestandteile in eine Tabelle
+bestandteile <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
+  bind_rows(bestandteile_oem2_typ21) %>%
+  bind_rows(bestandteile_oem2_typ22) %>%
+  select(ID_Karosserie, ID_Fahrzeug)
+
+#join K7 und Bestandteile, und dies dann nochmal mit zulassungen joinen
+zugelassene_k7_fahrzeuge <- inner_join(komponente_k7, bestandteile, by = c("IDNummer" = "ID_Karosserie")) %>%
+  inner_join(zulassungen_koeln, by = c("ID_Fahrzeug" = "IDNummer")) %>%
+  mutate(n = 1)
+
+anzahl <- sum(zugelassene_k7_fahrzeuge$n)
+```
+Es wurden `r anzahl` der Komponenten K7 in Fahrzeugen verbaut, die in Köln zugelassen wurden.
+
+
+# Aufgabe 4: Welche Datentypen haben die Attribute der Zulassungstabelle „Zulassungen_aller_Fahrzeuge“?
+```{r}
+str(zulassungen_aller_Fahrzeuge)
+```
+Das Attribut von *X1* hat den Datentypen *col_double*.
+Das Attribut von *IDNummer* hat den Datentypen *col_character*.
+Das Attribut von *Gemeinden* hat den Datentypen *col_character*.
+Das Attribut von *Zulassung* hat den Datentypen *col_date*.
+
+
+# Aufgabe 5: Sie wollen Ihre Applikation veröffentlichen. Warum ist es gerade dann sinnvoll die Datensätze auf der Datenbank eines Servers abzulegen? Warum können Sie die Datensätze nicht auf Ihrem persönlichen Computer ablegen? Nennen Sie eine einfache Möglichkeit Ihre Applikation ihrem Kundenkreis zugänglich zu machen?
+
+Angenommen die Applikation würde auf diese Datensätze zugreifen müssen. Wenn diese Datensätze dann nur lokal auf meinem persönlichen Cmputer gespeichert sind, dann sind diese Datensätze nicht immer zugreifbar für die veröffentlichte Applikation, denn mein Computer ist nicht 24h lang aktiv.
+Meine Applikation kann auf einer Webseite oder in einem App-Store dem Kundenkreis zugänglich gemacht werden.
+
+
+# Aufgabe 6: Am 11.08.2010 hat es einen Unfall mit Fahrerflucht gegeben. Von dem Kennzeichen des Unfallwagens fehlt jede Spur. Die Polizei bittet Sie um Hilfe, da Sie für das Kraftfahrtbundesamt arbeiten und fragt, wo das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ zugelassen wurde.
+
+```{r}
+bestandteil_k4_112_1121_23 <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
+  bind_rows(bestandteile_oem2_typ21) %>%
+  bind_rows(bestandteile_oem2_typ22) %>%
+  filter(ID_Karosserie == "K4-112-1121-23") %>%
+  inner_join(zulassungen_aller_Fahrzeuge, by = c("ID_Fahrzeug" = "IDNummer"))
+
+ort <- bestandteil_k4_112_1121_23$Gemeinden
+
+```
+
+Das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ wurde in `r paste(substring(ort, 1, 1), tolower(substring(ort, 2, str_length(ort))), sep = "")` zugelassen.
