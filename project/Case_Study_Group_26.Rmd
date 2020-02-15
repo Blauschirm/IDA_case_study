@@ -1,0 +1,85 @@
+---
+title: "GruppenAufgaben"
+author: "Gruppe 26"
+date: "15 2 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Libraries einbinden
+
+```{r libraries}
+library(readr)
+```
+
+
+
+## Aufgabe 1
+
+Importieren Sie relevante Datensätze aus dem bereitgestellten tubcloud-Ordner. Listen sie zunächst in der Dokumentation auf, welche Dateien sie importieren.
+
+```{r import data}
+# Import data
+read_csv()
+```
+
+## Aufgabe 2
+
+Bereiten Sie die für Ihre Aufgabe relevanten Daten nach den Prinzipien von tidy data auf und fügen Sie diese in einem einzigen Datensatz zusammen.
+
+```{r tidy data}
+# Tidy data
+```
+
+## Aufgabe 3
+
+Entwickeln Sie eine Shiny-App welche folgende Kriterien erfüllt:
+Alle verwendeten Packages müssen auf der aktuellen R-Version lauffähig sein.
+Die Applikation muss ohne weitere Anpassungen aus dem Abgabeordner gestartet werden können. Es bietet sich an, dies vor Abgabe zu testen. Die Applikation soll sich nur auf einen einzelnen, von Ihnen erstellten Datensatz beziehen.
+Das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Unternehmensfarbe entsprechen. Die Farbe ihres Unternehmens ist TUB-Rot. Des Weiteren soll ein Logo in das Layout integriert werden. Es kann ein eigenes Logo erstellt werden, oder das Logo vom Fachgebiet Qualitätswissenschaft verwendet werden. Passen Sie die Schriftart ihrer Applikation nach Ihren wünschen an. Eine Anpassung ist obligatorisch.
+
+```{r shiny app}
+# Shiny Server
+# Shiny App
+```
+
+## Aufgabe 4
+
+Visualisieren Sie folgendes in der Applikation
+a. Einen Graphen, der den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in den Gemeinden darstellt. Verwenden Sie zusätzlich eine Heatmapdarstellung zur Visualisierung von Schadensschwerpunkten. Integrieren Sie Popups in die Kartendarstellung, die Informationen zu den zugelassenen Fahrzeugen enthalten.
+b. Den Lieferweg (als Luftlinie) für ein betroffenes Bauteil, welches vom Benutzer ausgewählt werden kann.
+c. Den Fahrzeughaltern soll es möglich sein, (bspw. über ein Suchfeld) anhand der Fahrzeug-ID zu überprüfen, ob ihr Auto betroffen ist.
+d. Ihren zugrundeliegenden Datensatz als Tabelle, damit Sie Visualisiertes auch beweisen können. Denken Sie auch hier daran, nur die notwendigen Attribute anzuzeigen.
+
+```{r plot data}
+# a) Plot data 'zeitlichen Zulassungsverlauf'
+ggplot()
+# b) Plot data 'Lieferweg (als Luftlinie) für ein betroffenes Bauteil'
+# c) ID tracker
+# d) Print table
+```
+
+## Aufgabe 5
+
+Dokumentieren Sie die Ergebnisse Ihrer Analyse in einer R Markdown Datei. Beschreiben Sie Ihren Datenanalyseprozess schrittweise und diskutieren Sie das Ergebnis anhand aussagekräftiger Graphiken aus Ihrer entwickelten App. Das Beschreiben Ihres Vorgehens dient der Nachvollziehbarkeit Ihrer Lösungsschritte. Falls es Probleme mit Ihrem R-Code gibt, kann durch die Dokumentation ein grundsätzlich richtiges Vorgehen anerkannt werden. Kommentieren Sie deshalb Ihren Code sorgfältig und beachten Sie den tidyverse Style-Guide. Erstellen Sie ein Inhaltsverzeichnis, welches im html-File eingeblendet wird und anklickbar ist. Folgende Gliederungspunkte sollen im Inhaltsverzeichnis mindestens aufgeführt werden:
+Importieren der Daten Datenaufbereitung
+Erstellen des finalen Datensatzes Auswertung
+Ergebnis
+
+```{r TOC}
+# Table of Contents
+```
+
+## Aufgabe 6
+
+Im Abgabeordner sollen folgende Dateien zu finden sein, XX ist mit der Gruppennummer zu ersetzen:
+- Final_Data_Group_XX
+- General_Tasks_Group_XX.rmd
+- General_Tasks_Group_XX.html
+- Case_Study_Group_XX.rmd
+- Case_Study_Group_XX.html
+- Case_study_App_XX.r
