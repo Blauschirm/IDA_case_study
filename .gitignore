@@ -39,8 +39,10 @@ vignettes/*.pdf
 .Renviron
 
 # Ordner mit den Rohdaten
-*/Daten
-*/Data
+/Daten
+/Data
+/project/Data
+/project/Daten
 
 
 README.html
