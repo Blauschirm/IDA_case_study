@@ -146,6 +146,93 @@ t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
 
 #Import Komponenten
 
+#read Komponenete_K2LE1
+
+#read file and replace delim with single character delim
+tx  <- read_file("Data/Komponente/Komponente_K2LE1.txt")
+tx2 <- gsub(pattern = "II", replace = ";", x = tx, fixed = TRUE)
+#add Newline when needed so that table has table structure
+tx3 <- unlist(strsplit(tx2, ";")) # unlist is here to convert to a vector
+tx3 <- split(tx3, ceiling(seq_along(tx3)/15))
+out <- sapply(tx3, function(x) paste0(x, collapse = ";"))
+#write output in temp file and read temp file 
+myFile <- tempfile()
+writeLines(out, con=myFile)
+#read Komponente
+komponente_k2le1 <- read_delim(myFile, delim = ";", col_types = c("ncDnnnDncDnnnDc")) %>%
+  select(-X1)
+
+#split table in two (x and y)
+komponente_k2le1.x <- komponente_k2le1 %>%
+  select(1:7) %>%
+  #filter out those where ID is na
+  filter(!is.na(ID_Sitze.x)) %>%
+  rename(
+    ID_Sitze = ID_Sitze.x,
+    Produktionsdatum = Produktionsdatum.x,
+    Herstellernummer = Herstellernummer.x,
+    Werksnummer = Werksnummer.x,
+    Fehlerhaft = Fehlerhaft.x,
+    Fehlerhaft_Datum = Fehlerhaft_Datum.x,
+    Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.x,
+  )
+komponente_k2le1.y <- komponente_k2le1 %>%
+  select(8:14) %>%
+  #filter out those where ID is na
+  filter(!is.na(ID_Sitze.y)) %>%
+  #split column into two because there was no delim in original file between them, keep just necessary information
+  mutate(Fehlerhaft_Fahrleistung = as.numeric(strsplit(`Fehlerhaft_Fahrleistung.y""1`, split = "\"", fixed = TRUE)[[1]][1])) %>%
+  select(-`Fehlerhaft_Fahrleistung.y""1`) %>%
+  rename(
+    ID_Sitze = ID_Sitze.y,
+    Produktionsdatum = Produktionsdatum.y,
+    Herstellernummer = Herstellernummer.y,
+    Werksnummer = Werksnummer.y,
+    Fehlerhaft = Fehlerhaft.y,
+    Fehlerhaft_Datum = Fehlerhaft_Datum.y
+  )
+
+#bind the two tables (x and y) together again the right way
+komponente_k2le1 <- bind_rows(komponente_k2le1.x, komponente_k2le1.y) %>%
+  mutate(Komponente = "K2LE1")
+  
+#read Komponenete_K2LE2
+#read file because first column name is missing
+temp1 <- read_file("Data/Komponente/Komponente_K2LE2.txt")
+#add first column name
+temp2 <- paste("X2", temp1, sep = "\\")
+#write into temporary file
+myFile2 <- tempfile()
+writeLines(temp2, con=myFile2)
+
+#read file
+komponente_k2le2 <- read_delim(myFile2, delim = "\\") %>%
+  #format origin in date format and create Produktionsdatum
+  mutate(origin = as.Date(origin, format = "%d-%m-%Y"), Produktionsdatum = as.Date(Produktionsdatum_Origin_01011970, origin = origin)) %>%
+  select(-X1, -X2, -origin, -Produktionsdatum_Origin_01011970) %>%
+  mutate(Komponente = "K2LE2")
+
+#bind tables into one and check if IDs are correct
+komponenten <- bind_rows(komponente_k2le1, komponente_k2le2) %>%
+   mutate(id_richtig_komp =
+           isTRUE(
+              #check if ID-Herstellernr and Herstellernr match
+              strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][2] == Herstellernummer && 
+              #check if ID-Werksnr and Werksnr match
+              strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][3] == Werksnummer &&
+              #check if Herstellernr and Herstellernr in Werksnr match
+              Herstellernummer == as.numeric(substring(Werksnummer, 1, nchar(Herstellernummer))) &&
+              #check if ID-Komponente and Komponente match
+              strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][1] == Komponente
+            )
+  )
+
+#if all IDs are correct, delete redundant columns
+if(all(komponenten$id_richtig_komp == TRUE)){
+  komponenten <- komponenten %>%
+    select(-id_richtig_komp, -Herstellernummer, -Werksnummer, -Komponente)
+}
+
 
 #Import Fahrzeuge und deren Bestandteile
 
