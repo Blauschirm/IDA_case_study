@@ -104,3 +104,7 @@ t15$Fehlerhaft_Datum <- as.Date(t15$Fehlerhaft_Datum, format = "%Y-%m-%d")
 t16$Fehlerhaft_Datum <- as.Date(t16$Fehlerhaft_Datum, format = "%Y-%m-%d")
 t19$Fehlerhaft_Datum <- as.Date(t19$Fehlerhaft_Datum, format = "%Y-%m-%d")
 t20$Fehlerhaft_Datum <- as.Date(t20$Fehlerhaft_Datum, format = "%Y-%m-%d")
+
+# Moving column Produktionsdatum to the last position in T15 and T16 in order to get the same structure for all datasets
+t15 <- t15 %>% select(-Produktionsdatum, Produktionsdatum)
+t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
