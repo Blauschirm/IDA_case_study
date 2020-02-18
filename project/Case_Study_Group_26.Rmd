@@ -207,11 +207,14 @@ bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_
 fahrzeug_bestandteile <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
   bind_rows(bestandteile_oem2_typ21) %>%
   bind_rows(bestandteile_oem2_typ22) %>%
-  mutate(id_richtig_fahrz_bestandteile = 
-                  #check if Herstellernr and number in Werksnummer match in ID_Sitze
-           isTRUE(strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][2] == as.numeric(substring((strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][3]), 1, nchar(strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][2]))) &&
-                  #check if Herstellernr and number in Werksnummer match in ID_Fahrzeuge
-                  strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][2] == as.numeric(substring((strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][3]), 1, nchar(strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][2])))))
+  mutate(id_richtig_fahrz_bestandteile = isTRUE(
+    #check if Herstellernr and number in Werksnummer match in ID_Sitze
+    strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][2] == 
+      substring((strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][3]), 1, nchar(strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][2])) &&
+    #check if Herstellernr and number in Werksnummer match in ID_Fahrzeuge
+    strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][2] == 
+      substring((strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][3]), 1, nchar(strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][2]))
+  ))
 
 #if all IDs are correct, deselect redundant columns
 if(all(fahrzeug_bestandteile$id_r == TRUE) && all(fahrzeug_bestandteile$id_richtig_fahrz_bestandteile == TRUE)){
