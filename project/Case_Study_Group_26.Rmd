@@ -13,7 +13,20 @@ knitr::opts_chunk$set(echo = TRUE)
 # Libraries einbinden
 
 ```{r libraries}
+if(!require(magrittr)){
+  install.packages("magrittr")
+}
+library(magrittr)
+
+if(!require(tidyverse)){
+  install.packages("tidyverse")
+}
 library(tidyverse)
+
+if(!require(readr)){
+  install.packages("readr")
+}
+library(readr)
 ```
 
 
@@ -133,6 +146,84 @@ t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
 
 #Import Komponenten
 
+
+#Import Fahrzeuge und deren Bestandteile
+
+#read Fahrzeuge and deselect unnecessary columns and mutate a type column for a later check
+#transform origin in date format and create Produktionsdatum
+fahrzeug_oem1_typ11 <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv") %>%
+  select(-X1, -X1_1) %>%
+  mutate(Fahrzeugtyp = 11)
+fahrzeug_oem1_typ12 <- read_csv2("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv") %>%
+  select(-X1, -X1_1) %>%
+  mutate(Fahrzeugtyp = 12)
+fahrzeug_oem2_typ21 <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM2_Typ21.csv") %>%
+  mutate(origin = (as.Date(origin, format = "%d-%m-%Y")), Produktionsdatum = as.Date(Produktionsdatum_Origin_01011970, origin = origin)) %>%
+  select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970) %>%
+  mutate(Fahrzeugtyp = 21)
+fahrzeug_oem2_typ22 <- read_csv2("Data/Fahrzeug/Fahrzeuge_OEM2_Typ22.csv") %>%
+  mutate(origin = (as.Date(origin, format = "%d-%m-%Y")), Produktionsdatum = as.Date(Produktionsdatum_Origin_01011970, origin = origin)) %>%
+  select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970) %>%
+  mutate(Fahrzeugtyp = 22)
+
+#bind Fahrzeuge together in one table, check if IDs are correct
+fahrzeuge <- bind_rows(fahrzeug_oem1_typ11, fahrzeug_oem1_typ12) %>%
+  bind_rows(fahrzeug_oem2_typ21) %>%
+  bind_rows(fahrzeug_oem2_typ22) %>%
+  mutate(id_richtig_fahrzeuge =
+           isTRUE(
+              #check if ID-Herstellernr and Herstellernr match
+              strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][2] == Herstellernummer && 
+              #check if ID-Werksnr and Werksnr match
+              strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][3] == Werksnummer &&
+              #check if Herstellernr and number in Werksnr match
+              Herstellernummer == as.numeric(substring(Werksnummer, 1, nchar(Herstellernummer))) &&
+              # check if Fahrzeug has correct type
+              strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][1] == Fahrzeugtyp
+            )
+  )
+
+#if all IDs are correct, deselect redundant columns
+if(all(fahrzeuge$id_richtig_fahrzeuge == TRUE)){
+  fahrzeuge <- fahrzeuge %>%
+    select(-id_richtig_fahrzeuge, -Herstellernummer, -Werksnummer, -Fahrzeugtyp)
+}
+
+#read Bestandteile_Fahrzeuge and check if Fahrzeugtyp is correct
+bestandteile_oem1_typ11 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv") %>%
+  select(ID_Sitze, ID_Fahrzeug) %>%
+  mutate(id_r = isTRUE(strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][1] == 11))
+bestandteile_oem1_typ12 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv") %>%
+  select(ID_Sitze, ID_Fahrzeug) %>%
+  mutate(id_r = isTRUE(strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][1] == 12))
+bestandteile_oem2_typ21 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv") %>%
+  select(ID_Sitze, ID_Fahrzeug) %>%
+  mutate(id_r = isTRUE(strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][1] == 21))
+bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv") %>%
+  select(ID_Sitze, ID_Fahrzeug) %>%
+  mutate(id_r = isTRUE(strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][1] == 22))
+
+#bind Bestandteile together in one table and check if IDs correct
+fahrzeug_bestandteile <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
+  bind_rows(bestandteile_oem2_typ21) %>%
+  bind_rows(bestandteile_oem2_typ22) %>%
+  mutate(id_richtig_fahrz_bestandteile = 
+                  #check if Herstellernr and number in Werksnummer match in ID_Sitze
+           isTRUE(strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][2] == as.numeric(substring((strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][3]), 1, nchar(strsplit(ID_Sitze, split = "-", fixed = TRUE)[[1]][2]))) &&
+                  #check if Herstellernr and number in Werksnummer match in ID_Fahrzeuge
+                  strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][2] == as.numeric(substring((strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][3]), 1, nchar(strsplit(ID_Fahrzeug, split = "-", fixed = TRUE)[[1]][2])))))
+
+#if all IDs are correct, deselect redundant columns
+if(all(fahrzeug_bestandteile$id_r == TRUE) && all(fahrzeug_bestandteile$id_richtig_fahrz_bestandteile == TRUE)){
+  fahrzeug_bestandteile <- fahrzeug_bestandteile %>%
+    select(-id_r, -id_richtig_fahrz_bestandteile)
+}
+
+#join Fahrzeuge and Bestandteile
+#transform dates in correct format
+fahrzeuge_end <- full_join(fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug") %>%
+  mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
+         Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
 
 ```
 
