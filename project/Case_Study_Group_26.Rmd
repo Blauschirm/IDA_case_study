@@ -50,38 +50,36 @@ write(einzelteil_t20_csv, file = "Data/Einzelteil/Einzelteil_T20.csv")
 # and a lot of data is shown as NA even though there is data. The parsing error happens because the 
 # data is split on different columns
 
-# read csv
-t11 <- read.csv("Data/Einzelteil/Einzelteil_T11.csv")
-t16 <- read.csv("Data/Einzelteil/Einzelteil_T16.csv")
-t19 <- read.csv("Data/Einzelteil/Einzelteil_T19.csv")
-t20 <- read.csv("Data/Einzelteil/Einzelteil_T20.csv")
+# read csv, avoid parsing of ID column into Factor
+t11 <- read.csv("Data/Einzelteil/Einzelteil_T11.csv", stringsAsFactors = FALSE)
+t16 <- read.csv("Data/Einzelteil/Einzelteil_T16.csv", stringsAsFactors = FALSE)
+t19 <- read.csv("Data/Einzelteil/Einzelteil_T19.csv", stringsAsFactors = FALSE)
+t20 <- read.csv("Data/Einzelteil/Einzelteil_T20.csv", stringsAsFactors = FALSE)
 
-# read csv2
-t14 <- read.csv2("Data/Einzelteil/Einzelteil_T14.csv")
-t15 <- read.csv2("Data/Einzelteil/Einzelteil_T15.csv")
+# read csv2, avoid parsing of ID column into Factor
+t14 <- read.csv2("Data/Einzelteil/Einzelteil_T14.csv", stringsAsFactors = FALSE)
+t15 <- read.csv2("Data/Einzelteil/Einzelteil_T15.csv", stringsAsFactors = FALSE)
 
-# Renaming columns
-t11 <- t11 %>% rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
-t14 <- t14 %>% rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
-t19 <- t19 %>% rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
-t20 <- t20 %>% rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+# Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
+# Transform origin column into Class Date, use mutate to add Produktionsdatum_Origin_01011970 values to origin values
+t11 %>% 
+  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
+t14 %>% 
+  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
+t19 %>% 
+  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
+t20 %>% 
+  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
 
-# Produktionsdatum (in T11, T14, T19, T20) is an integer in days which have to be added to 
-# the origin date in origin column
-t11$Produktionsdatum <- as.Date(t11$origin, format = "%d-%m-%Y") + t11$Produktionsdatum
-t14$Produktionsdatum <- as.Date(t14$origin, format = "%d-%m-%Y") + t14$Produktionsdatum
-t19$Produktionsdatum <- as.Date(t19$origin, format = "%d-%m-%Y") + t19$Produktionsdatum
-t20$Produktionsdatum <- as.Date(t20$origin, format = "%d-%m-%Y") + t20$Produktionsdatum
-
-# Removing unnecessary columns
-t11 <- t11 %>% select(-X1, -origin)
-t14 <- t14 %>% select(-X, -X1, -origin)
+# Remove unnecessary columns
+t11 <- t11 %>% select(-X1, -origin, -Produktionsdatum_Origin_01011970)
+t14 <- t14 %>% select(-X, -X1, -origin, -Produktionsdatum_Origin_01011970)
 t15 <- t15 %>% select(-X, -X1)
 t16 <- t16 %>% select(-X1)
-t19 <- t19 %>% select(-X, -X1, -origin)
-t20 <- t20 %>% select(-X1, -origin)
+t19 <- t19 %>% select(-X, -X1, -origin, -Produktionsdatum_Origin_01011970)
+t20 <- t20 %>% select(-X1, -origin, -Produktionsdatum_Origin_01011970)
 
-# Splitting the three diferent parts of T15 and T16 into three data sets
+# Split the three diferent parts of T15 and T16 into three data sets
 t15_part1 <- filter(t15, !is.na(ID_T15.x)) 
 t15_part2 <- filter(t15, !is.na(ID_T15.y))
 
@@ -97,10 +95,9 @@ t16_part1 <- t16_part1[, c(-8:-21)]
 t16_part2 <- t16_part2[, c(-1:-7, -15:-21)]
 t16_part3 <- t16_part3[, c(-1:-14)]
 
-# Renaming column names to the same names for all parts
+# Rename column names to the same names for all parts of T15 and T16 data set respectively
 colnames(t15_part2) <- c("ID_T15", "Produktionsdatum", "Herstellernummer","Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum", "Fehlerhaft_Fahrleistung" )
 colnames(t15_part1) <- colnames(t15_part2)
-
 
 colnames(t16_part3) <- c("ID_T16", "Produktionsdatum", "Herstellernummer","Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum", "Fehlerhaft_Fahrleistung" )
 colnames(t16_part2) <- colnames(t16_part3)
@@ -111,7 +108,7 @@ t15 <- rbind(t15_part1, t15_part2)
 
 t16 <- rbind(t16_part1, t16_part2, t16_part3)
 
-# Produktionsdatum and Fehlerhaft_Datum into Date-class
+# Produktionsdatum and Fehlerhaft_Datum into Class Date
 t11$Produktionsdatum <- as.Date(t11$Produktionsdatum, format = "%Y-%m-%d")
 t14$Produktionsdatum <- as.Date(t14$Produktionsdatum, format = "%Y-%m-%d")
 t15$Produktionsdatum <- as.Date(t15$Produktionsdatum, format = "%Y-%m-%d")
@@ -126,7 +123,7 @@ t16$Fehlerhaft_Datum <- as.Date(t16$Fehlerhaft_Datum, format = "%Y-%m-%d")
 t19$Fehlerhaft_Datum <- as.Date(t19$Fehlerhaft_Datum, format = "%Y-%m-%d")
 t20$Fehlerhaft_Datum <- as.Date(t20$Fehlerhaft_Datum, format = "%Y-%m-%d")
 
-# Moving column Produktionsdatum to the last position in T15 and T16 in order to get the same structure for all datasets
+# Move column Produktionsdatum to the last position in T15 and T16 in order to get the same structure for all datasets
 t15 <- t15 %>% select(-Produktionsdatum, Produktionsdatum)
 t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
 
