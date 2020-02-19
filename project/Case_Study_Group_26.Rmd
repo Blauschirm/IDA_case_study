@@ -148,6 +148,24 @@ t20[, c("Fehlerhaft_Datum", "Produktionsdatum")] <- lapply(t20[, c("Fehlerhaft_D
 t15 <- t15 %>% select(-Produktionsdatum, Produktionsdatum)
 t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
 
+# rename ID_* columns to ID to get common column names for all data sets and prepare for rbind
+t11 <- rename(t11, ID = ID_T11)
+t14 <- rename(t14, ID = ID_T14)
+t15 <- rename(t15, ID = ID_T15)
+t16 <- rename(t16, ID = ID_T16)
+t19 <- rename(t19, ID = ID_T19)
+t20 <- rename(t20, ID = ID_T20)
+
+# use rbind to bind rows of all data sets into one data set
+einzelteile <- rbind(t11, t14, t15, t16, t19, t20)
+
+t11 <- ""
+t14 <- ""
+t15 <- ""
+t16 <- ""
+t19 <- ""
+t20 <- ""
+gc()
 
 #Import Komponenten
 
