@@ -6,9 +6,6 @@ if( !require(leaflet)){
 }
 library(leaflet)
 
-# Shiny Server
-shinyApp(ui, server)
-
 # Shiny UI
 ui <- fluidPage(
   mainPanel(
@@ -18,6 +15,8 @@ ui <- fluidPage(
     actionButton(inputId = "reset", "RESET")
   )
 )
+
+# Shiny Server
 server <- function(input, output) {
   
   output$map <- renderLeaflet({
@@ -29,7 +28,10 @@ server <- function(input, output) {
     
     leafletProxy("map")%>%
       setView(lng = 13.4, lat = 52.52, zoom = 11)
-
+    
   })
- 
+  
 }
+
+# Shiny App starten
+shinyApp(ui, server)
