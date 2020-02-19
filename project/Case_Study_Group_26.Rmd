@@ -75,13 +75,13 @@ t15 <- read.csv2("Data/Einzelteil/Einzelteil_T15.csv", stringsAsFactors = FALSE)
 
 # Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
 # Transform origin column into Class Date, use mutate to add Produktionsdatum_Origin_01011970 values to origin values
-t11 %>% 
+t11 <- t11 %>% 
   mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
-t14 %>% 
+t14 <- t14 %>% 
   mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
-t19 %>% 
+t19 <- t19 %>% 
   mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
-t20 %>% 
+t20 <- t20 %>% 
   mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
 
 # Remove unnecessary columns
