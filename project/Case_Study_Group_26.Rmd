@@ -172,11 +172,11 @@ bestandteile_k2le2 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE2.c
 
 bestandteile_k2le1 <- bestandteile_k2le1 %>%
   select(-X1) %>%
-  rename(ID_Komponente = ID_K2LE1)
+  rename(ID_Sitze = ID_K2LE1)
 
 bestandteile_k2le2 <- bestandteile_k2le2 %>%
   select(-X1) %>%
-  rename(ID_Komponente = ID_K2LE2)
+  rename(ID_Sitze = ID_K2LE2)
 
 # ID_Einzelteile is spread over three columns: Split into three different tables resepectively and rename ID_T* into ID_Einzelteil
 
