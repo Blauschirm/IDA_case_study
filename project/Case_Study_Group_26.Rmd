@@ -36,7 +36,8 @@ library(readr)
 Importieren Sie relevante Datensätze aus dem bereitgestellten tubcloud-Ordner. Listen sie zunächst in der Dokumentation auf, welche Dateien sie importieren.
 
 ```{r import data}
-# Import Einzelteile
+## Import Einzelteile
+
 # Import all the relevant parts (T11, T14, T15, T16, T19, T20)
 
 # read files with exotic delimiters in txt-files (T11, T16, T20) as string (for better performance)
@@ -136,28 +137,20 @@ t16_part2 <- ""
 t16_part3 <- ""
 gc()
 
-# Produktionsdatum and Fehlerhaft_Datum into Class Date
-t11[, c("Fehlerhaft_Datum", "Produktionsdatum")] <- lapply(t11[, c("Fehlerhaft_Datum", "Produktionsdatum")], as.Date, format = "%Y-%m-%d")
-t14[, c("Fehlerhaft_Datum", "Produktionsdatum")] <- lapply(t14[, c("Fehlerhaft_Datum", "Produktionsdatum")], as.Date, format = "%Y-%m-%d")
-t15[, c("Fehlerhaft_Datum", "Produktionsdatum")] <- lapply(t15[, c("Fehlerhaft_Datum", "Produktionsdatum")], as.Date, format = "%Y-%m-%d")
-t16[, c("Fehlerhaft_Datum", "Produktionsdatum")] <- lapply(t16[, c("Fehlerhaft_Datum", "Produktionsdatum")], as.Date, format = "%Y-%m-%d")
-t19[, c("Fehlerhaft_Datum", "Produktionsdatum")] <- lapply(t19[, c("Fehlerhaft_Datum", "Produktionsdatum")], as.Date, format = "%Y-%m-%d")
-t20[, c("Fehlerhaft_Datum", "Produktionsdatum")] <- lapply(t20[, c("Fehlerhaft_Datum", "Produktionsdatum")], as.Date, format = "%Y-%m-%d")
-
 # Move column Produktionsdatum to the last position in T15 and T16 in order to get the same structure for all datasets
 t15 <- t15 %>% select(-Produktionsdatum, Produktionsdatum)
 t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
 
 # rename ID_* columns to ID to get common column names for all data sets and prepare for rbind
-t11 <- rename(t11, ID = ID_T11)
-t14 <- rename(t14, ID = ID_T14)
-t15 <- rename(t15, ID = ID_T15)
-t16 <- rename(t16, ID = ID_T16)
-t19 <- rename(t19, ID = ID_T19)
-t20 <- rename(t20, ID = ID_T20)
+t11 <- rename(t11, ID_Einzelteil = ID_T11)
+t14 <- rename(t14, ID_Einzelteil = ID_T14)
+t15 <- rename(t15, ID_Einzelteil = ID_T15)
+t16 <- rename(t16, ID_Einzelteil = ID_T16)
+t19 <- rename(t19, ID_Einzelteil = ID_T19)
+t20 <- rename(t20, ID_Einzelteil = ID_T20)
 
 # use rbind to bind rows of all data sets into one data set
-einzelteile <- rbind(t11, t14, t15, t16, t19, t20)
+all_einzelteile <- rbind(t11, t14, t15, t16, t19, t20)
 
 t11 <- ""
 t14 <- ""
@@ -167,7 +160,70 @@ t19 <- ""
 t20 <- ""
 gc()
 
-#Import Komponenten
+
+
+## Import Bestandteile_Komponenten
+
+# read Bestandteile_Komponenten for relevant Kompenenten (K2LE1, K2LE2)
+bestandteile_k2le1 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE1.csv")
+bestandteile_k2le2 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE2.csv")
+
+# tidy and transform: Rename ID_Komponente in order to match komponenten data set and remove unnecessary columns
+
+bestandteile_k2le1 <- bestandteile_k2le1 %>%
+  select(-X1) %>%
+  rename(ID_Komponente = ID_K2LE1)
+
+bestandteile_k2le2 <- bestandteile_k2le2 %>%
+  select(-X1) %>%
+  rename(ID_Komponente = ID_K2LE2)
+
+# ID_Einzelteile is spread over three columns: Split into three different tables resepectively and rename ID_T* into ID_Einzelteil
+
+b_k2le1_part1 <- bestandteile_k2le1[, -2:-3] %>%
+  rename(ID_Einzelteil = ID_T11)
+b_k2le1_part2 <- bestandteile_k2le1[, c(-1,-3)] %>%
+  rename(ID_Einzelteil = ID_T14)
+b_k2le1_part3 <- bestandteile_k2le1[, -1:-2] %>%
+  rename(ID_Einzelteil = ID_T15)
+
+b_k2le2_part1 <- bestandteile_k2le2[, -2:-3]%>%
+  rename(ID_Einzelteil = ID_T16)
+b_k2le2_part2 <- bestandteile_k2le2[, c(-1,-3)] %>%
+  rename(ID_Einzelteil = ID_T19)
+b_k2le2_part3 <- bestandteile_k2le2[, -1:-2] %>%
+  rename(ID_Einzelteil = ID_T20)
+
+# bind the split tables into one for each Komponente and bind 
+
+bestandteile_k2le1 <- bind_rows(b_k2le1_part1, b_k2le1_part2, b_k2le1_part3)
+bestandteile_k2le2 <- bind_rows(b_k2le2_part1, b_k2le2_part2, b_k2le2_part3)
+
+bestandteile_komponenten <- bind_rows(bestandteile_k2le1, bestandteile_k2le2)
+
+b_k2le1_part1 <- ""
+b_k2le1_part2 <- ""
+b_k2le1_part3 <- ""
+b_k2le2_part1 <- ""
+b_k2le2_part2 <- ""
+b_k2le2_part3 <- ""
+bestandteile_k2le1 <- ""
+bestandteile_k2le2 <- ""
+gc()
+
+#join Fahrzeuge and Bestandteile
+#transform dates in correct format
+einzelteile <- full_join(all_einzelteile, bestandteile_komponenten, by = "ID_Einzelteil") %>%
+  mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
+         Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d")) %>%
+  filter(!is.na(ID_Komponente))
+
+all_einzelteile <- ""
+bestandteile_komponenten <- ""
+gc()
+
+
+## Import Komponenten
 
 #read Komponenete_K2LE1
 
