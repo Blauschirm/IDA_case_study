@@ -566,7 +566,7 @@ einz_komp_fahrz <- full_join(einzelteile_clean, komponenten_clean, by = "ID_Sitz
 
 # filter for Herstellernummer_Komponente == 111 and Fehlerhaft == 1 to get faulty parts and components of seats produced by company "111"
 
-einz_komp_fahrz_fehlerhaft_111 <- einz_komp_fahrz %>%
+final_joined <- einz_komp_fahrz %>%
   filter(Herstellernummer_Komponente == 111) %>%
   filter(Fehlerhaft_Einzelteil == 1 | Fehlerhaft_Komponente == 1) %>%
   select(-Herstellernummer_Komponente)
