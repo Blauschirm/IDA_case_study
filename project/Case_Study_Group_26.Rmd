@@ -462,6 +462,20 @@ zulassungen_pro_gemeinde <- zulassungen %>%
   summarise(Anzahl = length(Gemeinden)) %>%
   arrange(desc(Anzahl))
 
+
+## Import Geodaten
+
+
+
+## join tables into final data set
+
+# remove 
+
+# join Einzelteile and Komponenten
+
+einz_komp <- full_join(einzelteile, komponenten, by = "ID_Sitze", suffix = c("_Einzelteil", "_Komponente"))
+
+
 ```
 
 ## Aufgabe 2
