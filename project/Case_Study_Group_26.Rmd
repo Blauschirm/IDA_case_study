@@ -477,7 +477,13 @@ Die Applikation muss ohne weitere Anpassungen aus dem Abgabeordner gestartet wer
 Das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Unternehmensfarbe entsprechen. Die Farbe ihres Unternehmens ist TUB-Rot. Des Weiteren soll ein Logo in das Layout integriert werden. Es kann ein eigenes Logo erstellt werden, oder das Logo vom Fachgebiet Qualitätswissenschaft verwendet werden. Passen Sie die Schriftart ihrer Applikation nach Ihren wünschen an. Eine Anpassung ist obligatorisch.
 
 ```{r shiny app}
+
+## Die Shiny App befindet sich in der .R Datei.
+
+# Shiny UI
+
 # Shiny Server
+
 # Shiny App
 ```
 
