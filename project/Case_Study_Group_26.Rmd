@@ -385,6 +385,15 @@ fahrzeuge <- full_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug")
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
 
+## Import Zulassungen
+zulassungen <- read_csv2("project/Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
+  drop_na(IDNummer) %>%
+  select(IDNummer, Gemeinden, Datum = Zulassung)
+
+zulassungen_pro_gemeinde <- zulassungen %>%
+  group_by(Gemeinden) %>%
+  summarise(Anzahl = length(Gemeinden)) %>%
+  arrange(desc(Anzahl))
 ```
 
 ## Aufgabe 2
