@@ -450,10 +450,7 @@ all_fahrzeuge <- ""
 fahrzeug_bestandteile <- ""
 gc()
 
-<<<<<<< HEAD
 
-=======
->>>>>>> d6bf3de4286b0079d2721c9c822133a58e262815
 ## Import Zulassungen
 
 zulassungen <- read_csv2("project/Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
@@ -464,14 +461,7 @@ zulassungen_pro_gemeinde <- zulassungen %>%
   group_by(Gemeinden) %>%
   summarise(Anzahl = length(Gemeinden)) %>%
   arrange(desc(Anzahl))
-<<<<<<< HEAD
 
-
-## Import Geodaten
-
-
-=======
->>>>>>> d6bf3de4286b0079d2721c9c822133a58e262815
 ```
 
 ## Aufgabe 2
