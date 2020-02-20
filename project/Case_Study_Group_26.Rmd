@@ -253,15 +253,15 @@ gc()
 #read file and replace delim with single character delim
 tx  <- read_file("Data/Komponente/Komponente_K2LE1.txt")
 tx2 <- gsub(pattern = "II", replace = ";", x = tx, fixed = TRUE)
-#add Newline when needed so that table has table structure
-tx3 <- unlist(strsplit(tx2, ";")) # unlist is here to convert to a vector
-tx3 <- split(tx3, ceiling(seq_along(tx3)/15))
-out <- sapply(tx3, function(x) paste0(x, collapse = ";"))
-#write output in temp file and read temp file 
+#add column name 
+tx3 <- paste("X2", tx2, sep = ";")
+#replace exotic separator with newline
+out <- gsub(pattern = "", replace = "\n", x = tx3, fixed = TRUE)
+#write output in temp file 
 myFile <- tempfile()
 writeLines(out, con=myFile)
 #read Komponente
-komponente_k2le1 <- read_delim(myFile, delim = ";", col_types = c("ncDnnnDncDnnnDc")) %>%
+komponente_k2le1 <- read_csv2(myFile, delim = ";", col_types = c("nncDnnnDncDnnnDn")) %>%
   select(-X1)
 
 #split table in two (x and y)
@@ -282,16 +282,14 @@ komponente_k2le1.y <- komponente_k2le1 %>%
   select(8:14) %>%
   #filter out those where ID is na
   filter(!is.na(ID_Sitze.y)) %>%
-  #split column into two because there was no delim in original file between them, keep just necessary information
-  mutate(Fehlerhaft_Fahrleistung = as.numeric(strsplit(`Fehlerhaft_Fahrleistung.y""1`, split = "\"", fixed = TRUE)[[1]][1])) %>%
-  select(-`Fehlerhaft_Fahrleistung.y""1`) %>%
   rename(
     ID_Sitze = ID_Sitze.y,
     Produktionsdatum = Produktionsdatum.y,
     Herstellernummer = Herstellernummer.y,
     Werksnummer = Werksnummer.y,
     Fehlerhaft = Fehlerhaft.y,
-    Fehlerhaft_Datum = Fehlerhaft_Datum.y
+    Fehlerhaft_Datum = Fehlerhaft_Datum.y,
+    Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.y
   )
 
 #bind the two tables (x and y) together again the right way
@@ -359,19 +357,25 @@ gc()
 
 #Import Fahrzeuge und deren Bestandteile
 
-#read Fahrzeuge and deselect unnecessary columns and mutate a type column for a later check
+#read Fahrzeuge 
+fahrzeug_oem1_typ11 <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv")
+fahrzeug_oem1_typ12 <- read_csv2("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv")
+fahrzeug_oem2_typ21 <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM2_Typ21.csv")
+fahrzeug_oem2_typ22 <- read_csv2("Data/Fahrzeug/Fahrzeuge_OEM2_Typ22.csv")
+
+#deselect unnecessary columns and mutate a type column for a later check
 #transform origin in date format and create Produktionsdatum
-fahrzeug_oem1_typ11 <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv") %>%
+fahrzeug_oem1_typ11 <- fahrzeug_oem1_typ11 %>%
   select(-X1, -X1_1) %>%
   mutate(Fahrzeugtyp = 11)
-fahrzeug_oem1_typ12 <- read_csv2("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv") %>%
+fahrzeug_oem1_typ12 <- fahrzeug_oem1_typ12 %>%
   select(-X1, -X1_1) %>%
   mutate(Fahrzeugtyp = 12)
-fahrzeug_oem2_typ21 <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM2_Typ21.csv") %>%
+fahrzeug_oem2_typ21 <- fahrzeug_oem2_typ21 %>%
   mutate(origin = (as.Date(origin, format = "%d-%m-%Y")), Produktionsdatum = as.Date(Produktionsdatum_Origin_01011970, origin = origin)) %>%
   select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970) %>%
   mutate(Fahrzeugtyp = 21)
-fahrzeug_oem2_typ22 <- read_csv2("Data/Fahrzeug/Fahrzeuge_OEM2_Typ22.csv") %>%
+fahrzeug_oem2_typ22 <- fahrzeug_oem2_typ22 %>%
   mutate(origin = (as.Date(origin, format = "%d-%m-%Y")), Produktionsdatum = as.Date(Produktionsdatum_Origin_01011970, origin = origin)) %>%
   select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970) %>%
   mutate(Fahrzeugtyp = 22)
@@ -453,7 +457,7 @@ gc()
 
 ## Import Zulassungen
 
-zulassungen <- read_csv2("project/Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
+zulassungen <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
   drop_na(IDNummer) %>%
   select(IDNummer, Gemeinden, Datum = Zulassung)
 
