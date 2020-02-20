@@ -459,11 +459,11 @@ gc()
 
 zulassungen <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
   drop_na(IDNummer) %>%
-  select(IDNummer, Gemeinden, Datum = Zulassung)
+  select(ID_Fahrzeug = IDNummer, Gemeinde = Gemeinden, Zulassungsdatum = Zulassung)
 
 zulassungen_pro_gemeinde <- zulassungen %>%
-  group_by(Gemeinden) %>%
-  summarise(Anzahl = length(Gemeinden)) %>%
+  group_by(Gemeinde) %>%
+  summarise(Anzahl = length(Gemeinde)) %>%
   arrange(desc(Anzahl))
 
 
@@ -520,7 +520,8 @@ tier1_clean <- tier1  %>%
   mutate(Breitengrad = addZerosUntil8Digits(Breitengrad))  %>%
   mutate(Längengrad = addZerosUntil8Digits(Längengrad)) %>%
   mutate(Breitengrad = Breitengrad/1000000) %>%
-  mutate(Längengrad = Längengrad/1000000)
+  mutate(Längengrad = Längengrad/1000000) %>%
+  rename(Werksnummer = Werk, Ort = ORT)
 
 tier2_clean <- tier2  %>%
   na.omit(tier2)  %>%
@@ -529,20 +530,31 @@ tier2_clean <- tier2  %>%
   mutate(Breitengrad = addZerosUntil8Digits(Breitengrad))  %>%
   mutate(Längengrad = addZerosUntil8Digits(Längengrad)) %>%
   mutate(Breitengrad = Breitengrad/1000000) %>%
-  mutate(Längengrad = Längengrad/1000000)
+  mutate(Längengrad = Längengrad/1000000) %>%
+  rename(Werksnummer = Werk, Ort = ORT)
 
+# join Einzelteile and Komponenten with Geodaten
 
+einzelteile_geo <- left_join(einzelteile, tier2_clean, by = "Werksnummer") %>%
+  select(-PLZ, -Ort)
+
+komponenten_geo <- left_join(komponenten, tier1_clean, by = "Werksnummer") %>%
+  select(-PLZ, -Ort)
+
+# join Fahrzeuge with zulassungen
+fahrzeuge_geo <- left_join(fahrzeuge, zulassungen, by = "ID_Fahrzeug") %>%
+  left_join(., gemeinden_clean, by = "Gemeinde")
 
 ## join tables into final data set
 
 # remove irrevelant columns from einzelteile and komponenten
 
-einzelteile_clean <- einzelteile %>%
+einzelteile_clean <- einzelteile_geo %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
-komponenten_clean <- komponenten %>%
+komponenten_clean <- komponenten_geo %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum) %>%
   rename(Herstellernummer_Komponente = Herstellernummer)
-fahrzeuge_clean <- fahrzeuge %>%
+fahrzeuge_clean <- fahrzeuge_geo %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer)
 
 # join Einzelteile and Komponenten and Fahrzeuge by ID_Sitze column, remove Fehlerhaft column (of fahrzeuge table)
@@ -558,6 +570,8 @@ einz_komp_fahrz_fehlerhaft_111 <- einz_komp_fahrz %>%
   filter(Herstellernummer_Komponente == 111) %>%
   filter(Fehlerhaft_Einzelteil == 1 | Fehlerhaft_Komponente == 1) %>%
   select(-Herstellernummer_Komponente)
+
+# join with Geodaten
 
 
 ```
