@@ -142,15 +142,39 @@ t15 <- t15 %>% select(-Produktionsdatum, Produktionsdatum)
 t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
 
 # rename ID_* columns to ID to get common column names for all data sets and prepare for rbind
-t11 <- rename(t11, ID_Einzelteil = ID_T11)
-t14 <- rename(t14, ID_Einzelteil = ID_T14)
-t15 <- rename(t15, ID_Einzelteil = ID_T15)
-t16 <- rename(t16, ID_Einzelteil = ID_T16)
-t19 <- rename(t19, ID_Einzelteil = ID_T19)
-t20 <- rename(t20, ID_Einzelteil = ID_T20)
+t11 <- rename(t11, ID_Einzelteil = ID_T11) %>%
+  mutate(Einzelteil="11")
+t14 <- rename(t14, ID_Einzelteil = ID_T14) %>%
+  mutate(Einzelteil="14")
+t15 <- rename(t15, ID_Einzelteil = ID_T15) %>%
+  mutate(Einzelteil="15")
+t16 <- rename(t16, ID_Einzelteil = ID_T16) %>%
+  mutate(Einzelteil="16")
+t19 <- rename(t19, ID_Einzelteil = ID_T19) %>%
+  mutate(Einzelteil="19")
+t20 <- rename(t20, ID_Einzelteil = ID_T20) %>%
+  mutate(Einzelteil="20")
 
 # use rbind to bind rows of all data sets into one data set
-all_einzelteile <- rbind(t11, t14, t15, t16, t19, t20)
+all_einzelteile <- rbind(t11, t14, t15, t16, t19, t20) %>%
+  mutate(id_richtig_einzel =
+           isTRUE(
+              #check if ID-Herstellernr and Herstellernr match
+              strsplit(ID_Einzelteil, split = "-", fixed = TRUE)[[1]][2] == Herstellernummer && 
+              #check if ID-Werksnr and Werksnr match
+              strsplit(ID_Einzelteil, split = "-", fixed = TRUE)[[1]][3] == Werksnummer &&
+              #check if Herstellernr and Herstellernr in Werksnr match
+              Herstellernummer == as.numeric(substring(Werksnummer, 1, nchar(Herstellernummer))) &&
+              #check if ID-Einzelteil and Einzelteil match
+              strsplit(ID_Einzelteil, split = "-", fixed = TRUE)[[1]][1] == Einzelteil
+            )
+  )
+
+#if all IDs are correct, delete redundant columns
+if(all(all_einzelteile$id_richtig_einzel == TRUE)){
+  all_einzelteile <- all_einzelteile %>%
+    select(-id_richtig_einzel, -Herstellernummer, -Einzelteil)
+}
 
 t11 <- ""
 t14 <- ""
@@ -425,6 +449,22 @@ fahrzeuge <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug"
 all_fahrzeuge <- ""
 fahrzeug_bestandteile <- ""
 gc()
+
+
+## Import Zulassungen
+
+zulassungen <- read_csv2("project/Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
+  drop_na(IDNummer) %>%
+  select(IDNummer, Gemeinden, Datum = Zulassung)
+
+zulassungen_pro_gemeinde <- zulassungen %>%
+  group_by(Gemeinden) %>%
+  summarise(Anzahl = length(Gemeinden)) %>%
+  arrange(desc(Anzahl))
+
+
+## Import Geodaten
+
 
 ```
 
