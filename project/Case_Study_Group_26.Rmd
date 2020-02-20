@@ -450,7 +450,9 @@ all_fahrzeuge <- ""
 fahrzeug_bestandteile <- ""
 gc()
 
+
 ## Import Zulassungen
+
 zulassungen <- read_csv2("project/Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
   drop_na(IDNummer) %>%
   select(IDNummer, Gemeinden, Datum = Zulassung)
@@ -459,6 +461,21 @@ zulassungen_pro_gemeinde <- zulassungen %>%
   group_by(Gemeinden) %>%
   summarise(Anzahl = length(Gemeinden)) %>%
   arrange(desc(Anzahl))
+
+
+## Import Geodaten
+
+
+
+## join tables into final data set
+
+# remove 
+
+# join Einzelteile and Komponenten
+
+einz_komp <- full_join(einzelteile, komponenten, by = "ID_Sitze", suffix = c("_Einzelteil", "_Komponente"))
+
+
 ```
 
 ## Aufgabe 2
