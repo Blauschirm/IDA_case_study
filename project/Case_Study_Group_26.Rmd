@@ -536,11 +536,24 @@ tier2_clean <- tier2  %>%
 einzelteile_clean <- einzelteile %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
 komponenten_clean <- komponenten %>%
-  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum)
+  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum) %>%
+  rename(Herstellernummer_Komponente = Herstellernummer)
+fahrzeuge_clean <- fahrzeuge %>%
+  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer)
 
-# join Einzelteile and Komponenten
+# join Einzelteile and Komponenten and Fahrzeuge by ID_Sitze column, remove Fehlerhaft column (of fahrzeuge table)
 
-einz_komp <- full_join(einzelteile_clean, komponenten_clean, by = "ID_Sitze", suffix = c("_Einzelteil", "_Komponente"))
+einz_komp_fahrz <- full_join(einzelteile_clean, komponenten_clean, by = "ID_Sitze", suffix = c("_Einzelteil", "_Komponente")) %>%
+  full_join(., fahrzeuge_clean, by ="ID_Sitze") %>%
+  rename(Produktionsdatum_Fahrzeug = Produktionsdatum, Werksnummer_Fahrzeug = Werksnummer) %>%
+  select(-Fehlerhaft)
+
+# filter for Herstellernummer_Komponente == 111 and Fehlerhaft == 1 to get faulty parts and components of seats produced by company "111"
+
+einz_komp_fahrz_fehlerhaft_111 <- einz_komp_fahrz %>%
+  filter(Herstellernummer_Komponente == 111) %>%
+  filter(Fehlerhaft_Einzelteil == 1 | Fehlerhaft_Komponente == 1) %>%
+  select(-Herstellernummer_Komponente)
 
 
 ```
