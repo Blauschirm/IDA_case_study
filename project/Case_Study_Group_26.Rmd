@@ -261,8 +261,8 @@ out <- gsub(pattern = "", replace = "\n", x = tx3, fixed = TRUE)
 myFile <- tempfile()
 writeLines(out, con=myFile)
 #read Komponente
-komponente_k2le1 <- read_csv2(myFile, delim = ";", col_types = c("nncDnnnDncDnnnDn")) %>%
-  select(-X1)
+komponente_k2le1 <- read_csv2(myFile, col_types = c("nncDnnnDncDnnnDn")) %>%
+  select(-X1, -X2)
 
 #split table in two (x and y)
 komponente_k2le1.x <- komponente_k2le1 %>%
@@ -276,7 +276,7 @@ komponente_k2le1.x <- komponente_k2le1 %>%
     Werksnummer = Werksnummer.x,
     Fehlerhaft = Fehlerhaft.x,
     Fehlerhaft_Datum = Fehlerhaft_Datum.x,
-    Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.x,
+    Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.x
   )
 komponente_k2le1.y <- komponente_k2le1 %>%
   select(8:14) %>%
