@@ -472,13 +472,13 @@ zulassungen_pro_gemeinde <- zulassungen %>%
 # remove irrevelant columns from einzelteile and komponenten
 
 einzelteile_clean <- einzelteile %>%
-  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum)
+  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
 komponenten_clean <- komponenten %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum)
 
 # join Einzelteile and Komponenten
 
-einz_komp <- full_join(einzelteile, komponenten, by = "ID_Sitze", suffix = c("_Einzelteil", "_Komponente"))
+einz_komp <- full_join(einzelteile_clean, komponenten_clean, by = "ID_Sitze", suffix = c("_Einzelteil", "_Komponente"))
 
 
 ```
