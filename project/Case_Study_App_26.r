@@ -10,7 +10,7 @@ library(leaflet)
 ui <- fluidPage(
   mainPanel(
     width="100%",
-    titlePanel("Örtliche und zeitliche Verteilung von Fahrzeugen mit verbauten defekten Ledersitzen"),
+    titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf nach Gemeinden // Darstellung 2: Heatmap mit Fahrzeug-Suche und Bauteil-Suche + Darstellung des Lieferwegs"),
     wellPanel(
       fluidRow(
         column(12,
@@ -27,7 +27,7 @@ ui <- fluidPage(
                   fluidRow(
                     column(8, 
                       titlePanel("Karte"),
-                      leafletOutput(outputId = "map", width = 1000, height = 1000)),
+                      leafletOutput(outputId = "map", width = 550, height = 550)),
                       column(8, "Bottombox")
                   )
                 ),
@@ -52,13 +52,13 @@ server <- function(input, output) {
   
   output$map <- renderLeaflet({
     leaflet() %>%
-      setView(lng = 13.4, lat = 52.52, zoom = 7) %>%
+      setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles()
   })
   observeEvent(input$reset, {
     
     leafletProxy("map")%>%
-      setView(lng = 13.4, lat = 52.52, zoom = 11)
+      setView(lng = 10.46, lat = 51.15, zoom = 6.25)
     
   })
   
