@@ -213,10 +213,9 @@ gc()
 
 #join Fahrzeuge and Bestandteile
 #transform dates in correct format
-einzelteile <- full_join(all_einzelteile, bestandteile_komponenten, by = "ID_Einzelteil") %>%
+einzelteile <- right_join(all_einzelteile, bestandteile_komponenten, by = "ID_Einzelteil") %>%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
-         Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d")) %>%
-  filter(!is.na(ID_Sitze))
+         Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
 
 all_einzelteile <- ""
 bestandteile_komponenten <- ""
