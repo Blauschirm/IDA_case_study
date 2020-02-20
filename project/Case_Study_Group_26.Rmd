@@ -173,7 +173,7 @@ all_einzelteile <- rbind(t11, t14, t15, t16, t19, t20) %>%
 #if all IDs are correct, delete redundant columns
 if(all(all_einzelteile$id_richtig_einzel == TRUE)){
   all_einzelteile <- all_einzelteile %>%
-    select(-id_richtig_einzel, -Herstellernummer, -Einzelteil)
+    select(-id_richtig_einzel, -Einzelteil)
 }
 
 t11 <- ""
@@ -346,7 +346,7 @@ komponenten <- bind_rows(komponente_k2le1, komponente_k2le2) %>%
 #if all IDs are correct, delete redundant columns
 if(all(komponenten$id_richtig_komp == TRUE)){
   komponenten <- komponenten %>%
-    select(-id_richtig_komp, -Herstellernummer, -Werksnummer, -Komponente)
+    select(-id_richtig_komp, -Komponente)
 }
 
 #remove unused objects and free memory
@@ -398,7 +398,7 @@ all_fahrzeuge <- bind_rows(fahrzeug_oem1_typ11, fahrzeug_oem1_typ12) %>%
 #if all IDs are correct, deselect redundant columns
 if(all(all_fahrzeuge$id_richtig_fahrzeuge == TRUE)){
   all_fahrzeuge <- all_fahrzeuge %>%
-    select(-id_richtig_fahrzeuge, -Herstellernummer, -Werksnummer, -Fahrzeugtyp)
+    select(-id_richtig_fahrzeuge, -Fahrzeugtyp)
 }
 
 #remove unused objects and free memory
@@ -530,16 +530,21 @@ tier2_clean <- tier2  %>%
   mutate(Längengrad = addZerosUntil8Digits(Längengrad)) %>%
   mutate(Breitengrad = Breitengrad/1000000) %>%
   mutate(Längengrad = Längengrad/1000000)
-```
-```
+
+
 
 ## join tables into final data set
 
-# remove 
+# remove irrevelant columns from einzelteile and komponenten
+
+einzelteile_clean <- einzelteile %>%
+  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
+komponenten_clean <- komponenten %>%
+  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum)
 
 # join Einzelteile and Komponenten
 
-einz_komp <- full_join(einzelteile, komponenten, by = "ID_Sitze", suffix = c("_Einzelteil", "_Komponente"))
+einz_komp <- full_join(einzelteile_clean, komponenten_clean, by = "ID_Sitze", suffix = c("_Einzelteil", "_Komponente"))
 
 
 ```
