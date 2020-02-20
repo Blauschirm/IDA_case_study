@@ -273,6 +273,16 @@ komponente_k2le1.y <- komponente_k2le1 %>%
 #bind the two tables (x and y) together again the right way
 komponente_k2le1 <- bind_rows(komponente_k2le1.x, komponente_k2le1.y) %>%
   mutate(Komponente = "K2LE1")
+
+#remove unused objects and free memory
+komponente_k2le1.x <- ""
+komponente_k2le1.y <- ""
+tx <- ""
+tx2 <- ""
+tx3 <- ""
+out <- ""
+myFile <- ""
+gc()
   
 #read Komponenete_K2LE2
 #read file because first column name is missing
@@ -289,6 +299,12 @@ komponente_k2le2 <- read_delim(myFile2, delim = "\\") %>%
   mutate(origin = as.Date(origin, format = "%d-%m-%Y"), Produktionsdatum = as.Date(Produktionsdatum_Origin_01011970, origin = origin)) %>%
   select(-X1, -X2, -origin, -Produktionsdatum_Origin_01011970) %>%
   mutate(Komponente = "K2LE2")
+
+#remove unused objects and free memory
+temp1 <- ""
+temp2 <- ""
+myFile2 <- ""
+gc()
 
 #bind tables into one and check if IDs are correct
 komponenten <- bind_rows(komponente_k2le1, komponente_k2le2) %>%
@@ -310,6 +326,11 @@ if(all(komponenten$id_richtig_komp == TRUE)){
   komponenten <- komponenten %>%
     select(-id_richtig_komp, -Herstellernummer, -Werksnummer, -Komponente)
 }
+
+#remove unused objects and free memory
+komponente_k2le1 <- ""
+komponente_k2le2 <- ""
+gc()
 
 
 #Import Fahrzeuge und deren Bestandteile
@@ -352,6 +373,13 @@ if(all(all_fahrzeuge$id_richtig_fahrzeuge == TRUE)){
     select(-id_richtig_fahrzeuge, -Herstellernummer, -Werksnummer, -Fahrzeugtyp)
 }
 
+#remove unused objects and free memory
+fahrzeug_oem1_typ11 <- ""
+fahrzeug_oem1_typ12 <- ""
+fahrzeug_oem2_typ21 <- ""
+fahrzeug_oem2_typ22 <- ""
+gc()
+
 #read Bestandteile_Fahrzeuge
 bestandteile_oem1_typ11 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv") %>%
   select(ID_Sitze, ID_Fahrzeug)
@@ -366,6 +394,7 @@ bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_
 fahrzeug_bestandteile <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
   bind_rows(bestandteile_oem2_typ21) %>%
   bind_rows(bestandteile_oem2_typ22) %>%
+  filter(substring(ID_Sitze, 1, 4) == "K2LE") %>%
   mutate(id_richtig_fahrz_bestandteile = isTRUE(
       #check if Herstellernr and number in Werksnummer match in ID_Sitze
       substring(ID_Sitze, 7, 9) == substring(ID_Sitze, 11, 13) &&
@@ -379,11 +408,23 @@ if(all(fahrzeug_bestandteile$id_richtig_fahrz_bestandteile == TRUE)){
     select(-id_richtig_fahrz_bestandteile)
 }
 
+#remove unused objects and free memory
+bestandteile_oem1_typ11 <- ""
+bestandteile_oem1_typ12 <- ""
+bestandteile_oem2_typ21 <- ""
+bestandteile_oem2_typ22 <- ""
+gc()
+
 #join Fahrzeuge and Bestandteile
 #transform dates in correct format
-fahrzeuge <- full_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug") %>%
+fahrzeuge <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug") %>%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
+
+#remove unused objects and free memory
+all_fahrzeuge <- ""
+fahrzeug_bestandteile <- ""
+gc()
 
 ```
 
