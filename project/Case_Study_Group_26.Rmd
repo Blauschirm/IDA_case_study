@@ -465,7 +465,69 @@ zulassungen_pro_gemeinde <- zulassungen %>%
 
 ## Import Geodaten
 
+# 1. CSV Import
 
+#getwd() # print working directory
+# get file path from /Data
+path1 <- "Data/Geodaten/Tier1_Werke_2017-07-11_v1.2_TrR.csv"
+path2 <- "Data/Geodaten/Tier2_Werke_2017-07-11_v1.2_TrR.csv"
+path3 <- "Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv"
+path4 <- "Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv"
+path5 <- "Data/Geodaten/Klimazonen_Köppen_Geiger.xlsx"
+
+# Import with readr
+locale = locale(encoding = 'ISO-8859-1')
+
+tier1 <- read_csv2(path1, locale = locale, col_types = "ccnnn")
+tier2 <- read_csv2(path2, locale = locale, col_types = "ccnnn")
+#tier2.1 <- read.table(file=path2, dec= ".", sep= ";") # erkennt '.' als Decimal-Trennzeichen
+oem <- read_csv2(path3, locale = locale, col_types = "ccnnn")
+gemeinden <- read_csv2(path4, locale = locale, col_types = "__ccnn")
+
+# 2. Clean Data
+
+# Function that add zeros at the end of the number until it has 8 digits
+addZerosUntil8Digits <- function(num) {
+  for (i in 1:10) { ifelse(nchar(trunc(num)) < 8, num <- num*10, num) }
+    return(num) }
+
+# Function that add leading zero to PLZ
+addLeadingZero <- function(char) {
+  ifelse(nchar(char) < 5, char <- paste0("0",char), char)
+    return(char) }
+
+# Change ae to ä in Längengrad
+colnames(tier1)[5] <- "Längengrad"
+colnames(tier2)[5] <- "Längengrad"
+colnames(oem)[5] <- "Längengrad"
+colnames(gemeinden)[3] <- "Längengrad"
+# Change Postleitzahl to PLZ
+colnames(gemeinden)[1] <- "PLZ"
+
+# Add leading zero to PLZ if missing
+gemeinden_clean <- gemeinden %>%
+  rowwise() %>%
+  mutate(PLZ = addLeadingZero(PLZ))
+
+# Clean: omit NAs annd standardize long / lat values
+tier1_clean <- tier1  %>%
+  na.omit(tier1)  %>%
+  rowwise() %>%
+  mutate(Breitengrad = addZerosUntil8Digits(Breitengrad))  %>%
+  mutate(Längengrad = addZerosUntil8Digits(Längengrad)) %>%
+  mutate(Breitengrad = Breitengrad/1000000) %>%
+  mutate(Längengrad = Längengrad/1000000)
+
+tier2_clean <- tier2  %>%
+  na.omit(tier2)  %>%
+  rowwise() %>%
+  mutate(PLZ = addLeadingZero(PLZ) ) %>%
+  mutate(Breitengrad = addZerosUntil8Digits(Breitengrad))  %>%
+  mutate(Längengrad = addZerosUntil8Digits(Längengrad)) %>%
+  mutate(Breitengrad = Breitengrad/1000000) %>%
+  mutate(Längengrad = Längengrad/1000000)
+```
+```
 
 ## join tables into final data set
 
