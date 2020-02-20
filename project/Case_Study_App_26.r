@@ -9,12 +9,43 @@ library(leaflet)
 # Shiny UI
 ui <- fluidPage(
   mainPanel(
-    leafletOutput(outputId = "map", width = 1000, height = 1000)
-  ),
-  sidebarPanel(
-    actionButton(inputId = "reset", "RESET")
+    width="100%",
+    titlePanel("Örtliche und zeitliche Verteilung von Fahrzeugen mit verbauten defekten Ledersitzen"),
+    wellPanel(
+      fluidRow(
+        column(12,
+          fluidRow(
+            column(12,
+              titlePanel("Karte aller betroffenen Fahrzeuge"),
+              fluidRow(
+                column(
+                  2, 
+                  "betroffene Gemeinden"
+                ),
+                column(
+                  8,
+                  fluidRow(
+                    column(8, 
+                      titlePanel("Karte"),
+                      leafletOutput(outputId = "map", width = 1000, height = 1000)),
+                      column(8, "Bottombox")
+                  )
+                ),
+                column(2,
+                  fluidRow("Betroffene Fahrzeuge"),
+                  fluidRow("Betroffene Bauteile")
+                )
+              )
+            )
+          )
+        )
+      )
+    )
   )
 )
+
+
+
 
 # Shiny Server
 server <- function(input, output) {
