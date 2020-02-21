@@ -16,18 +16,26 @@ library(dplyr)
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
 
-
+# Data preperation
+#
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
-# Create a search/autocomplete vektor with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
+#
+# Create a search/autocomplete vector with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
 #inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Sitze)
-inputIDs <- fahrzeuge$ID_Fahrzeug[1:10]
+#inputIDs <- fahrzeuge$ID_Fahrzeug[1:10]
 fahrzeuge_subset <- fahrzeuge[1:40,]
-
-# Cerate a search/autocomplete list as group optins
+#
+# Cerate a search/autocomplete list as group options: inputIDs_grouped
 #inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Sitze, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
-inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:100], ID_Komponente = final_joined$ID_Sitze[1:100], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:100])
-str(inputIDs_grouped)
+#
+# Cerate a subset of 300k IDs (due to performance issues)
+#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:100000], ID_Komponente = final_joined$ID_Sitze[1:100000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:100000])
+# Cerate a subset of 30k IDs (due to performance issues)
+inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Sitze[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
+
+#str(inputIDs_grouped) # Stats
+
 # Shiny UI
 ui <- fluidPage(
   mainPanel(
@@ -62,20 +70,28 @@ ui <- fluidPage(
                     column(8, 
                       titlePanel(h6("Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken")),
                       
-                      # Create search input bar with autocomplete 
+                      # Create search input bar with autocomplete: selectizeInput()
                       # from: https://shiny.rstudio.com/gallery/selectize-examples.html
                       # if needed: toggle/hide Dropdown: https://rdrr.io/cran/shinyWidgets/man/toggleDropdownButton.html
                       # if neeeed: performance boost: check selectizeInput('x2'... https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
                       
+                      # selectizeInput() (depreciated)
                       selectizeInput(
                         'e1', 'Wählen Sie den Kartentyp aus',
                         choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
                       ),
-                      selectizeInput(
-                        'e2', 'Wählen Sie eine oder mehrere Fahrzeug- oder Bauteil-IDs aus',
-                        choices = inputIDs_grouped, multiple = TRUE, options = list(maxOptions = 6, placeholder = 'Filter für ID_Bauteil(e) und/oder ID_Fahrzeug (AND Verknüpfung)')
-                        
+                      # selectizeInput(
+                      #   'e2', 'Wählen Sie eine oder mehrere Fahrzeug- oder Bauteil-IDs aus',
+                      #   choices = inputIDs_grouped, multiple = TRUE, options = list(maxOptions = 6, placeholder = 'Filter für ID_Bauteil(e) und/oder ID_Fahrzeug (AND Verknüpfung)'
+                      # ),
+                      
+                      # Client-side rendering of updateSelectizeInput(session, 'search_by_ID2', ...),
+                      selectizeInput('search_by_ID', 'Wählen Sie eine oder mehrere Fahrzeug- oder Bauteil-IDs aus',
+                                     choices = NULL,
+                                     multiple = TRUE,
                       ),
+
+                      
                       # Highlight the text and use CTRL + SHIFT + C to (un)comment multiple lines in Windows. Or, command + SHIFT + C in OS-X.
                       # selectizeInput(
                       #   'e3', '3. Item creation', choices = inputIDs,
@@ -124,7 +140,20 @@ ui <- fluidPage(
 
 
 # Shiny Server
-server <- function(input, output) {
+server <- function(input, output, session) {
+  
+  # Render dropdown menu: selectizeInput()
+  # with inputID: 'search_by_ID'
+  # https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
+  # https://shiny.rstudio.com/reference/shiny/0.14/updateSelectInput.html
+  updateSelectizeInput(session, 'search_by_ID', 
+                            choices = inputIDs_grouped,
+                            #multiple = TRUE, 
+                            options = list(
+                              maxOptions = 6,
+                              placeholder = 'Filter für ID_Bauteil(e) und/oder ID_Fahrzeug (AND Verknüpfung)',
+                              selected = NULL)
+  )
   
   # Render table: datatable_gemeinde, table_fahrzeuge, table_bauteile
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
