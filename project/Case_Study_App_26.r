@@ -6,29 +6,29 @@ if( !require(leaflet)){
 }
 library(leaflet)
 
-if( !require(rgdal)){
-  install.packages("rgdal")
+if( !require(dplyr)){
+  install.packages("dplyr")
 }
-library(rgdal)
-
 library(dplyr)
 
 # Load manufacturing info with geo data
+# falls Probleme auftreten evtl. load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
+
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
-fahrzeuge <- einz_komp_fahrz_fehlerhaft_111[!duplicated(einz_komp_fahrz_fehlerhaft_111$ID_Fahrzeug),]
+fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
 
 # Shiny UI
 ui <- fluidPage(
   mainPanel(
     width="100%",
-    titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf nach Gemeinden // Darstellung 2: Heatmap mit Fahrzeug-Suche und Bauteil-Suche + Darstellung des Lieferwegs"),
+    titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf nach Gemeinden"),
     wellPanel(
       fluidRow(
         column(12,
           fluidRow(
             column(12,
-              titlePanel("Karte aller betroffenen Fahrzeuge"),
+              titlePanel("Darstellung 2: Heatmap mit Fahrzeug-Suche und Bauteil-Suche + Darstellung des Lieferwegs"),
               fluidRow(
                 column(
                   2, 
