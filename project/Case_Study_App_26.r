@@ -1,5 +1,6 @@
 library(shiny)
 library(ggplot2)
+library(DT)
 
 if( !require(leaflet)){
   install.packages("leaflet")
@@ -21,10 +22,11 @@ fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
 # Create a search/autocomplete vektor with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
 #inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Sitze)
 inputIDs <- fahrzeuge$ID_Fahrzeug[1:10]
+fahrzeuge_subset <- fahrzeuge[1:40,]
 
 # Cerate a search/autocomplete list as group optins
 #inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Sitze, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
-inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:1000], ID_Komponente = final_joined$ID_Sitze[1:1000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:1000])
+inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:100], ID_Komponente = final_joined$ID_Sitze[1:100], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:100])
 str(inputIDs_grouped)
 # Shiny UI
 ui <- fluidPage(
@@ -40,7 +42,17 @@ ui <- fluidPage(
               fluidRow(
                 column(
                   2, 
-                  "betroffene Gemeinden"
+                  "betroffene Gemeinden",
+                  
+                  # Display Betroffene Gemeinden as data table
+                  dataTableOutput('datatable_gemeinde'),
+                  
+                  #datatable(datatable_gemeinde), # slow
+                  # depreciated due to client-side rendering!
+                  # use instead:
+                  # client-side: dataTableOutput('my_table')
+                  # server-side: output$'my_table' <- renderDataTable(my_df)
+                  
                 ),
                 column(
                   8,
@@ -60,8 +72,8 @@ ui <- fluidPage(
                         choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
                       ),
                       selectizeInput(
-                        'e2', 'Wählen Sie eine oder mehrere Fahrzeug- oder Bauteil_IDs aus',
-                        choices = inputIDs_grouped, multiple = TRUE, options = list(maxOptions = 6, placeholder = 'Filter für ID_Bauteil(e) und/oder ID_Fahrzeug (AND Verknüpfung)'),
+                        'e2', 'Wählen Sie eine oder mehrere Fahrzeug- oder Bauteil-IDs aus',
+                        choices = inputIDs_grouped, multiple = TRUE, options = list(maxOptions = 6, placeholder = 'Filter für ID_Bauteil(e) und/oder ID_Fahrzeug (AND Verknüpfung)')
                         
                       ),
                       # Highlight the text and use CTRL + SHIFT + C to (un)comment multiple lines in Windows. Or, command + SHIFT + C in OS-X.
@@ -78,7 +90,7 @@ ui <- fluidPage(
                       #   multiple = TRUE, options = list(maxItems = 2)
                       # ),
                       
-                      # Display the heatmap with car markers
+                      # Display the heatmap  with car markers
                       leafletOutput(outputId = "map", width = 550, height = 550)
                       ),
                       column(8, "Bottombox")
@@ -86,7 +98,18 @@ ui <- fluidPage(
                 ),
                 column(2,
                   fluidRow("Betroffene Fahrzeuge"),
-                  fluidRow("Betroffene Bauteile")
+                  
+                    # Adds 'Betrofene Fahrzeuge' table 
+                    column(12,
+                         tableOutput('table_fahrzeuge'),
+                  ),
+                  
+                  fluidRow("Betroffene Bauteile"),
+                  
+                    # Adds 'Betrofene Bauteile' table
+                    column(12,
+                         tableOutput('table_bauteile'),
+                  ),
                 )
               )
             )
@@ -103,6 +126,14 @@ ui <- fluidPage(
 # Shiny Server
 server <- function(input, output) {
   
+  # Render table: datatable_gemeinde, table_fahrzeuge, table_bauteile
+  # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
+  # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
+  output$datatable_gemeinde <- renderDataTable(final_joined[ ,c(14,16)]) # Betroffene Gemeinde
+  output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10,11]) # Betroffene Fahrzeuge
+  output$table_bauteile <- renderTable(final_joined[1:30,1]) # Betroffene Bauteile
+  
+  # Render the heatmap with markers: map
   output$map <- renderLeaflet({
     leaflet() %>%
       setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
