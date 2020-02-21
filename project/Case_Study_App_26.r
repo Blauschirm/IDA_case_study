@@ -12,12 +12,20 @@ if( !require(dplyr)){
 library(dplyr)
 
 # Load manufacturing info with geo data
-# falls Probleme auftreten evtl. load("./project/Datensatz_tidy.RData") oder getwd() versuchen
+# Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
+
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
+# Create a search/autocomplete vektor with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
+#inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Sitze)
+inputIDs <- fahrzeuge$ID_Fahrzeug[1:10]
 
+# Cerate a search/autocomplete list as group optins
+#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Sitze, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
+inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:1000], ID_Komponente = final_joined$ID_Sitze[1:1000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:1000])
+str(inputIDs_grouped)
 # Shiny UI
 ui <- fluidPage(
   mainPanel(
@@ -37,9 +45,42 @@ ui <- fluidPage(
                 column(
                   8,
                   fluidRow(
+                    
+                    # Heatmap with search bar section
                     column(8, 
                       titlePanel(h6("Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken")),
-                      leafletOutput(outputId = "map", width = 550, height = 550)),
+                      
+                      # Create search input bar with autocomplete 
+                      # from: https://shiny.rstudio.com/gallery/selectize-examples.html
+                      # if needed: toggle/hide Dropdown: https://rdrr.io/cran/shinyWidgets/man/toggleDropdownButton.html
+                      # if neeeed: performance boost: check selectizeInput('x2'... https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
+                      
+                      selectizeInput(
+                        'e1', 'Wählen Sie den Kartentyp aus',
+                        choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
+                      ),
+                      selectizeInput(
+                        'e2', 'Wählen Sie eine oder mehrere Fahrzeug- oder Bauteil_IDs aus',
+                        choices = inputIDs_grouped, multiple = TRUE, options = list(maxOptions = 6, placeholder = 'Filter für ID_Bauteil(e) und/oder ID_Fahrzeug (AND Verknüpfung)'),
+                        
+                      ),
+                      # Highlight the text and use CTRL + SHIFT + C to (un)comment multiple lines in Windows. Or, command + SHIFT + C in OS-X.
+                      # selectizeInput(
+                      #   'e3', '3. Item creation', choices = inputIDs,
+                      #   options = list(create = TRUE)
+                      # ),
+                      # selectizeInput(
+                      #   'e4', '4. Max number of options to show (3)', choices = inputIDs,
+                      #   options = list(maxOptions = 3)
+                      # ),
+                      # selectizeInput(
+                      #   'e5', '5. Max number of items to select', choices = inputIDs,
+                      #   multiple = TRUE, options = list(maxItems = 2)
+                      # ),
+                      
+                      # Display the heatmap with car markers
+                      leafletOutput(outputId = "map", width = 550, height = 550)
+                      ),
                       column(8, "Bottombox")
                   )
                 ),
@@ -84,7 +125,7 @@ server <- function(input, output) {
     
   })
   
-}
+  } 
 
 # Shiny App starten
 shinyApp(ui, server)
