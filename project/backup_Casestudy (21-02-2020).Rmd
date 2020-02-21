@@ -177,12 +177,14 @@ path5 <- "Data/Geodaten/Klimazonen_Köppen_Geiger.xlsx"
 # Import with readr
 locale = locale(encoding = 'ISO-8859-1')
 
-tier1 <- read_csv2(path1, locale = locale, col_types = "ccnnn")
-tier2 <- read_csv2(path2, locale = locale, col_types = "ccnnn")
-
-# tier2.1 <- read.table(file=path2, dec= ".", sep= ";") # erkennt '.' als Decimal-Trennzeichen
-oem <- read_csv2(path3, locale = locale, col_types = "ccnnn")
-gemeinden <- read_csv2(path4, locale = locale, col_types = "__ccnn")
+tier1 <- read_csv2("Data/Geodaten/Tier1_Werke_2017-07-11_v1.2_TrR.csv",
+                   locale = locale, col_types = "ccnnn")
+tier2 <- read_csv2("Data/Geodaten/Tier2_Werke_2017-07-11_v1.2_TrR.csv",
+                   locale = locale, col_types = "ccnnn")
+oem <- read_csv2("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv",
+                   locale = locale, col_types = "ccnnn")
+gemeinden <- read_csv2("Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", 
+                   locale = locale, col_types = "__ccnn")
 
 
 ```
