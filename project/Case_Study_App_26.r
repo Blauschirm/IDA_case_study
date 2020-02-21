@@ -6,6 +6,18 @@ if( !require(leaflet)){
 }
 library(leaflet)
 
+if( !require(rgdal)){
+  install.packages("rgdal")
+}
+library(rgdal)
+
+library(dplyr)
+
+# Load manufacturing info with geo data
+load("Datensatz_tidy.RData")
+# Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
+fahrzeuge <- einz_komp_fahrz_fehlerhaft_111[!duplicated(einz_komp_fahrz_fehlerhaft_111$ID_Fahrzeug),]
+
 # Shiny UI
 ui <- fluidPage(
   mainPanel(
@@ -26,7 +38,7 @@ ui <- fluidPage(
                   8,
                   fluidRow(
                     column(8, 
-                      titlePanel("Karte"),
+                      titlePanel(h6("Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken")),
                       leafletOutput(outputId = "map", width = 550, height = 550)),
                       column(8, "Bottombox")
                   )
@@ -53,7 +65,17 @@ server <- function(input, output) {
   output$map <- renderLeaflet({
     leaflet() %>%
       setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
-      addTiles()
+      addTiles() %>%
+      addMarkers(data = fahrzeuge, ~Längengrad, ~Breitengrad, 
+                 #display large amounts of markers as clusters
+                 clusterOptions = markerClusterOptions(),
+                 popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                 "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                 "ID_Sitz: ", ID_Sitze, "<br/>",
+                                 "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                 "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                 "Zugelassen in: ", PLZ, " ", Gemeinde)
+                 )
   })
   observeEvent(input$reset, {
     
