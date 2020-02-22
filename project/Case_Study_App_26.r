@@ -27,13 +27,13 @@ library(dplyr)
 
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
-load("Datensatz_tidy.RData")
+#load("Datensatz_tidy.RData")
 #load("./project/Datensatz_tidy.RData")
 
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-#final_joined <- head(final_joined, n = 3000)
+final_joined <- head(final_joined, n = 3000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -190,15 +190,16 @@ server <- function(input, output, session) {
   heat <- final_joined %>%
     group_by(Längengrad, Breitengrad) %>%
     summarise(fehleranzahl = n())  %>%
-    filter(fehleranzahl > 100)
-  str(heat)
+    filter(fehleranzahl > 2) %>%
+    ungroup()
+ # str(heat)
   
   
   output$map <- renderLeaflet({
     leaflet(final_joined) %>%
       #setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles() %>%
-      addHeatmap(data = heat, lng = ~as.numeric(Längengrad), lat = ~as.numeric(Breitengrad), 
+      addHeatmap(data = heat, lng = ~Längengrad, lat = ~Breitengrad, 
                  intensity = ~fehleranzahl, blur = 14, max = 5, radius = 12) %>%
       fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>%
       addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad, 
