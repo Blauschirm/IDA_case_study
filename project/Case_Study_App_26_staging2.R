@@ -15,6 +15,7 @@ library(dplyr)
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
+final_joined <- head(final_joined, 30)
 #load("./project/Datensatz_tidy.RData")
 # Data preperation
 #
@@ -112,20 +113,35 @@ ui <- fluidPage(
                       # ),
                       
                       # Client-side rendering of updateSelectizeInput(session, 'search_by_ID2', ...),
-                      selectizeInput('search_by_ID_einzelteile', 'Wählen Sie eine oder mehrere Einzelteil-IDs aus',
+                      selectizeInput('search_by_ID_einzelteile', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Einzelteil-IDs aus',
                                      choices = NULL,
                                      multiple = TRUE,
                       ),
-                      # selectizeInput('search_by_ID_sitze', 'Wählen Sie eine oder mehrere Komponenten-IDs aus',
-                      #                choices = NULL,
-                      #                multiple = TRUE,
-                      # ),
-                      selectizeInput('search_by_ID_fahrzeuge', 'Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
+                      
+                      hr(), # adds horizontal line
+                      
+                      selectizeInput('search_by_ID_sitze', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Komponenten-IDs aus (selectizeInput, langsamer)',
                                      choices = NULL,
                                      multiple = TRUE,
+                      ),
+                      selectInput('e1', 'Selectize = FALSE, client-side: Wählen Sie eine oder mehrere Komponenten-IDs aus (selectInput)',
+                                  choices = inputIDs_sitze,
+                                  #multiple = TRUE
+                                  selectize = FALSE
+                      ),
+                      
+                      hr(), # adds horizontal line
+                      
+                      selectizeInput('search_by_ID_fahrzeuge', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
+                                     choices = NULL,
+                                     multiple = TRUE,
+                      ),
+                      
+                      selectInput('x4', 'Selectize = FALSE, client-side: Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
+                                  choices = inputIDs_fahrzeuge,
+                                  selectize = FALSE
                       ),
 
-                      
                       # Highlight the text and use CTRL + SHIFT + C to (un)comment multiple lines in Windows. Or, command + SHIFT + C in OS-X.
                       # selectizeInput(
                       #   'e3', '3. Item creation', choices = inputIDs,
@@ -189,14 +205,16 @@ server <- function(input, output, session) {
                               placeholder = 'Filter für ID_Einzelteile',
                               selected = NULL)
   )
-  # updateSelectizeInput(session, 'search_by_ID_sitze', 
-  #                      choices = inputIDs_sitze[1:inputIDs_subset_value],
-  #                      #multiple = TRUE, 
-  #                      options = list(
-  #                        maxOptions = 6,
-  #                        placeholder = 'Filter für ID_Komponente',
-  #                        selected = NULL)
-  # )
+  
+  updateSelectizeInput(session, 'search_by_ID_sitze',
+                       choices = inputIDs_sitze[1:inputIDs_subset_value],
+                       #multiple = TRUE,
+                       options = list(
+                         maxOptions = 6,
+                         placeholder = 'Filter für ID_Komponente',
+                         selected = NULL)
+  )
+  
   updateSelectizeInput(session, 'search_by_ID_fahrzeuge', 
                        choices = inputIDs_fahrzeuge[1:inputIDs_subset_value],
                        #multiple = TRUE, 
