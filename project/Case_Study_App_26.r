@@ -2,6 +2,13 @@ library(shiny)
 library(ggplot2)
 library(DT)
 
+# scales to be able to use dates as ggplot limits
+if (!require(scales)){
+  installed.packages("scales")
+}
+library(scales)
+
+
 if( !require(leaflet)){
   install.packages("leaflet")
 }
@@ -46,8 +53,12 @@ inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_dis
 ui <- fluidPage(
   mainPanel(
     width="100%",
-    titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf nach Gemeinden"),
     wellPanel(
+      titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf"),
+      plotOutput("plot_zulassungsverlauf")
+    ),
+    wellPanel(
+      titlePanel("Darstellung 1: Karte"),
       fluidRow(
         column(12,
           fluidRow(
@@ -151,6 +162,30 @@ ui <- fluidPage(
 # Shiny Server
 server <- function(input, output, session) {
   
+  zulassungen <- reactive({
+    if(length(input$datatable_gemeinden_rows_selected)){
+      zulassungen <- filter(fahrzeuge, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
+      print(zulassungen)
+    } else {
+      zulassungen <- final_joined
+    }
+
+    zulassungen %>%
+      group_by(Zulassungsdatum, Gemeinde) %>%
+      summarise(anzahl = n())
+    
+  })
+  
+  # Plot für zeitlichen Zulassungsverlauf vorbereiten
+  xlim <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
+  output$plot_zulassungsverlauf <- renderPlot({
+    ggplot(zulassungen(), aes(x=Zulassungsdatum, y = anzahl)) +
+    geom_bar(stat = "identity") +
+      scale_x_date(date_breaks = "1 month", 
+                   labels = date_format("%b-%Y"),
+                   limits = as.Date(xlim))
+  })
+  
   # Render dropdown menu: selectizeInput()
   # with inputID: 'search_by_ID'
   # https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
@@ -168,7 +203,7 @@ server <- function(input, output, session) {
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
   
-  gemeinden <- final_joined %>% 
+  gemeinden <- fahrzeuge %>% 
     select(Gemeinde, PLZ) %>%
     group_by(Gemeinde, PLZ) %>%
     summarise(Zulassungen = length(PLZ)) %>%
