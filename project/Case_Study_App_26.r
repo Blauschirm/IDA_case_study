@@ -49,7 +49,7 @@ ui <- fluidPage(
               titlePanel("Darstellung 2: Heatmap mit Fahrzeug-Suche und Bauteil-Suche + Darstellung des Lieferwegs"),
               fluidRow(
                 column(
-                  2, 
+                  3, 
                   "betroffene Gemeinden",
                   
                   # Display Betroffene Gemeinden as data table
@@ -63,7 +63,7 @@ ui <- fluidPage(
                   
                 ),
                 column(
-                  8,
+                  7,
                   fluidRow(
                     
                     # Heatmap with search bar section
@@ -158,7 +158,12 @@ server <- function(input, output, session) {
   # Render table: datatable_gemeinde, table_fahrzeuge, table_bauteile
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
-  output$datatable_gemeinde <- renderDataTable(final_joined[ ,c(14,16)]) # Betroffene Gemeinde
+  output$datatable_gemeinde <- renderDataTable(final_joined %>% 
+                                                 select(Gemeinde, PLZ) %>%
+                                                 group_by(Gemeinde, PLZ) %>%
+                                                 summarise(Zulassungen = length(PLZ)) %>%
+                                                 ungroup()
+                                                 ) # Betroffene Gemeinde
   output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10,11]) # Betroffene Fahrzeuge
   output$table_bauteile <- renderTable(final_joined[1:30,1]) # Betroffene Bauteile
   
