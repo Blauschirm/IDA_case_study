@@ -168,8 +168,8 @@ server <- function(input, output, session) {
     geom_bar(stat = "identity") +
     scale_x_date(breaks = scales::breaks_width("1 month"), 
                  labels = scales::label_date_short(),
-                 limits = start_end_dates
-    )+
+                 limits = start_end_dates) +
+    scale_y_continuous(breaks= pretty_breaks()) +
     theme(axis.text.x = element_text(angle=45, hjust = 1))
   })
   
