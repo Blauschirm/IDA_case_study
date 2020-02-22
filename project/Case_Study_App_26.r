@@ -15,6 +15,7 @@ library(dplyr)
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
+#load("./project/Datensatz_tidy.RData")
 
 # Data preperation
 #
@@ -29,10 +30,13 @@ fahrzeuge_subset <- fahrzeuge[1:40,]
 # Cerate a search/autocomplete list as group options: inputIDs_grouped
 #inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Sitze, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
 #
-# Cerate a subset of 300k IDs (due to performance issues)
-#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:100000], ID_Komponente = final_joined$ID_Sitze[1:100000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:100000])
+# Cerate a subset of IDs (due to performance issues)
+subset_size = 120000
+subset_distribution_size <- subset_size / 3
+inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_distribution_size], ID_Komponente = final_joined$ID_Sitze[1:subset_distribution_size], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:subset_distribution_size])
+#str(inputIDs_grouped)
 # Cerate a subset of 30k IDs (due to performance issues)
-inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Sitze[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
+#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Sitze[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
 
 #str(inputIDs_grouped) # Stats
 
