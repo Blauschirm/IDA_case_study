@@ -33,7 +33,7 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-#final_joined <- head(final_joined, n = 500)
+#final_joined <- head(final_joined, n = 3000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -42,20 +42,20 @@ start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsda
 print(start_end_dates)
 #
 # Create a search/autocomplete vector with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
-#inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Sitze)
+#inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Komponente)
 #inputIDs <- fahrzeuge$ID_Fahrzeug[1:10]
 fahrzeuge_subset <- fahrzeuge[1:40,]
 #
 # Cerate a search/autocomplete list as group options: inputIDs_grouped
-#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Sitze, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
+#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Komponente, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
 #
 # Cerate a subset of IDs (due to performance issues)
 subset_size = 120000
 subset_distribution_size <- subset_size / 3
-inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_distribution_size], ID_Komponente = final_joined$ID_Sitze[1:subset_distribution_size], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:subset_distribution_size])
+inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_distribution_size], ID_Komponente = final_joined$ID_Komponente[1:subset_distribution_size], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:subset_distribution_size])
 #str(inputIDs_grouped)
 # Cerate a subset of 30k IDs (due to performance issues)
-#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Sitze[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
+#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Komponente[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
 
 
 # Shiny UI
@@ -91,7 +91,7 @@ ui <- fluidPage(
                     column(9,
                       (h4("Betroffene Bauteile")),
                       
-                      # Display ID-search by ID_einzelteile & ID_sitze
+                      # Display ID-search by ID_einzelteile & ID_Komponente
                       dataTableOutput('datatable_bauteile'),
                       
                       # Select map type
@@ -186,17 +186,27 @@ server <- function(input, output, session) {
   })
   
   # Render the heatmap with markers: map
+  
+  heat <- final_joined %>%
+    group_by(Längengrad, Breitengrad) %>%
+    summarise(fehleranzahl = n())  %>%
+    filter(fehleranzahl > 100)
+  str(heat)
+  
+  
   output$map <- renderLeaflet({
-    leaflet() %>%
+    leaflet(final_joined) %>%
       #setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles() %>%
+      addHeatmap(data = heat, lng = ~as.numeric(Längengrad), lat = ~as.numeric(Breitengrad), 
+                 intensity = ~fehleranzahl, blur = 14, max = 5, radius = 12) %>%
       fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>%
       addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad, 
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
                                  "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
-                                 "ID_Sitz: ", ID_Sitze, "<br/>",
+                                 "ID_Sitz: ", ID_Komponente, "<br/>",
                                  "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
                                  "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
                                  "Zugelassen in: ", PLZ, " ", Gemeinde)
