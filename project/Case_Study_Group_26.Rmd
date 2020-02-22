@@ -243,6 +243,7 @@ gc()
 t15 <- t15 %>% select(-Produktionsdatum, Produktionsdatum)
 t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
 
+
 # rename ID_* columns to ID to get common column names for all data sets and prepare for Join/Binding by adding column "Einzelteil" with distinguishable unique value 
 t11 <- rename(t11, ID_Einzelteil = ID_T11) %>%
   mutate(Einzelteil="11")
@@ -370,12 +371,15 @@ bestandteile_oem2_typ22 <- bestandteile_oem2_typ22 %>%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
 
 
-## Clean and tidy Zulassungen and Geodaten
+## Clean and tidy Zulassungen
 
 # Clean ID from NA and rename columns in zulassungen
 zulassungen <- zulassungen %>%
   drop_na(IDNummer) %>%
   select(ID_Fahrzeug = IDNummer, Gemeinde = Gemeinden, Zulassungsdatum = Zulassung)
+
+
+## Clean and tidy Geodaten
 
 # Function that add zeros at the end of the number until it has 8 digits
 addZerosUntil8Digits <- function(num) {
@@ -396,9 +400,12 @@ colnames(gemeinden)[3] <- "Längengrad"
 colnames(gemeinden)[1] <- "PLZ"
 
 # Add leading zero to PLZ if missing
-gemeinden_clean <- gemeinden %>%
+gemeinden <- gemeinden %>%
   rowwise() %>%
   mutate(PLZ = addLeadingZero(PLZ))
+
+# after final join in the end missing coordinates and PLZ for location "Seeg" were detected, data was missing in gemeinden dataset: Add missing data as row to gemeinden dataset
+gemeinden_clean <- rbind(gemeinden, c(87637, "SEEG", 10.610416, 47.654222))
 
 # Clean: omit NAs annd standardize long / lat values
 tier1_clean <- tier1  %>%
@@ -445,7 +452,7 @@ all_einzelteile <- bind_rows(t11, t14, t15, t16, t19, t20) %>%
   )
 
 # if all IDs are correct, delete redundant columns
-if(all(all_einzelteile$id_richtig_einzel == TRUE)){
+if(all(all_einzelteile$id_richtig_einzel == TRUE)) {
   all_einzelteile <- all_einzelteile %>%
     select(-id_richtig_einzel, -Einzelteil)
 }
@@ -468,6 +475,11 @@ bestandteile_k2le2 <- bind_rows(b_k2le2_part1, b_k2le2_part2, b_k2le2_part3)
 
 # relation table for all Komponenten and Einzelteile
 bestandteile_komponenten <- bind_rows(bestandteile_k2le1, bestandteile_k2le2)
+
+# check if any values are missing in the joined dataset
+if(any(is.na(bestandteile_komponenten))==TRUE) {
+   filter_all(bestandteile_komponenten, any_vars(is.na(.)))
+}
 
 # remove unused objects
 b_k2le1_part1 <- ""
@@ -530,6 +542,11 @@ if(all(fahrzeug_bestandteile$id_richtig_fahrz_bestandteile == TRUE)){
     select(-id_richtig_fahrz_bestandteile)
 }
 
+# check if any values are missing in the joined dataset
+if(any(is.na(fahrzeug_bestandteile))==TRUE) {
+   filter_all(fahrzeug_bestandteile, any_vars(is.na(.)))
+}
+
 # remove unused objects and free memory
 bestandteile_oem1_typ11 <- ""
 bestandteile_oem1_typ12 <- ""
@@ -584,7 +601,7 @@ gc()
 
 ## Join fahrzeuge with relational fahrzeug_bestandteile dataset
 
-# transform dates in correct format
+# right_join to keep all fahrzeuge with leather seats, transform dates in correct format
 fahrzeuge <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug") %>%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
@@ -603,35 +620,51 @@ einzelteile_geo <- left_join(einzelteile, tier2_clean, by = "Werksnummer") %>%
 komponenten_geo <- left_join(komponenten, tier1_clean, by = "Werksnummer") %>%
   select(-PLZ, -Ort)
 
-# Join fahrzeuge with zulassungen and gemeinden_clean (containing coordinates), left joins to keep all fahrzeuge data and only relevant coordinates
+# Join fahrzeuge with zulassungen and gemeinden_clean (containing coordinates), left joins to keep all fahrzeuge data and only relevant zulassungen and coordinates
 fahrzeuge_geo <- left_join(fahrzeuge, zulassungen, by = "ID_Fahrzeug") %>%
   left_join(., gemeinden_clean, by = "Gemeinde")
 
+# Clean datasets from irrelevant columns in order to prepare for final join
 
-## Clean joins by irrelevant columns and join into final dataset
-
-# remove irrevelant columns from einzelteile_geo ,komponenten_geo and fahrzeuge_geo
+# remove irrevelant columns from einzelteile_geo, komponenten_geo and fahrzeuge_geo
 einzelteile_clean <- einzelteile_geo %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
 komponenten_clean <- komponenten_geo %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum) %>%
   rename(Herstellernummer_Komponente = Herstellernummer)
 fahrzeuge_clean <- fahrzeuge_geo %>%
-  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer)
+  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Fehlerhaft)
 
-# join einzelteile_, komponenten_, and fahrzeuge_clean by ID_Komponente column, remove Fehlerhaft column from fahrzeuge
-einz_komp_fahrz <- full_join(einzelteile_clean, komponenten_clean, by = "ID_Komponente", suffix = c("_Einzelteil", "_Komponente")) %>%
+# check if any values are missing in the joined datasets
+if(any(is.na(einzelteile_clean))==TRUE) {
+  filter_all(einzelteile_clean, any_vars(is.na(.)))
+}
+if(any(is.na(komponenten_clean))==TRUE) {
+  filter_all(komponenten_clean, any_vars(is.na(.)))
+}
+if(any(is.na(fahrzeuge_clean))==TRUE) {
+  filter_all(fahrzeuge_clean, any_vars(is.na(.)))
+  # the filtered dataset initially showed that coordinates and PLZ are missing for the location "Seeg". The PLZ is 87637, Längengrad = 10.612874 and Breitengrad = 47.654894. The entry "Seeg" was completely missing in the "gemeinden" dataset and the NA occured after joining with zulassen. The Data was added too gemeinden dataset
+}
+
+
+## Final join, filter and cleaning
+
+# Final join: einzelteile_, komponenten_, and fahrzeuge_clean by ID_Komponente column
+final_join <- full_join(einzelteile_clean, komponenten_clean, by = "ID_Komponente", suffix = c("_Einzelteil", "_Komponente")) %>%
   full_join(., fahrzeuge_clean, by ="ID_Komponente") %>%
-  rename(Produktionsdatum_Fahrzeug = Produktionsdatum, Werksnummer_Fahrzeug = Werksnummer) %>%
-  select(-Fehlerhaft)
+  rename(Produktionsdatum_Fahrzeug = Produktionsdatum, Werksnummer_Fahrzeug = Werksnummer)
 
 # filter for Herstellernummer_Komponente == 111 and Fehlerhaft == 1 to get faulty parts and components of seats produced by company "111"
-final_joined <- einz_komp_fahrz %>%
+final_filtered <- final_join %>%
   filter(Herstellernummer_Komponente == 111) %>%
   filter(Fehlerhaft_Einzelteil == 1 | Fehlerhaft_Komponente == 1) %>%
-  select(-Herstellernummer_Komponente, -Werksnummer_Fahrzeug)
+  select(-Herstellernummer_Komponente)
 
-final_joined_order <- final_joined[c(1:3,5,6,4,7:15,17,16)]
+final_order <- final_filtered[c(1:3,5,6,4,7:11,13,12,15,14,16,18,17)]
+
+final_joined <- final_order
+
 
 
 ```
