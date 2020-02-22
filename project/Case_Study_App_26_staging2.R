@@ -180,7 +180,7 @@ server <- function(input, output, session) {
   # with inputID: 'search_by_ID'
   # https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
   # https://shiny.rstudio.com/reference/shiny/0.14/updateSelectInput.html
-  inputIDs_subset_value <- 100
+  inputIDs_subset_value <- 900 # don't put more than 9k without strong machine
   updateSelectizeInput(session, 'search_by_ID_einzelteile', 
                             choices = inputIDs_einzelteile[1:inputIDs_subset_value],
                             #multiple = TRUE, 
@@ -218,7 +218,7 @@ server <- function(input, output, session) {
     leaflet() %>%
       setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles() %>%
-      addMarkers(data = fahrzeuge[1:30,], ~Längengrad, ~Breitengrad, 
+      addMarkers(data = fahrzeuge[1:inputIDs_subset_value,], ~Längengrad, ~Breitengrad, 
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
