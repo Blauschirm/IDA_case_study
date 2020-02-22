@@ -6,6 +6,8 @@ if( !require(leaflet)){
   install.packages("leaflet")
 }
 library(leaflet)
+library(leaflet.extras)
+
 
 if( !require(dplyr)){
   install.packages("dplyr")
@@ -18,6 +20,7 @@ load("Datensatz_tidy.RData")
 
 # Data preperation
 #
+final_joined <- head(final_joined, n = 500)
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
 #
@@ -53,7 +56,7 @@ ui <- fluidPage(
                   "betroffene Gemeinden",
                   
                   # Display Betroffene Gemeinden as data table
-                  dataTableOutput('datatable_gemeinde'),
+                  DT::dataTableOutput('datatable_gemeinden'),
                   
                   #datatable(datatable_gemeinde), # slow
                   # depreciated due to client-side rendering!
@@ -107,7 +110,7 @@ ui <- fluidPage(
                       # ),
                       
                       # Display the heatmap  with car markers
-                      leafletOutput(outputId = "map", width = 550, height = 550)
+                      leafletOutput(outputId = "map", width = 600, height = 600)
                       ),
                       column(8, "Bottombox")
                   )
@@ -158,21 +161,35 @@ server <- function(input, output, session) {
   # Render table: datatable_gemeinde, table_fahrzeuge, table_bauteile
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
-  output$datatable_gemeinde <- renderDataTable(final_joined %>% 
-                                                 select(Gemeinde, PLZ) %>%
-                                                 group_by(Gemeinde, PLZ) %>%
-                                                 summarise(Zulassungen = length(PLZ)) %>%
-                                                 ungroup()
-                                                 ) # Betroffene Gemeinde
-  output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10,11]) # Betroffene Fahrzeuge
-  output$table_bauteile <- renderTable(final_joined[1:30,1]) # Betroffene Bauteile
+  
+  gemeinden <- final_joined %>% 
+    select(Gemeinde, PLZ) %>%
+    group_by(Gemeinde, PLZ) %>%
+    summarise(Zulassungen = length(PLZ)) %>%
+    arrange(Gemeinde) %>%
+    ungroup()
+  
+  output$datatable_gemeinden <- renderDataTable(gemeinden) # Betroffene Gemeinde
+  output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10, "ID_Fahrzeug"]) # Betroffene Fahrzeuge
+  output$table_bauteile <- renderTable(final_joined[1:30, "ID_Einzelteil"]) # Betroffene Bauteile
+  
+  
+  filtered_vehicles <- reactive({
+    if(length(input$datatable_gemeinden_rows_selected)){
+      fahrzeuge %>%
+        filter(PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ)
+    } else {
+      fahrzeuge
+    }
+  })
   
   # Render the heatmap with markers: map
   output$map <- renderLeaflet({
     leaflet() %>%
-      setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
+      #setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles() %>%
-      addMarkers(data = fahrzeuge, ~Längengrad, ~Breitengrad, 
+      fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>%
+      addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad, 
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
