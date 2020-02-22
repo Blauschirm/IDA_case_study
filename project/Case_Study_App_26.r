@@ -42,7 +42,6 @@ inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_dis
 #inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Sitze[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
 
 #str(inputIDs_grouped) # Stats
-
 # Shiny UI
 ui <- fluidPage(
   mainPanel(
@@ -54,6 +53,9 @@ ui <- fluidPage(
           fluidRow(
             column(12,
               titlePanel("Darstellung 2: Heatmap mit Fahrzeug-Suche und Bauteil-Suche + Darstellung des Lieferwegs"),
+              fluidRow(
+                actionButton("reset_filters", "Alle Filter zurücksetzen")
+              ),
               fluidRow(
                 column(
                   3, 
@@ -173,7 +175,9 @@ server <- function(input, output, session) {
     arrange(Gemeinde) %>%
     ungroup()
   
-  output$datatable_gemeinden <- renderDataTable(gemeinden) # Betroffene Gemeinde
+  output$datatable_gemeinden <- renderDataTable({
+                                                input$reset_filters
+                                                gemeinden}) # Betroffene Gemeinde
   output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10, "ID_Fahrzeug"]) # Betroffene Fahrzeuge
   output$table_bauteile <- renderTable(final_joined[1:30, "ID_Einzelteil"]) # Betroffene Bauteile
   
@@ -210,6 +214,7 @@ server <- function(input, output, session) {
       setView(lng = 10.46, lat = 51.15, zoom = 6.25)
     
   })
+
   
   } 
 
