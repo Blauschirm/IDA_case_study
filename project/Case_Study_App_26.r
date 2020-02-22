@@ -8,6 +8,10 @@ if (!require(scales)){
 }
 library(scales)
 
+if (!require(lubridate)){
+  installed.packages("lubridate")
+}
+library(lubridate)
 
 if( !require(leaflet)){
   install.packages("leaflet")
@@ -34,6 +38,8 @@ load("Datensatz_tidy.RData")
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
 start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
+#start_end_dates <- c( as.Date("2009-1-1", "Y-m-d"),as.Date("2017-1-1", "Y-m-d") )
+print(start_end_dates)
 #
 # Create a search/autocomplete vector with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
 #inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Komponente)
@@ -118,27 +124,31 @@ server <- function(input, output, session) {
   
   zulassungen <- reactive({
     if(length(input$datatable_gemeinden_rows_selected)){
-      zulassungen <- filter(fahrzeuge, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
-      print(zulassungen)
+      zulassungen_out <- filter(fahrzeuge, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
     } else {
-      zulassungen <- final_joined
+      zulassungen_out <- fahrzeuge
     }
+    
+    
+    zulassungen_out <- zulassungen_out %>%
+      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d")) %>%
+      group_by(Monat, Gemeinde) %>%
+      summarise(anzahl = n()) %>%
+      ungroup()
 
-    zulassungen %>%
-      group_by(Zulassungsdatum, Gemeinde) %>%
-      summarise(anzahl = n())
+    zulassungen_out
     
   })
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
-  print(start_end_dates)
-  print(min(final_joined$Zulassungsdatum))
   output$plot_zulassungsverlauf <- renderPlot({
-    ggplot(zulassungen(), aes(x = Zulassungsdatum, y = anzahl)) +
+    ggplot(zulassungen(), aes(x = Monat, y = anzahl)) +
     geom_bar(stat = "identity") +
-    scale_x_date(date_breaks = "1 month", 
-                labels=date_format("%b-%Y"),
-                limits = start_end_dates)
+    scale_x_date(breaks = scales::breaks_width("1 month"), 
+                 labels = scales::label_date_short(),
+                 limits = start_end_dates) +
+    scale_y_continuous(breaks= pretty_breaks()) +
+    theme(axis.text.x = element_text(angle=45, hjust = 1))
   })
   
   
