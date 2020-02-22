@@ -28,9 +28,11 @@ load("Datensatz_tidy.RData")
 
 # Data preperation
 #
-final_joined <- head(final_joined, n = 500)
+# for debugging: reducing the amount of data to be loaded
+#final_joined <- head(final_joined, n = 500)
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
+start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
 #
 # Create a search/autocomplete vector with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
 #inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Sitze)
@@ -177,13 +179,14 @@ server <- function(input, output, session) {
   })
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
-  xlim <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
+  print(start_end_dates)
+  print(min(final_joined$Zulassungsdatum))
   output$plot_zulassungsverlauf <- renderPlot({
-    ggplot(zulassungen(), aes(x=Zulassungsdatum, y = anzahl)) +
+    ggplot(zulassungen(), aes(x = Zulassungsdatum, y = anzahl)) +
     geom_bar(stat = "identity") +
-      scale_x_date(date_breaks = "1 month", 
-                   labels = date_format("%b-%Y"),
-                   limits = as.Date(xlim))
+    scale_x_date(date_breaks = "1 month", 
+                labels=date_format("%b-%Y"),
+                limits = start_end_dates)
   })
   
   # Render dropdown menu: selectizeInput()
