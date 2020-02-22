@@ -15,7 +15,7 @@ library(dplyr)
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
-final_joined <- head(final_joined, 30)
+#final_joined <- head(final_joined, 3000000)
 #load("./project/Datensatz_tidy.RData")
 # Data preperation
 #
@@ -75,9 +75,8 @@ ui <- fluidPage(
             column(12,
               titlePanel("Darstellung 2: Heatmap mit Fahrzeug-Suche und Bauteil-Suche + Darstellung des Lieferwegs"),
               fluidRow(
-                column(
-                  2, 
-                  "betroffene Gemeinden",
+                column(2, 
+                  (h4("Betroffene Gemeinden")),
                   
                   # Display Betroffene Gemeinden as data table
                   dataTableOutput('datatable_gemeinde'),
@@ -95,54 +94,47 @@ ui <- fluidPage(
                     
                     # Heatmap with search bar section
                     column(8, 
-                      titlePanel(h6("Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken")),
+                      (h4("Betroffene Bauteile")),
                       
                       # Create search input bar with autocomplete: selectizeInput()
                       # from: https://shiny.rstudio.com/gallery/selectize-examples.html
                       # if needed: toggle/hide Dropdown: https://rdrr.io/cran/shinyWidgets/man/toggleDropdownButton.html
                       # if neeeed: performance boost: check selectizeInput('x2'... https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
                       
-                      # selectizeInput() (depreciated)
-                      selectizeInput(
-                        'e1', 'Wählen Sie den Kartentyp aus',
-                        choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
-                      ),
                       # selectizeInput(
                       #   'e2', 'Wählen Sie eine oder mehrere Fahrzeug- oder Bauteil-IDs aus',
                       #   choices = inputIDs_grouped, multiple = TRUE, options = list(maxOptions = 6, placeholder = 'Filter für ID_Bauteil(e) und/oder ID_Fahrzeug (AND Verknüpfung)'
                       # ),
                       
                       # Client-side rendering of updateSelectizeInput(session, 'search_by_ID2', ...),
-                      selectizeInput('search_by_ID_einzelteile', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Einzelteil-IDs aus',
-                                     choices = NULL,
-                                     multiple = TRUE,
-                      ),
-                      
-                      hr(), # adds horizontal line
-                      
-                      selectizeInput('search_by_ID_sitze', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Komponenten-IDs aus (selectizeInput, langsamer)',
-                                     choices = NULL,
-                                     multiple = TRUE,
-                      ),
-                      selectInput('e1', 'Selectize = FALSE, client-side: Wählen Sie eine oder mehrere Komponenten-IDs aus (selectInput)',
-                                  choices = inputIDs_sitze,
-                                  #multiple = TRUE
-                                  selectize = FALSE
-                      ),
-                      
-                      hr(), # adds horizontal line
-                      
-                      selectizeInput('search_by_ID_fahrzeuge', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
-                                     choices = NULL,
-                                     multiple = TRUE,
-                      ),
-                      
-                      selectInput('x4', 'Selectize = FALSE, client-side: Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
-                                  choices = inputIDs_fahrzeuge,
-                                  selectize = FALSE
-                      ),
-
-                      dataTableOutput('datatable_bauteile'),
+                      # selectizeInput('search_by_ID_einzelteile', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Einzelteil-IDs aus',
+                      #                choices = NULL,
+                      #                multiple = TRUE,
+                      # ),
+                      # 
+                      # hr(), # adds horizontal line
+                      # 
+                      # selectizeInput('search_by_ID_sitze', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Komponenten-IDs aus (selectizeInput, langsamer)',
+                      #                choices = NULL,
+                      #                multiple = TRUE,
+                      # ),
+                      # selectInput('e1', 'Selectize = FALSE, client-side: Wählen Sie eine oder mehrere Komponenten-IDs aus (selectInput)',
+                      #             choices = inputIDs_sitze,
+                      #             #multiple = TRUE
+                      #             selectize = FALSE
+                      # ),
+                      # 
+                      # hr(), # adds horizontal line
+                      # 
+                      # selectizeInput('search_by_ID_fahrzeuge', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
+                      #                choices = NULL,
+                      #                multiple = TRUE,
+                      # ),
+                      # 
+                      # selectInput('x4', 'Selectize = FALSE, client-side: Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
+                      #             choices = inputIDs_fahrzeuge,
+                      #             selectize = FALSE
+                      # ),
                       
                       # Highlight the text and use CTRL + SHIFT + C to (un)comment multiple lines in Windows. Or, command + SHIFT + C in OS-X.
                       # selectizeInput(
@@ -158,10 +150,19 @@ ui <- fluidPage(
                       #   multiple = TRUE, options = list(maxItems = 2)
                       # ),
                       
-                      # Display the heatmap  with car markers
-                      leafletOutput(outputId = "map", width = 550, height = 550)
+                      # Display ID-search by ID_einzelteile & ID_sitze
+                      dataTableOutput('datatable_bauteile'),
+                      
+                      # Selection of map type by "Fahrzeuginfo" or "Lieferweg des Bauteils"
+                      selectizeInput(
+                        'e1', 'Wählen Sie den Kartentyp aus',
+                        choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
                       ),
-                      column(8, "Bottombox")
+                      
+                      # Display the heatmap  with car markers
+                      leafletOutput(outputId = "map", width = '100%', height = 550)
+                      ),
+                      column(8, "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken")
                   )
                 ),
                 column(2,
@@ -169,6 +170,7 @@ ui <- fluidPage(
                   
                     # Adds 'Betrofene Fahrzeuge' table 
                     column(12,
+                           
                          tableOutput('table_fahrzeuge'),
                   ),
                   
@@ -199,48 +201,72 @@ server <- function(input, output, session) {
   # https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
   # https://shiny.rstudio.com/reference/shiny/0.14/updateSelectInput.html
   inputIDs_subset_value <- 900 # don't put more than 9k without strong machine
-  updateSelectizeInput(session, 'search_by_ID_einzelteile', 
-                            choices = inputIDs_einzelteile[1:inputIDs_subset_value],
-                            #multiple = TRUE, 
-                            options = list(
-                              maxOptions = 6,
-                              placeholder = 'Filter für ID_Einzelteile',
-                              selected = NULL)
-  )
-  
-  updateSelectizeInput(session, 'search_by_ID_sitze',
-                       choices = inputIDs_sitze[1:inputIDs_subset_value],
-                       #multiple = TRUE,
-                       options = list(
-                         maxOptions = 6,
-                         placeholder = 'Filter für ID_Komponente',
-                         selected = NULL)
-  )
-  
-  updateSelectizeInput(session, 'search_by_ID_fahrzeuge', 
-                       choices = inputIDs_fahrzeuge[1:inputIDs_subset_value],
-                       #multiple = TRUE, 
-                       options = list(
-                         maxOptions = 6,
-                         placeholder = 'Filter für ID_Fahrzeuge',
-                         selected = NULL)
-  )
+  # updateSelectizeInput(session, 'search_by_ID_einzelteile', 
+  #                           choices = inputIDs_einzelteile[1:inputIDs_subset_value],
+  #                           #multiple = TRUE, 
+  #                           options = list(
+  #                             maxOptions = 6,
+  #                             placeholder = 'Filter für ID_Einzelteile',
+  #                             selected = NULL)
+  # )
+  # 
+  # updateSelectizeInput(session, 'search_by_ID_sitze',
+  #                      choices = inputIDs_sitze[1:inputIDs_subset_value],
+  #                      #multiple = TRUE,
+  #                      options = list(
+  #                        maxOptions = 6,
+  #                        placeholder = 'Filter für ID_Komponente',
+  #                        selected = NULL)
+  # )
+  # 
+  # updateSelectizeInput(session, 'search_by_ID_fahrzeuge', 
+  #                      choices = inputIDs_fahrzeuge[1:inputIDs_subset_value],
+  #                      #multiple = TRUE, 
+  #                      options = list(
+  #                        maxOptions = 6,
+  #                        placeholder = 'Filter für ID_Fahrzeuge',
+  #                        selected = NULL)
+  # )
 
   # Render table: datatable_gemeinde, table_fahrzeuge, table_bauteile
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
-  output$datatable_gemeinde <- renderDataTable(final_joined[1:30,c(14,16)]) # Betroffene Gemeinde
+  output$datatable_gemeinde <- renderDataTable(final_joined[,c(14,16)]) # Betroffene Gemeinde
   output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10,11]) # Betroffene Fahrzeuge
   output$table_bauteile <- renderTable(final_joined[1:30,1]) # Betroffene Bauteile
   
   
-  output$datatable_bauteile <- renderDataTable(final_joined[1:30,c(1,4)]) # Betroffene Bauteile
+  output$datatable_bauteile <- renderDataTable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, c(1, 2, 4, 7, 11, 13)], # [1:30,c(1,4)],  # Betroffene Bauteile
+                                               options = list(
+                                                 lengthMenu = list(c(3, 6, -1), c('3', '6', 'All')),
+                                                 pageLength = 3
+                                               ),
+                                               rownames = FALSE # suppress row names / index numbers
+                                               
+  )
+                                               #filter = list(position = "top"), 
+                                               #pageLength = 3,
+                                               #style = "bootstrap",
+                                               #escape = FALSE,
+                                               #filter="top",
+                                               #autoWidth = TRUE
+                                               #selection="multiple",
+                                               # options = list(
+                                               #                sDom  = '<"top">lrt<"bottom">ip',
+                                               #                pageLength = 3,
+                                               #                )
+                                               #options = list(
+                                                              # 
+                                                              #searching = FALSE)
+                                               
+  
+  
   # Render the heatmap with markers: map
   output$map <- renderLeaflet({
     leaflet() %>%
       setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles() %>%
-      addMarkers(data = fahrzeuge[1:inputIDs_subset_value,], ~Längengrad, ~Breitengrad, 
+      addMarkers(data = fahrzeuge, ~Längengrad, ~Breitengrad, 
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
