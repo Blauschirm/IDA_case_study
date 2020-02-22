@@ -36,7 +36,11 @@ ui <- fluidPage(
     width="100%",
     wellPanel(
       titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf"),
+      fluidRow(
+        column(12,
       plotOutput("plot_zulassungsverlauf")
+        )
+      )
     ),
     wellPanel(
       titlePanel("Darstellung 2: Heatmap mit Gemeinde-Suche und Bauteil-Suche"),
@@ -53,19 +57,10 @@ ui <- fluidPage(
                   
                   # Display Betroffene Gemeinden as data table
                   dataTableOutput('datatable_gemeinden'),
-                  
-                  #datatable(datatable_gemeinde), # slow
-                  # depreciated due to client-side rendering!
-                  # use instead:
-                  # client-side: dataTableOutput('my_table')
-                  # server-side: output$'my_table' <- renderDataTable(my_df)
-                  
                 ),
-                column(7,
-                  fluidRow(
-                    
+
                     # Heatmap with search bar section
-                    column(10,
+                    column(9,
                       (h4("Betroffene Bauteile")),
                       
                       # Display ID-search by ID_einzelteile & ID_sitze
@@ -80,24 +75,7 @@ ui <- fluidPage(
                       # Display the heatmap  with car markers
                       leafletOutput(outputId = "map", width = '100%', height = 600)
                       ),
-                      column(10, "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken")
-                  )
-                ),
-                # column(2,
-                #   fluidRow("Betroffene Fahrzeuge"),
-                #   
-                #     # Adds 'Betrofene Fahrzeuge' table 
-                #     column(12,
-                #          tableOutput('table_fahrzeuge'),
-                #   ),
-                #   
-                #   fluidRow("Betroffene Bauteile"),
-                #   
-                #     # Adds 'Betrofene Bauteile' table
-                #     column(12,
-                #          tableOutput('table_bauteile'),
-                #   ),
-                # )
+                      column(9, "Bottombox: Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken")
               )
             )
           )
