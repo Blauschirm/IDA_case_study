@@ -404,8 +404,8 @@ gemeinden <- gemeinden %>%
   rowwise() %>%
   mutate(PLZ = addLeadingZero(PLZ))
 
-# after final join in the end missing coordinates and PLZ for location "Seeg" were detected, data was missing in gemeinden dataset: Add missing data as row to gemeinden dataset
-gemeinden_clean <- rbind(gemeinden, c(87637, "SEEG", 10.610416, 47.654222))
+# after final join in the end missing coordinates and PLZ for location "Seeg" were detected, data was missing in gemeinden dataset: Add missing data as row to gemeinden datase
+gemeinden_clean <- rbind(gemeinden, c("87637", "SEEG", as.numeric(10610416), as.numeric(47654222)))
 
 # Clean: omit NAs annd standardize long / lat values
 tier1_clean <- tier1  %>%
