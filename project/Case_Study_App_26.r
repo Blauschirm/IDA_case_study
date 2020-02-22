@@ -28,7 +28,29 @@ load("Datensatz_tidy.RData")
 
 # Data preperation
 #
-final_joined <- head(final_joined, n = 500)
+# for debugging: reducing the amount of data to be loaded
+#final_joined <- head(final_joined, n = 500)
+
+# Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
+fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
+start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
+#
+# Create a search/autocomplete vector with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
+#inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Sitze)
+#inputIDs <- fahrzeuge$ID_Fahrzeug[1:10]
+fahrzeuge_subset <- fahrzeuge[1:40,]
+#
+# Cerate a search/autocomplete list as group options: inputIDs_grouped
+#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Sitze, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
+#
+# Cerate a subset of IDs (due to performance issues)
+subset_size = 120000
+subset_distribution_size <- subset_size / 3
+inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_distribution_size], ID_Komponente = final_joined$ID_Sitze[1:subset_distribution_size], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:subset_distribution_size])
+#str(inputIDs_grouped)
+# Cerate a subset of 30k IDs (due to performance issues)
+#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Sitze[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
+
 
 # Shiny UI
 ui <- fluidPage(
@@ -109,13 +131,14 @@ server <- function(input, output, session) {
   })
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
-  xlim <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
+  print(start_end_dates)
+  print(min(final_joined$Zulassungsdatum))
   output$plot_zulassungsverlauf <- renderPlot({
-    ggplot(zulassungen(), aes(x=Zulassungsdatum, y = anzahl)) +
+    ggplot(zulassungen(), aes(x = Zulassungsdatum, y = anzahl)) +
     geom_bar(stat = "identity") +
-      scale_x_date(date_breaks = "1 month", 
-                   labels = date_format("%b-%Y"),
-                   limits = as.Date(xlim))
+    scale_x_date(date_breaks = "1 month", 
+                labels=date_format("%b-%Y"),
+                limits = start_end_dates)
   })
   
   
