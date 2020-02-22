@@ -142,6 +142,8 @@ ui <- fluidPage(
                                   selectize = FALSE
                       ),
 
+                      dataTableOutput('datatable_bauteile'),
+                      
                       # Highlight the text and use CTRL + SHIFT + C to (un)comment multiple lines in Windows. Or, command + SHIFT + C in OS-X.
                       # selectizeInput(
                       #   'e3', '3. Item creation', choices = inputIDs,
@@ -231,6 +233,8 @@ server <- function(input, output, session) {
   output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10,11]) # Betroffene Fahrzeuge
   output$table_bauteile <- renderTable(final_joined[1:30,1]) # Betroffene Bauteile
   
+  
+  output$datatable_bauteile <- renderDataTable(final_joined[1:30,c(1,4)]) # Betroffene Bauteile
   # Render the heatmap with markers: map
   output$map <- renderLeaflet({
     leaflet() %>%
