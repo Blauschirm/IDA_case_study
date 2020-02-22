@@ -6,8 +6,6 @@ if( !require(leaflet)){
   install.packages("leaflet")
 }
 library(leaflet)
-library(leaflet.extras)
-
 
 if( !require(dplyr)){
   install.packages("dplyr")
@@ -17,31 +15,53 @@ library(dplyr)
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
+final_joined <- head(final_joined, 30)
 #load("./project/Datensatz_tidy.RData")
-
 # Data preperation
 #
-final_joined <- head(final_joined, n = 500)
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
+#sitze <- final_joined[!duplicated(final_joined$ID_Sitze),]
+#
+# Create subset to display for test in table
+fahrzeuge_subset <- fahrzeuge[1:40,]
+#
+# Create 3 input vectors for dropdown menus: inputIDs_sitze, inputIDs_einzelteile, inputIDs_Fahrzeug
+ inputIDs_einzelteile <- final_joined$ID_Einzelteil[final_joined$Fehlerhaft_Einzelteil == 1]
+ inputIDs_sitze <- fahrzeuge$ID_Sitze[fahrzeuge$Fehlerhaft_Komponente == 1]
+ inputIDs_fahrzeuge <- fahrzeuge$ID_Fahrzeug
 #
 # Create a search/autocomplete vector with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
 #inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Sitze)
-#inputIDs <- fahrzeuge$ID_Fahrzeug[1:10]
-fahrzeuge_subset <- fahrzeuge[1:40,]
+#
+# Cerate a search/autocomplete list (only ID_Einzelteil & ID_Komponente that are defective) as group options: inputIDs_grouped
+ # inputIDs_grouped <- list(
+ #          ID_Einzelteil = final_joined$ID_Einzelteil[final_joined$Fehlerhaft_Einzelteil == 1],
+ #          ID_Komponente = fahrzeuge$ID_Sitze[fahrzeuge$Fehlerhaft_Komponente == 1]
+ #          )
+ #  str(inputIDs_grouped) # Stats
 #
 # Cerate a search/autocomplete list as group options: inputIDs_grouped
 #inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Sitze, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
 #
-# Cerate a subset of IDs (due to performance issues)
-subset_size = 120000
-subset_distribution_size <- subset_size / 3
-inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_distribution_size], ID_Komponente = final_joined$ID_Sitze[1:subset_distribution_size], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:subset_distribution_size])
-#str(inputIDs_grouped)
-# Cerate a subset of 30k IDs (due to performance issues)
+# Cerate a fixed subset of 30k IDs (due to performance issues): inputIDs_grouped
 #inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Sitze[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
-
-#str(inputIDs_grouped) # Stats
+#
+# Cerate a variable subset of [subset_size] IDs (due to performance issues)
+#subset_size = 450000 # only multiples of 3 allowed
+#subset_distribution_size <- subset_size / 3
+#inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_distribution_size], ID_Komponente = final_joined$ID_Sitze[1:subset_distribution_size], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:subset_distribution_size])
+#
+# IDs size analysis
+#
+# inputIDs_einzelteil <- final_joined$ID_Einzelteil
+ str(inputIDs_einzelteile)
+# inputIDs_sitze <- final_joined$ID_Sitze
+# str(inputIDs_sitze)
+# inputIDs_sitze_unique <- fahrzeuge$ID_Sitze[fahrzeuge$Fehlerhaft_Komponente]
+# str(inputIDs_sitze_unique)
+#
+# End of data preparation
 
 # Shiny UI
 ui <- fluidPage(
@@ -56,11 +76,11 @@ ui <- fluidPage(
               titlePanel("Darstellung 2: Heatmap mit Fahrzeug-Suche und Bauteil-Suche + Darstellung des Lieferwegs"),
               fluidRow(
                 column(
-                  3, 
+                  2, 
                   "betroffene Gemeinden",
                   
                   # Display Betroffene Gemeinden as data table
-                  DT::dataTableOutput('datatable_gemeinden'),
+                  dataTableOutput('datatable_gemeinde'),
                   
                   #datatable(datatable_gemeinde), # slow
                   # depreciated due to client-side rendering!
@@ -70,7 +90,7 @@ ui <- fluidPage(
                   
                 ),
                 column(
-                  7,
+                  8,
                   fluidRow(
                     
                     # Heatmap with search bar section
@@ -93,11 +113,36 @@ ui <- fluidPage(
                       # ),
                       
                       # Client-side rendering of updateSelectizeInput(session, 'search_by_ID2', ...),
-                      selectizeInput('search_by_ID', 'Wählen Sie eine oder mehrere Fahrzeug- oder Bauteil-IDs aus',
+                      selectizeInput('search_by_ID_einzelteile', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Einzelteil-IDs aus',
                                      choices = NULL,
                                      multiple = TRUE,
                       ),
+                      
+                      hr(), # adds horizontal line
+                      
+                      selectizeInput('search_by_ID_sitze', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Komponenten-IDs aus (selectizeInput, langsamer)',
+                                     choices = NULL,
+                                     multiple = TRUE,
+                      ),
+                      selectInput('e1', 'Selectize = FALSE, client-side: Wählen Sie eine oder mehrere Komponenten-IDs aus (selectInput)',
+                                  choices = inputIDs_sitze,
+                                  #multiple = TRUE
+                                  selectize = FALSE
+                      ),
+                      
+                      hr(), # adds horizontal line
+                      
+                      selectizeInput('search_by_ID_fahrzeuge', 'Selectize = TRUE, server-side: Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
+                                     choices = NULL,
+                                     multiple = TRUE,
+                      ),
+                      
+                      selectInput('x4', 'Selectize = FALSE, client-side: Wählen Sie eine oder mehrere Fahrzeug-IDs aus',
+                                  choices = inputIDs_fahrzeuge,
+                                  selectize = FALSE
+                      ),
 
+                      dataTableOutput('datatable_bauteile'),
                       
                       # Highlight the text and use CTRL + SHIFT + C to (un)comment multiple lines in Windows. Or, command + SHIFT + C in OS-X.
                       # selectizeInput(
@@ -114,7 +159,7 @@ ui <- fluidPage(
                       # ),
                       
                       # Display the heatmap  with car markers
-                      leafletOutput(outputId = "map", width = 600, height = 600)
+                      leafletOutput(outputId = "map", width = 550, height = 550)
                       ),
                       column(8, "Bottombox")
                   )
@@ -153,47 +198,49 @@ server <- function(input, output, session) {
   # with inputID: 'search_by_ID'
   # https://shiny.rstudio.com/gallery/option-groups-for-selectize-input.html
   # https://shiny.rstudio.com/reference/shiny/0.14/updateSelectInput.html
-  updateSelectizeInput(session, 'search_by_ID', 
-                            choices = inputIDs_grouped,
+  inputIDs_subset_value <- 900 # don't put more than 9k without strong machine
+  updateSelectizeInput(session, 'search_by_ID_einzelteile', 
+                            choices = inputIDs_einzelteile[1:inputIDs_subset_value],
                             #multiple = TRUE, 
                             options = list(
                               maxOptions = 6,
-                              placeholder = 'Filter für ID_Bauteil(e) und/oder ID_Fahrzeug (AND Verknüpfung)',
+                              placeholder = 'Filter für ID_Einzelteile',
                               selected = NULL)
   )
   
+  updateSelectizeInput(session, 'search_by_ID_sitze',
+                       choices = inputIDs_sitze[1:inputIDs_subset_value],
+                       #multiple = TRUE,
+                       options = list(
+                         maxOptions = 6,
+                         placeholder = 'Filter für ID_Komponente',
+                         selected = NULL)
+  )
+  
+  updateSelectizeInput(session, 'search_by_ID_fahrzeuge', 
+                       choices = inputIDs_fahrzeuge[1:inputIDs_subset_value],
+                       #multiple = TRUE, 
+                       options = list(
+                         maxOptions = 6,
+                         placeholder = 'Filter für ID_Fahrzeuge',
+                         selected = NULL)
+  )
+
   # Render table: datatable_gemeinde, table_fahrzeuge, table_bauteile
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
-  
-  gemeinden <- final_joined %>% 
-    select(Gemeinde, PLZ) %>%
-    group_by(Gemeinde, PLZ) %>%
-    summarise(Zulassungen = length(PLZ)) %>%
-    arrange(Gemeinde) %>%
-    ungroup()
-  
-  output$datatable_gemeinden <- renderDataTable(gemeinden) # Betroffene Gemeinde
-  output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10, "ID_Fahrzeug"]) # Betroffene Fahrzeuge
-  output$table_bauteile <- renderTable(final_joined[1:30, "ID_Einzelteil"]) # Betroffene Bauteile
+  output$datatable_gemeinde <- renderDataTable(final_joined[1:30,c(14,16)]) # Betroffene Gemeinde
+  output$table_fahrzeuge <- renderTable(fahrzeuge_subset[1:10,11]) # Betroffene Fahrzeuge
+  output$table_bauteile <- renderTable(final_joined[1:30,1]) # Betroffene Bauteile
   
   
-  filtered_vehicles <- reactive({
-    if(length(input$datatable_gemeinden_rows_selected)){
-      fahrzeuge %>%
-        filter(PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ)
-    } else {
-      fahrzeuge
-    }
-  })
-  
+  output$datatable_bauteile <- renderDataTable(final_joined[1:30,c(1,4)]) # Betroffene Bauteile
   # Render the heatmap with markers: map
   output$map <- renderLeaflet({
     leaflet() %>%
-      #setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
+      setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles() %>%
-      fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>%
-      addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad, 
+      addMarkers(data = fahrzeuge[1:inputIDs_subset_value,], ~Längengrad, ~Breitengrad, 
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
