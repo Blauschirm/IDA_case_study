@@ -33,7 +33,7 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 100000)
+final_joined <- head(final_joined, n = 100)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -69,42 +69,42 @@ ui <- fluidPage(
       titlePanel("Darstellung 2: Heatmap mit Gemeinde-Suche und Bauteil-Suche"),
       fluidRow(
         column(12,
-          fluidRow(
-            column(12,
-              fluidRow(
-                actionButton("reset_filters", "Alle Filter zurücksetzen")
-              ),
-              fluidRow(
-                column(3, 
-                  (h4("Betroffene Gemeinden")),
-                  
-                  # Display Betroffene Gemeinden as data table
-                  dataTableOutput('datatable_gemeinden'),
-                ),
-
-                    # Heatmap with search bar section
-                    column(9,
-                      (h4("Betroffene Bauteile")),
-                      
-                      # Display ID-search by ID_einzelteile & ID_Komponente
-                      dataTableOutput('datatable_bauteile'),
-                      
-                      # Select map type
-                      selectizeInput(
-                        'e1', 'Wählen Sie den Kartentyp aus',
-                        choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
-                      ),
-
-                      # Display the heatmap  with car markers
-                      leafletOutput(outputId = "map", width = '100%', height = 600),
-                      "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"),
-                      
-                      column(12, 
-                        "Bottombox: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
-                      ),
-              )
-            )
-          )
+               fluidRow(
+                 column(12,
+                        fluidRow(
+                          actionButton("reset_filters", "Alle Filter zurücksetzen")
+                        ),
+                        fluidRow(
+                          column(3, 
+                                 (h4("Betroffene Gemeinden")),
+                                 
+                                 # Display Betroffene Gemeinden as data table
+                                 dataTableOutput('datatable_gemeinden'),
+                          ),
+                          
+                          # Heatmap with search bar section
+                          column(9,
+                                 (h4("Betroffene Bauteile")),
+                                 
+                                 # Display ID-search by ID_einzelteile & ID_Komponente
+                                 dataTableOutput('datatable_bauteile'),
+                                 
+                                 # Select map type
+                                 selectizeInput(
+                                   'e1', 'Wählen Sie den Kartentyp aus',
+                                   choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
+                                 ),
+                                 
+                                 # Display the heatmap  with car markers
+                                 leafletOutput(outputId = "map", width = '100%', height = 600),
+                                 "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"),
+                          
+                          column(12, 
+                                 "Bottombox: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
+                          ),
+                        )
+                 )
+               )
         )
       )
     ),
@@ -113,6 +113,9 @@ ui <- fluidPage(
       fluidRow(
         column(12,
                dataTableOutput('datatable_final_joined'),
+                style='margin-bottom:30px;border:1px solid; padding: 10px;',
+                style='border-left: 5px solid red;',
+                style='white-space: nowrap;',
                
         )
       )
@@ -125,7 +128,7 @@ ui <- fluidPage(
 
 # Shiny Server
 server <- function(input, output, session) {
-
+  
   # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
   fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
   
@@ -142,7 +145,7 @@ server <- function(input, output, session) {
       group_by(Monat, Gemeinde) %>%
       summarise(anzahl = n()) %>%
       ungroup()
-
+    
     zulassungen_out
     
   })
@@ -150,12 +153,12 @@ server <- function(input, output, session) {
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
     ggplot(zulassungen(), aes(x = Monat, y = anzahl)) +
-    geom_bar(stat = "identity") +
-    scale_x_date(breaks = scales::breaks_width("1 month"), 
-                 labels = scales::label_date_short(),
-                 limits = start_end_dates) +
-    scale_y_continuous(breaks= pretty_breaks()) +
-    theme(axis.text.x = element_text(angle=45, hjust = 1))
+      geom_bar(stat = "identity") +
+      scale_x_date(breaks = scales::breaks_width("1 month"), 
+                   labels = scales::label_date_short(),
+                   limits = start_end_dates) +
+      scale_y_continuous(breaks= pretty_breaks()) +
+      theme(axis.text.x = element_text(angle=45, hjust = 1))
   })
   
   
@@ -172,16 +175,19 @@ server <- function(input, output, session) {
   
   # Render data table: gemeinden
   output$datatable_gemeinden <- renderDataTable({
-                                                input$reset_filters
-                                                gemeinden}) # Betroffene Gemeinde
+    input$reset_filters
+    gemeinden}) # Betroffene Gemeinde
   # Render data table: bauteile
   # fehlt noch: input$reset_filters
-  output$datatable_bauteile <- renderDataTable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, c(1, 2, 4, 7, 11, 13)], # [1:30,c(1,4)],  # Betroffene Bauteile
+  output$datatable_bauteile <- renderDataTable({
+                                            input$reset_filters
+                                              datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, c(1, 2, 4, 7, 11, 13)], # [1:30,c(1,4)],  # Betroffene Bauteile
                                                options = list(
                                                  lengthMenu = list(c(3, 6, -1), c('3', '6', 'All')),
                                                  pageLength = 3
                                                ),
-                                               rownames = FALSE) # suppress row names / index numbers
+                                               rownames = FALSE)
+  })
   
   filtered_vehicles <- reactive({
     if(length(input$datatable_gemeinden_rows_selected)){
@@ -196,12 +202,12 @@ server <- function(input, output, session) {
   
   # Create datapoints for the heatmap
   datapoints_heat <- final_joined %>%
-      group_by(Gemeinde, Längengrad, Breitengrad) %>%
-      summarise(fehleranzahl = n())  %>%
-      ungroup()  %>%
-      select(-Gemeinde)  %>%
-      filter(fehleranzahl > 10)
-
+    group_by(Gemeinde, Längengrad, Breitengrad) %>%
+    summarise(fehleranzahl = n())  %>%
+    ungroup()  %>%
+    select(-Gemeinde)  %>%
+    filter(fehleranzahl > 10)
+  
   # Render map
   output$map <- renderLeaflet({
     leaflet(final_joined) %>%
@@ -214,12 +220,12 @@ server <- function(input, output, session) {
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
-                                 "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
-                                 "ID_Sitz: ", ID_Komponente, "<br/>",
-                                 "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
-                                 "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
-                                 "Zugelassen in: ", PLZ, " ", Gemeinde)
-                 )
+                                "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                "ID_Sitz: ", ID_Komponente, "<br/>",
+                                "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                "Zugelassen in: ", PLZ, " ", Gemeinde)
+      )
   })
   
   observeEvent(input$reset, {
@@ -230,18 +236,32 @@ server <- function(input, output, session) {
   })
   
   # Render full database
-  output$datatable_final_joined <- renderDataTable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, ],
-                                              filter = 'top',
-                                              options = list(
-                                                 lengthMenu = list(c(3, 10, 20, 100, 1000,  -1), c('3', '10', '20', '100', '1000', 'All')),
-                                                 pageLength = 10
-                                               ),
-                                               rownames = FALSE) # suppress row names / index numbers
+  output$datatable_final_joined <- renderDataTable({
+                                                  input$reset_filters
+                                                   datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1,
+                                                                c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil',
+                                                                  'ID_Komponente', 'Werksnummer_Komponente', 'Fehlerhaft_Komponente',
+                                                                  'ID_Fahrzeug', 'Werksnummer_Fahrzeug', 'Produktionsdatum_Fahrzeug', 'Zulassungsdatum', 'Gemeinde', 'PLZ') ],
+                                                    filter = 'top',
+                                                    options = list(
+                                                     lengthMenu = list(c(3, 10, 20, 100, 1000,  -1), c('3', '10', '20', '100', '1000', 'All')),
+                                                     pageLength = 10
+                                                     ),
+                                                     colnames = c('Werk_ID' = 'Werksnummer_Einzelteil',
+                                                                'Werk_ID' = 'Werksnummer_Komponente',
+                                                                'Werk_ID' =  'Werksnummer_Fahrzeug',
+                                                                'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
+                                                                'Fehlerhaft' = 'Fehlerhaft_Komponente'),
+                                                     rownames = FALSE) %>% 
+                                                      formatStyle(
+                                                        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = "solid 2px")
+                                                      
+  })
+    
   
-
-
   
-  } 
+  
+} 
 
 # Shiny App starten
 shinyApp(ui, server)
