@@ -32,7 +32,7 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 6000)
+final_joined <- head(final_joined, n = 600000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -214,12 +214,14 @@ server <- function(input, output, session) {
   # Render the heatmap with markers
   
   # Create datapoints for the heatmap
+  treshold_fehleranzahl <- 1
+  #treshold_fehleranzahl <- 10
   datapoints_heat <- final_joined %>%
-    group_by(Gemeinde, Längengrad, Breitengrad) %>%
+    group_by(Längengrad, Breitengrad) %>%
     summarise(fehleranzahl = n())  %>%
     ungroup()  %>%
-    select(-Gemeinde)  %>%
-    filter(fehleranzahl > 10)
+    #select(-Gemeinde)  %>%
+    filter(fehleranzahl > treshold_fehleranzahl)
   
   # Render map
   output$map <- renderLeaflet({
@@ -227,7 +229,8 @@ server <- function(input, output, session) {
       setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles() %>%
       addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
-                 intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
+                 intensity = ~fehleranzahl, blur = 14, max = 20, radius = 12) %>%
+                 #intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
       #fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>%
       addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
                  #display large amounts of markers as clusters
