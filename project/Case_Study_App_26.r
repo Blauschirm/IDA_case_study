@@ -19,11 +19,15 @@ if( !require(leaflet)){
 library(leaflet)
 library(leaflet.extras)
 
-
 if( !require(dplyr)){
   install.packages("dplyr")
 }
 library(dplyr)
+
+if( !require(shinythemes)){
+  install.packages("shinythemes")
+}
+library(shinythemes)
 
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
@@ -33,7 +37,7 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 100)
+final_joined <- head(final_joined, n = 10)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -42,18 +46,33 @@ start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsda
 print(start_end_dates)
 #
 
-ui <- fluidPage(
-  mainPanel(
+ui <- fluidPage( # theme = "bootstrap.min.css" # shinytheme("cerulean"),
+  
+  # logoFarBe rot:
+  #   rot
+  # CMYK rgB
+  # heX Code pantone
+  # 20c 100m 100y 0k 197r 14g 31b #c50e1f
+  # 1797c / u
+  
+    mainPanel(
+    # Link CSS file to main panel
+    #tags$link(rel = "stylesheet", type = "text/css", href = "bootstrap.min.css"),
+    
     width="100%",
     wellPanel(
+      
       img(src='https://www.qw.tu-berlin.de/fileadmin/_processed_/8/8d/csm_QW_ohne_Text_print_a4670877cd.jpg',
           align = "right"),
       img(src='https://www.qw.tu-berlin.de/fileadmin/Aperto_design/img/logo_01.gif',
           align = "left"),
-      titlePanel("Case_Study_App_26 | Zulassungsverlauf, Gemeindesuche und Bauteilsche"),
+      titlePanel("Case_Study_App_26"),
+      
       fluidRow(
         column(12,
-               "Textbox: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam"
+               "Zulassungsverlauf, Gemeinde-Suche und Bauteil-Suche",
+               style='font-size: 26px; color: #c50e1f;'
+               # CSS no linebrake in data table column
         )
       )
     ),
@@ -113,7 +132,7 @@ ui <- fluidPage(
       fluidRow(
         column(12,
                dataTableOutput('datatable_final_joined'),
-                style='white-space: nowrap;',
+                style='white-space: nowrap;', # CSS no linebrake in data table column
                
         )
       )
@@ -245,12 +264,13 @@ server <- function(input, output, session) {
                                                      lengthMenu = list(c(3, 10, 20, 100, 1000,  -1), c('3', '10', '20', '100', '1000', 'All')),
                                                      pageLength = 10
                                                      ),
-                                                     colnames = c('Werk_ID' = 'Werksnummer_Einzelteil',
-                                                                'Werk_ID' = 'Werksnummer_Komponente',
-                                                                'Werk_ID' =  'Werksnummer_Fahrzeug',
+                                                     colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
+                                                                'ID_Werk' = 'Werksnummer_Komponente',
+                                                                'ID_Werk' =  'Werksnummer_Fahrzeug',
                                                                 'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
                                                                 'Fehlerhaft' = 'Fehlerhaft_Komponente'),
                                                      rownames = FALSE) %>% 
+                                                      # Add column grid to visually divide Einzelteil, Komponente and Fahrzeug
                                                       formatStyle(
                                                         c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = "solid 1px")
                                                       
