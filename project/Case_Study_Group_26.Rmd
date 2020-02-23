@@ -173,6 +173,8 @@ gemeinden <- read_csv2("Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv
 
 Bereiten Sie die für Ihre Aufgabe relevanten Daten nach den Prinzipien von tidy data auf und fügen Sie diese in einem einzigen Datensatz zusammen.
 
+## Importieren der Daten Datenaufbereitung
+
 ```{r tidy data}
 ### Tidy data
 
@@ -437,6 +439,7 @@ tier2_clean <- tier2  %>%
   rename(Werksnummer = Werk, Ort = ORT)
 ```
 
+## Erstellen des finalen Datensatzes Auswertung
 
 ```{r join data}
 
@@ -689,7 +692,7 @@ Das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Untern
 # Shiny UI
 
 # Shiny Server
-getwd()
+
 # Shiny App
 runApp("Case_Study_App_26.r")
 ```
