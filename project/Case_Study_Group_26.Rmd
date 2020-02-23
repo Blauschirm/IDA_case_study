@@ -152,17 +152,13 @@ bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_
 zulassungen <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
 
 
-#getwd() # print working directory
-# get file path from /Data
-path1 <- "Data/Geodaten/Tier1_Werke_2017-07-11_v1.2_TrR.csv"
-path2 <- "Data/Geodaten/Tier2_Werke_2017-07-11_v1.2_TrR.csv"
-path3 <- "Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv"
-path4 <- "Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv"
-path5 <- "Data/Geodaten/Klimazonen_Köppen_Geiger.xlsx"
+## Import der Geodaten
+# Tier1, Tier2, OEM-Werke, Gemeinden
+# Schwierigkeiten: 
+
 
 # Import with readr
 locale = locale(encoding = 'ISO-8859-1')
-
 tier1 <- read_csv2("Data/Geodaten/Tier1_Werke_2017-07-11_v1.2_TrR.csv",
                    locale = locale, col_types = "ccnnn")
 tier2 <- read_csv2("Data/Geodaten/Tier2_Werke_2017-07-11_v1.2_TrR.csv",
@@ -171,8 +167,6 @@ oem <- read_csv2("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv",
                    locale = locale, col_types = "ccnnn")
 gemeinden <- read_csv2("Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", 
                    locale = locale, col_types = "__ccnn")
-
-
 ```
 
 ## Aufgabe 2
@@ -381,15 +375,11 @@ zulassungen <- zulassungen %>%
 
 ## Clean and tidy Geodaten
 
-# Function that add zeros at the end of the number until it has 8 digits
-addZerosUntil8Digits <- function(num) {
-  for (i in 1:10) { ifelse(nchar(trunc(num)) < 8, num <- num*10, num) }
-    return(num) }
+## Besondere Anforderungen an die Daten:
+# - Koordinaten sollen vom Typ double sein um sie anschließend in der App von leaflet in der Kartendarstellung anzuzeigen. 
+# - Postleitzahlen sollen 5 Zeichen und alle Gemeinden Deutschlands beinhalten.
 
-# Function that add leading zero to PLZ
-addLeadingZero <- function(char) {
-  ifelse(nchar(char) < 5, char <- paste0("0",char), char)
-    return(char) }
+# Nach dem Import mit read_csv2() werden die Umlaute korrigiert und Postleitzahlen in PLZ umbenannt.
 
 # Change ae to ä in Längengrad
 colnames(tier1)[5] <- "Längengrad"
@@ -399,16 +389,34 @@ colnames(gemeinden)[3] <- "Längengrad"
 # Change Postleitzahl to PLZ
 colnames(gemeinden)[1] <- "PLZ"
 
+### Geodaten Gemeinden: gemeinden_clean
+# Als nächstes werden die Postleitzahlen  normiert.
+
+# Function that add leading zero to PLZ
+addLeadingZero <- function(char) {
+  ifelse(nchar(char) < 5, char <- paste0("0",char), char)
+    return(char) }
+
 # Add leading zero to PLZ if missing
 gemeinden <- gemeinden %>%
   rowwise() %>%
   mutate(PLZ = addLeadingZero(PLZ))
 
-# after final join in the end missing coordinates and PLZ for location "Seeg" were detected, data was missing in gemeinden dataset: Add missing data as row to gemeinden datase
+# Dann werden fehlende Einträge hinzugefügt
+# After final join in the end missing coordinates and PLZ for location "Seeg" were detected.
+# Data was missing in gemeinden dataset: Add missing data as row to gemeinden dataframe
+gemeinden_clean <- rbind(gemeinden, list("87637", "SEEG", 10.610416, 47.654222))
+str(gemeinden_clean)
 
-gemeinden_clean <- rbind(gemeinden, list("87637", "SEEG", as.numeric(10610416), as.numeric(47654222)))
+### Geodaten Werke: tier1_clean, tier2_clean
+# Zuletzt werden leere Spalten gelöscht, die Koordinaten normiert und Spaltennamen geändert.
 
-# Clean: omit NAs annd standardize long / lat values
+# Function that add zeros at the end of the number until it has 8 digits
+addZerosUntil8Digits <- function(num) {
+  for (i in 1:7) { ifelse(nchar(trunc(num)) < 8, num <- num*10, num) }
+    return(num) }
+
+# Clean: omit NAs, standardize geodata and change column names
 tier1_clean <- tier1  %>%
   na.omit(tier1)  %>%
   rowwise() %>%
@@ -427,7 +435,6 @@ tier2_clean <- tier2  %>%
   mutate(Breitengrad = Breitengrad/1000000) %>%
   mutate(Längengrad = Längengrad/1000000) %>%
   rename(Werksnummer = Werk, Ort = ORT)
-
 ```
 
 
@@ -665,9 +672,7 @@ final_filtered <- final_join %>%
 final_order <- final_filtered[c(1:3,5,6,4,7:11,13,12,15,14,16,18,17)]
 
 final_joined <- final_order
-
-
-
+str(final_joined)
 ```
 
 ## Aufgabe 3
@@ -684,8 +689,13 @@ Das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Untern
 # Shiny UI
 
 # Shiny Server
-
+getwd()
 # Shiny App
+runApp("Case_Study_App_26.r")
+```
+
+```{r run previous}
+# profiler stats
 ```
 
 ## Aufgabe 4
