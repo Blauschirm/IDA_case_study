@@ -418,6 +418,12 @@ addZerosUntil8Digits <- function(num) {
   for (i in 1:7) { ifelse(nchar(trunc(num)) < 8, num <- num*10, num) }
     return(num) }
 
+# After adding zeros, all coordinates have the same amount of digits. However, Germany ranges between ~6 and ~16°E in longitude (one or two digit)
+# Function that chops one decimal in Längengrad values if it's outside Germany's proximity
+chopBigLongitudes <- function(x){
+  ifelse(x > 20, x <- x/10, x)
+}
+
 # Clean: omit NAs, standardize geodata and change column names
 tier1_clean <- tier1  %>%
   na.omit(tier1)  %>%
@@ -426,6 +432,7 @@ tier1_clean <- tier1  %>%
   mutate(Längengrad = addZerosUntil8Digits(Längengrad)) %>%
   mutate(Breitengrad = Breitengrad/1000000) %>%
   mutate(Längengrad = Längengrad/1000000) %>%
+  mutate(Längengrad = chopBigLongitudes(Längengrad)) %>%
   rename(Werksnummer = Werk, Ort = ORT)
 
 tier2_clean <- tier2  %>%
@@ -436,6 +443,7 @@ tier2_clean <- tier2  %>%
   mutate(Längengrad = addZerosUntil8Digits(Längengrad)) %>%
   mutate(Breitengrad = Breitengrad/1000000) %>%
   mutate(Längengrad = Längengrad/1000000) %>%
+  mutate(Längengrad = chopBigLongitudes(Längengrad)) %>%
   rename(Werksnummer = Werk, Ort = ORT)
 ```
 
