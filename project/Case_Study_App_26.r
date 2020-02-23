@@ -33,7 +33,7 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 90000)
+final_joined <- head(final_joined, n = 7000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -55,14 +55,37 @@ print(start_end_dates)
 
 
 # Shiny UI
+# ui <- fluidPage(
+#   mainPanel(
+#     width="100%",
+#     wellPanel(
+#       titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf"),
+#       fluidRow(
+#         column(12,
+#       plotOutput("plot_zulassungsverlauf")
+#         )
+#       )
+#     ),
 ui <- fluidPage(
   mainPanel(
     width="100%",
     wellPanel(
+      img(src='https://www.qw.tu-berlin.de/fileadmin/_processed_/8/8d/csm_QW_ohne_Text_print_a4670877cd.jpg',
+          align = "right"),
+      img(src='https://www.qw.tu-berlin.de/fileadmin/Aperto_design/img/logo_01.gif',
+          align = "left"),
+      titlePanel("Case_Study_App_26 | Zulassungsverlauf, Gemeindesuche und Bauteilsche"),
+      fluidRow(
+        column(12,
+               "Textbox: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam"
+        )
+      )
+    ),
+    wellPanel(
       titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf"),
       fluidRow(
         column(12,
-      plotOutput("plot_zulassungsverlauf")
+               plotOutput("plot_zulassungsverlauf")
         )
       )
     ),
@@ -106,6 +129,15 @@ ui <- fluidPage(
               )
             )
           )
+        )
+      )
+    ),
+    wellPanel(
+      titlePanel("Datenbank"),
+      fluidRow(
+        column(12,
+               dataTableOutput('datatable_final_joined'),
+               
         )
       )
     )
@@ -213,6 +245,16 @@ server <- function(input, output, session) {
                                  "Zugelassen in: ", PLZ, " ", Gemeinde)
                  )
   })
+  
+  # Render full database
+  output$datatable_final_joined <- renderDataTable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, ],
+                                              filter = 'top',
+                                              options = list(
+                                                 lengthMenu = list(c(3, 10, 20, 100, 1000,  -1), c('3', '10', '20', '100', '1000', 'All')),
+                                                 pageLength = 10
+                                               ),
+                                               rownames = FALSE) # suppress row names / index numbers
+  
   observeEvent(input$reset, {
     
     leafletProxy("map") %>%
