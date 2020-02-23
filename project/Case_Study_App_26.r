@@ -27,13 +27,13 @@ library(dplyr)
 
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
-#load("Datensatz_tidy.RData")
+load("Datensatz_tidy.RData")
 #load("./project/Datensatz_tidy.RData")
 
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 3000)
+final_joined <- head(final_joined, n = 6000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -44,15 +44,11 @@ print(start_end_dates)
 # Create a search/autocomplete vector with ID_Einzelteil, ID_Komponente and ID_Fahrzeug: inputID
 #inputIDs <- c(fahrzeuge$ID_Fahrzeug, final_joined$ID_Einzelteil, final_joined$ID_Komponente)
 #inputIDs <- fahrzeuge$ID_Fahrzeug[1:10]
-fahrzeuge_subset <- fahrzeuge[1:40,]
 #
 # Cerate a search/autocomplete list as group options: inputIDs_grouped
 #inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil, ID_Komponente = final_joined$ID_Komponente, ID_Fahrzeug = fahrzeuge$ID_Fahrzeug)
 #
 # Cerate a subset of IDs (due to performance issues)
-subset_size = 120000
-subset_distribution_size <- subset_size / 3
-inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:subset_distribution_size], ID_Komponente = final_joined$ID_Komponente[1:subset_distribution_size], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:subset_distribution_size])
 #str(inputIDs_grouped)
 # Cerate a subset of 30k IDs (due to performance issues)
 #inputIDs_grouped <- list(ID_Einzelteil = final_joined$ID_Einzelteil[1:10000], ID_Komponente = final_joined$ID_Komponente[1:10000], ID_Fahrzeug = fahrzeuge$ID_Fahrzeug[1:10000])
@@ -101,9 +97,12 @@ ui <- fluidPage(
                       ),
 
                       # Display the heatmap  with car markers
-                      leafletOutput(outputId = "map", width = '100%', height = 600)
+                      leafletOutput(outputId = "map", width = '100%', height = 600),
+                      "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"),
+                      
+                      column(12, 
+                        "Bottombox: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
                       ),
-                      column(9, "Bottombox: Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken")
               )
             )
           )
@@ -185,24 +184,23 @@ server <- function(input, output, session) {
     }
   })
   
-  # Render the heatmap with markers: map
+  # Render the heatmap with markers
   
-  heat <- final_joined %>%
-    group_by(Längengrad, Breitengrad) %>%
+  # Create datapoints for the heatmap
+  datapoints_heat <- final_joined %>%
+    group_by(Gemeinde, Längengrad, Breitengrad) %>%
     summarise(fehleranzahl = n())  %>%
-    filter(fehleranzahl > 2) %>%
-    ungroup()
- # str(heat)
-  
-  
+    filter(fehleranzahl > 10)
+
+  # Render map
   output$map <- renderLeaflet({
     leaflet(final_joined) %>%
-      #setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
+      setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>%
       addTiles() %>%
-      addHeatmap(data = heat, lng = ~Längengrad, lat = ~Breitengrad, 
-                 intensity = ~fehleranzahl, blur = 14, max = 5, radius = 12) %>%
-      fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>%
-      addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad, 
+      addHeatmap(data = heat, lng = ~Längengrad, lat = ~Breitengrad,
+                 intensity = ~fehleranzahl, blur = 10, max = 30, radius = 20) %>%
+      #fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>%
+      addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
@@ -215,7 +213,7 @@ server <- function(input, output, session) {
   })
   observeEvent(input$reset, {
     
-    leafletProxy("map")%>%
+    leafletProxy("map") %>%
       setView(lng = 10.46, lat = 51.15, zoom = 6.25)
     
   })
