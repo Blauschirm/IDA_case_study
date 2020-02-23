@@ -113,8 +113,6 @@ ui <- fluidPage(
       fluidRow(
         column(12,
                dataTableOutput('datatable_final_joined'),
-                style='margin-bottom:30px;border:1px solid; padding: 10px;',
-                style='border-left: 5px solid red;',
                 style='white-space: nowrap;',
                
         )
@@ -254,7 +252,7 @@ server <- function(input, output, session) {
                                                                 'Fehlerhaft' = 'Fehlerhaft_Komponente'),
                                                      rownames = FALSE) %>% 
                                                       formatStyle(
-                                                        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = "solid 2px")
+                                                        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = "solid 1px")
                                                       
   })
     
