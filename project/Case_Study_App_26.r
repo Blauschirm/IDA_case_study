@@ -24,11 +24,6 @@ if( !require(dplyr)){
 }
 library(dplyr)
 
-if( !require(shinythemes)){
-  install.packages("shinythemes")
-}
-library(shinythemes)
-
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
@@ -37,7 +32,7 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 10)
+final_joined <- head(final_joined, n = 6000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -46,14 +41,7 @@ start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsda
 print(start_end_dates)
 #
 
-ui <- fluidPage( # theme = "bootstrap.min.css" # shinytheme("cerulean"),
-  
-  # logoFarBe rot:
-  #   rot
-  # CMYK rgB
-  # heX Code pantone
-  # 20c 100m 100y 0k 197r 14g 31b #c50e1f
-  # 1797c / u
+ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
   
     mainPanel(
     # Link CSS file to main panel
@@ -98,7 +86,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinytheme("cerulean"),
                                  (h4("Betroffene Gemeinden")),
                                  
                                  # Display Betroffene Gemeinden as data table
-                                 dataTableOutput('datatable_gemeinden'),
+                                 dataTableOutput('datatable_gemeinden')
                           ),
                           
                           # Heatmap with search bar section
@@ -193,7 +181,15 @@ server <- function(input, output, session) {
   # Render data table: gemeinden
   output$datatable_gemeinden <- renderDataTable({
     input$reset_filters
-    gemeinden}) # Betroffene Gemeinde
+    datatable(gemeinden,
+                options = list(
+                  lengthMenu = list(c(3, 6, 20, -1), c('3', '6', '20', 'All')),
+                  pageLength = 3
+                ),
+              rownames = FALSE
+    )
+  })
+  
   # Render data table: bauteile
   # fehlt noch: input$reset_filters
   output$datatable_bauteile <- renderDataTable({
