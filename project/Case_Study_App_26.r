@@ -32,7 +32,7 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 600)
+final_joined <- head(final_joined, n = 1000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
@@ -146,24 +146,25 @@ server <- function(input, output, session) {
     
     
     zulassungen_out <- zulassungen_out %>%
-      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d")) %>%
-      group_by(Monat, Gemeinde) %>%
+      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
+      group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
       summarise(anzahl = n()) %>%
       ungroup()
     
     zulassungen_out
-    
   })
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
-    ggplot(zulassungen(), aes(x = Monat, y = anzahl)) +
+    ggplot(zulassungen(), aes(x = Monat, y = anzahl, fill=factor(Werksnummer_Fahrzeug))) +
       geom_bar(stat = "identity") +
+      scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
+      guides(fill = guide_legend(title="Werknummer des OEM")) + 
       scale_x_date(breaks = scales::breaks_width("1 month"), 
-                   labels = scales::label_date_short(),
+                   labels = scales::label_date_short(format = c("%Y, %b")),
                    limits = start_end_dates) +
       scale_y_continuous(breaks= pretty_breaks()) +
-      theme(axis.text.x = element_text(angle=45, hjust = 1))
+      theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
   })
   
   
@@ -181,25 +182,26 @@ server <- function(input, output, session) {
   # Render data table: gemeinden
   output$datatable_gemeinden <- renderDataTable({
     input$reset_filters
-    datatable(gemeinden,
-                options = list(
-                  lengthMenu = list(c(3, 6, 20, -1), c('3', '6', '20', 'All')),
-                  pageLength = 3
-                ),
-              rownames = FALSE
+    datatable(
+      gemeinden,
+      options = list(
+        lengthMenu = list(c(3, 6, 20, -1), c('3', '6', '20', 'All')),
+        pageLength = 3
+      ),
+      rownames = FALSE
     )
   })
   
   # Render data table: bauteile
   # fehlt noch: input$reset_filters
   output$datatable_bauteile <- renderDataTable({
-                                            input$reset_filters
-                                              datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, c(1, 2, 4, 7, 11, 13)], # [1:30,c(1,4)],  # Betroffene Bauteile
-                                               options = list(
-                                                 lengthMenu = list(c(3, 6, -1), c('3', '6', 'All')),
-                                                 pageLength = 3
-                                               ),
-                                               rownames = FALSE)
+    input$reset_filters
+    datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, c(1, 2, 4, 7, 11, 13)], # [1:30,c(1,4)],  # Betroffene Bauteile
+     options = list(
+       lengthMenu = list(c(3, 6, -1), c('3', '6', 'All')),
+       pageLength = 3
+     ),
+     rownames = FALSE)
   })
   
   filtered_vehicles <- reactive({
@@ -252,31 +254,28 @@ server <- function(input, output, session) {
   
   # Render full database
   output$datatable_final_joined <- renderDataTable({
-                                                  input$reset_filters
-                                                   datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1,
-                                                                c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil',
-                                                                  'ID_Komponente', 'Werksnummer_Komponente', 'Fehlerhaft_Komponente',
-                                                                  'ID_Fahrzeug', 'Werksnummer_Fahrzeug', 'Produktionsdatum_Fahrzeug', 'Zulassungsdatum', 'Gemeinde', 'PLZ') ],
-                                                    filter = 'top',
-                                                    options = list(
-                                                     lengthMenu = list(c(3, 10, 20, 100, 1000,  -1), c('3', '10', '20', '100', '1000', 'All')),
-                                                     pageLength = 10
-                                                     ),
-                                                     colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
-                                                                'ID_Werk' = 'Werksnummer_Komponente',
-                                                                'ID_Werk' =  'Werksnummer_Fahrzeug',
-                                                                'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
-                                                                'Fehlerhaft' = 'Fehlerhaft_Komponente'),
-                                                     rownames = FALSE) %>% 
-                                                      # Add column grid to visually divide Einzelteil, Komponente and Fahrzeug
-                                                      formatStyle(
-                                                        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = "solid 1px")
-                                                      
+    input$reset_filters
+    datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1,
+                c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil',
+                  'ID_Komponente', 'Werksnummer_Komponente', 'Fehlerhaft_Komponente',
+                  'ID_Fahrzeug', 'Werksnummer_Fahrzeug', 'Produktionsdatum_Fahrzeug', 'Zulassungsdatum', 'Gemeinde', 'PLZ') ],
+    filter = 'top',
+    options = list(
+      lengthMenu = list(c(3, 10, 20, 100, 1000,  -1), c('3', '10', '20', '100', '1000', 'All')),
+      pageLength = 10
+    ),
+    colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
+                'ID_Werk' = 'Werksnummer_Komponente',
+                'ID_Werk' =  'Werksnummer_Fahrzeug',
+                'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
+                'Fehlerhaft' = 'Fehlerhaft_Komponente'),
+    rownames = FALSE) %>% 
+      # Add column grid to visually divide Einzelteil, Komponente and Fahrzeug
+      formatStyle(
+        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = "solid 1px"
+      )
   })
     
-  
-  
-  
 } 
 
 # Shiny App starten
