@@ -159,7 +159,7 @@ server <- function(input, output, session) {
     ggplot(zulassungen(), aes(x = Monat, y = anzahl, fill=factor(Werksnummer_Fahrzeug))) +
       geom_bar(stat = "identity") +
       scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
-      guides(fill = guide_legend(title="Werknummer des OEM")) + 
+      guides(fill = guide_legend(title="Werknummer der OEM")) + 
       scale_x_date(breaks = scales::breaks_width("1 month"), 
                    labels = scales::label_date_short(format = c("%Y, %b")),
                    limits = start_end_dates) +
