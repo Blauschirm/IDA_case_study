@@ -62,27 +62,22 @@ einzelteil_t11_string <- gsub("", "\n", einzelteil_t11_string)
 einzelteil_t16_string <- gsub("\t", "\n", einzelteil_t16_string)
 einzelteil_t20_string <- gsub(" ", "\n", einzelteil_t20_string)
 
-# write data into one csv file, respectively
-write(einzelteil_t11_string, file = "Data/Einzelteil/Einzelteil_T11.csv")
-write(einzelteil_t16_string, file = "Data/Einzelteil/Einzelteil_T16.csv")
-write(einzelteil_t20_string, file = "Data/Einzelteil/Einzelteil_T20.csv")
+# Import final csv-files
+# read_csv (delim = ","), coerce col_type for t16 because data is split on several columns which causes parsing errors
+t11 <- read_delim(einzelteil_t11_string, delim = ",")
+t16 <- read_delim(einzelteil_t16_string, delim = ",", col_types = c("nncDnnnDncDnnnDncDnnnDn"))
+t19 <- read_csv("Data/Einzelteil/Einzelteil_T19.csv")
+t20 <- read_delim(einzelteil_t20_string, delim = ",")
+
+# read_csv2 (delim = ";"), coerce col_type for t15 because data is split on several columns which causes parsing errors
+t14 <- read_csv2("Data/Einzelteil/Einzelteil_T14.csv")
+t15 <- read_csv2("Data/Einzelteil/Einzelteil_T15.csv", col_types = c("nncDnnnDncDnnnDn"))
 
 # remove unused objects and return memory
 einzelteil_t11_string <- ""
 einzelteil_t16_string <- ""
 einzelteil_t20_string <- ""
 gc()
-
-# Import final csv-files
-# read_csv (delim = ","), coerce col_type for t16 because data is split on several columns which causes parsing errors
-t11 <- read_csv("Data/Einzelteil/Einzelteil_T11.csv")
-t16 <- read_csv("Data/Einzelteil/Einzelteil_T16.csv", col_types = c("nncDnnnDncDnnnDncDnnnDn"))
-t19 <- read_csv("Data/Einzelteil/Einzelteil_T19.csv")
-t20 <- read_csv("Data/Einzelteil/Einzelteil_T20.csv")
-
-# read_csv2 (delim = ";"), coerce col_type for t15 because data is split on several columns which causes parsing errors
-t14 <- read_csv2("Data/Einzelteil/Einzelteil_T14.csv")
-t15 <- read_csv2("Data/Einzelteil/Einzelteil_T15.csv", col_types = c("nncDnnnDncDnnnDn"))
 
 
 ## Import Bestandteile_Komponente sets as relation tables between Komponente and Einzelteil sets
@@ -107,9 +102,8 @@ out <- gsub(pattern = "", replace = "\n", x = tx3, fixed = TRUE)
 myFile <- tempfile()
 writeLines(out, con=myFile)
 
-# read Komponente, remove irrevelant columns
-komponente_k2le1 <- read_csv2(myFile, col_types = c("nncDnnnDncDnnnDn")) %>%
-  select(-X1, -X2)
+# read Komponente
+komponente_k2le1 <- read_csv2(myFile, col_types = c("nncDnnnDncDnnnDn"))
 
 # read Komponenete_K2LE2
 
@@ -152,13 +146,12 @@ bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_
 zulassungen <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
 
 
-## Import der Geodaten
-# Tier1, Tier2, OEM-Werke, Gemeinden
-# Schwierigkeiten: 
+## Import Geodaten
 
+#
+locale = locale(encoding = 'ISO-8859-1')
 
 # Import with readr
-locale = locale(encoding = 'ISO-8859-1')
 tier1 <- read_csv2("Data/Geodaten/Tier1_Werke_2017-07-11_v1.2_TrR.csv",
                    locale = locale, col_types = "ccnnn")
 tier2 <- read_csv2("Data/Geodaten/Tier2_Werke_2017-07-11_v1.2_TrR.csv",
@@ -167,6 +160,7 @@ oem <- read_csv2("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv",
                    locale = locale, col_types = "ccnnn")
 gemeinden <- read_csv2("Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", 
                    locale = locale, col_types = "__ccnn")
+
 ```
 
 ## Aufgabe 2
@@ -183,50 +177,58 @@ Bereiten Sie die für Ihre Aufgabe relevanten Daten nach den Prinzipien von tid
 # Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
 # Transform origin column into Class Date, use mutate to add Produktionsdatum_Origin_01011970 values to origin values
 t11 <- t11 %>% 
-  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
+  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970) %>% 
+  # Remove unnecessary columns and rename ID column to get common column names for all t* datasets
+  select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970, ID_Einzelteil = ID_T11) %>%
+  # add column "Einzelteil" with unique value
+  mutate(Einzelteil="11")
 t14 <- t14 %>% 
-  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
+  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970) %>%
+  select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970, ID_Einzelteil = ID_T14) %>%
+  mutate(Einzelteil="14")
 t19 <- t19 %>% 
-  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
+  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970) %>%
+  select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970, ID_Einzelteil = ID_T19) %>%
+  mutate(Einzelteil="19")
 t20 <- t20 %>% 
-  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970)
+  mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970) %>%
+  select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970, ID_Einzelteil = ID_T20) %>%
+  mutate(Einzelteil="20")
 
-# Remove unnecessary columns
-t11 <- t11 %>% select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970)
-t14 <- t14 %>% select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970)
-t15 <- t15 %>% select(-X1, -X1_1)
-t16 <- t16 %>% select(-X1, -X1_1)
-t19 <- t19 %>% select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970)
-t20 <- t20 %>% select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970)
+# remove unnecessary columns in t15 and t16
+t15 <- select(t15, -X1, -X1_1)
+t16 <- select(t16, -X1, -X1_1)
 
-# Split the three diferent parts of T15 and T16 into three data sets
-t15_part1 <- filter(t15, !is.na(ID_T15.x)) 
-t15_part2 <- filter(t15, !is.na(ID_T15.y))
+# variables in t15 / t16 tables are distributed over two / three parts, split table into two / three tables
+t15_part1 <- filter(t15, !is.na(ID_T15.x)) %>% 
+  select(c(-8:-14))
+t15_part2 <- filter(t15, !is.na(ID_T15.y)) %>%
+  select(c(-1:-7))
 
-t16_part1 <- filter(t16, !is.na(ID_T16.x)) 
-t16_part2 <- filter(t16, !is.na(ID_T16.y))
-t16_part3 <- filter(t16, !is.na(ID_T16))
-
-# Remove empty column from each data set 
-t15_part1 <- t15_part1[, c(-8:-14)] 
-t15_part2 <- t15_part2[, c(-1:-7)]
-
-t16_part1 <- t16_part1[, c(-8:-21)] 
-t16_part2 <- t16_part2[, c(-1:-7, -15:-21)]
-t16_part3 <- t16_part3[, c(-1:-14)]
+t16_part1 <- filter(t16, !is.na(ID_T16.x)) %>% 
+  select(c(-8:-21))
+t16_part2 <- filter(t16, !is.na(ID_T16.y)) %>% 
+  select(c(-1:-7, -15:-21)) 
+t16_part3 <- filter(t16, !is.na(ID_T16)) %>% 
+  select(c(-1:-14)) 
 
 # Rename column names to the same names for all parts of T15 and T16 data set respectively
-colnames(t15_part2) <- c("ID_T15", "Produktionsdatum", "Herstellernummer","Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum", "Fehlerhaft_Fahrleistung" )
+colnames(t15_part2) <- c("ID_Einzelteil", "Produktionsdatum", "Herstellernummer","Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum", "Fehlerhaft_Fahrleistung" )
 colnames(t15_part1) <- colnames(t15_part2)
 
-colnames(t16_part3) <- c("ID_T16", "Produktionsdatum", "Herstellernummer","Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum", "Fehlerhaft_Fahrleistung" )
+colnames(t16_part3) <- c("ID_Einzelteil", "Produktionsdatum", "Herstellernummer","Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum", "Fehlerhaft_Fahrleistung" )
 colnames(t16_part2) <- colnames(t16_part3)
 colnames(t16_part1) <- colnames(t16_part3)
 
 # Bind the two (or three) datasets each into one dataset, respectively
-t15 <- bind_rows(t15_part1, t15_part2)
+t15 <- bind_rows(t15_part1, t15_part2) %>% 
+  # Move column Produktionsdatum to the last position in order to get the same structure for all Einzelteil datasets
+  select(-Produktionsdatum, Produktionsdatum) %>%
+  mutate(Einzelteil="15")
 
-t16 <- bind_rows(t16_part1, t16_part2, t16_part3)
+t16 <- bind_rows(t16_part1, t16_part2, t16_part3) %>%
+  select(-Produktionsdatum, Produktionsdatum) %>%
+  mutate(Einzelteil="16")
 
 t15_part1 <- ""
 t15_part2 <- ""
@@ -235,37 +237,16 @@ t16_part2 <- ""
 t16_part3 <- ""
 gc()
 
-# Move column Produktionsdatum to the last position in T15 and T16 in order to get the same structure for all datasets
-t15 <- t15 %>% select(-Produktionsdatum, Produktionsdatum)
-t16 <- t16 %>% select(-Produktionsdatum, Produktionsdatum)
-
-
-# rename ID_* columns to ID to get common column names for all data sets and prepare for Join/Binding by adding column "Einzelteil" with distinguishable unique value 
-t11 <- rename(t11, ID_Einzelteil = ID_T11) %>%
-  mutate(Einzelteil="11")
-t14 <- rename(t14, ID_Einzelteil = ID_T14) %>%
-  mutate(Einzelteil="14")
-t15 <- rename(t15, ID_Einzelteil = ID_T15) %>%
-  mutate(Einzelteil="15")
-t16 <- rename(t16, ID_Einzelteil = ID_T16) %>%
-  mutate(Einzelteil="16")
-t19 <- rename(t19, ID_Einzelteil = ID_T19) %>%
-  mutate(Einzelteil="19")
-t20 <- rename(t20, ID_Einzelteil = ID_T20) %>%
-  mutate(Einzelteil="20")
-
 
 ## Clean and tidy Bestandteile_Komponente datasets (relational table between einzelteile and komponenten)
 
-# tidy and transform: Rename "ID_*" columns to ID_Komponente in order to match with komponenten dataset and remove unnecessary columns
+# tidy and transform: Rename "ID_K2LE*" columns to ID_Komponente in order to match with komponenten dataset and remove unnecessary columns
 bestandteile_k2le1 <- bestandteile_k2le1 %>%
-  select(-X1) %>%
-  rename(ID_Komponente = ID_K2LE1)
+  select(-X1, ID_Komponente = ID_K2LE1)
 bestandteile_k2le2 <- bestandteile_k2le2 %>%
-  select(-X1) %>%
-  rename(ID_Komponente = ID_K2LE2)
+  select(-X1, ID_Komponente = ID_K2LE2)
 
-# Each "Komponente" (k2le1 & k2le2) consist of three parts (t11, t14, t15 & t16, t19, t20): Split into three different tables resepectively and rename "ID_T*" columns into "ID_Einzelteil"
+# Each "Komponente" (k2le1 & k2le2) consists of three parts (t11, t14, t15 & t16, t19, t20): Split into three different tables resepectively and rename "ID_T*" columns into "ID_Einzelteil"
 b_k2le1_part1 <- bestandteile_k2le1[, -2:-3] %>%
   rename(ID_Einzelteil = ID_T11)
 b_k2le1_part2 <- bestandteile_k2le1[, c(-1,-3)] %>%
@@ -280,8 +261,25 @@ b_k2le2_part2 <- bestandteile_k2le2[, c(-1,-3)] %>%
 b_k2le2_part3 <- bestandteile_k2le2[, -1:-2] %>%
   rename(ID_Einzelteil = ID_T20)
 
+# bind the split tables into one table respectively
+bestandteile_k2le1_clean <- bind_rows(b_k2le1_part1, b_k2le1_part2, b_k2le1_part3)
+bestandteile_k2le2_clean <- bind_rows(b_k2le2_part1, b_k2le2_part2, b_k2le2_part3)
+
+# remove unused objects
+b_k2le1_part1 <- ""
+b_k2le1_part2 <- ""
+b_k2le1_part3 <- ""
+b_k2le2_part1 <- ""
+b_k2le2_part2 <- ""
+b_k2le2_part3 <- ""
+gc()
+
 
 ## Clean and tidy Komponente datasets
+
+# remove irrevelant columns
+
+komponente_k2le1 <- select(komponente_k2le1, -X1, -X2)
 
 # variables in komponente_k2le1 are split into two parts,  split table in two (x and y)
 komponente_k2le1.x <- komponente_k2le1 %>%
@@ -312,7 +310,7 @@ komponente_k2le1.y <- komponente_k2le1 %>%
     Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.y
   )
 
-# bind the two tables (x and y) together again the right way
+# bind the two tables (x and y) together again the right way,  add new colum with unique values
 komponente_k2le1 <- bind_rows(komponente_k2le1.x, komponente_k2le1.y) %>%
   mutate(Komponente = "K2LE1")
 
@@ -328,7 +326,7 @@ gc()
 
 # clean komponente_k2le2
 komponente_k2le2 <- komponente_k2le2 %>%
-  # format origin in date format and create Produktionsdatum, remove unnecessary columns, rename ID_Sitze column and add Komponente column to distingiush dataset later when joined
+  # format origin in date format and create Produktionsdatum, remove irrelevant columns, rename ID_Sitze column and add Komponente column with unique value
   mutate(origin = as.Date(origin, format = "%d-%m-%Y"), Produktionsdatum = as.Date(Produktionsdatum_Origin_01011970, origin = origin)) %>%
   select(-X1, ID_Komponente = ID_Sitze, -X2, -origin, -Produktionsdatum_Origin_01011970) %>%
   mutate(Komponente = "K2LE2")
@@ -336,7 +334,7 @@ komponente_k2le2 <- komponente_k2le2 %>%
 
 ## Tidy and clean Fahrzeug datasets
 
-# deselect unnecessary columns and mutate a type column for a later check
+# deselect irrelevant columns and mutate a type column for a later check
 # transform origin in date format and create Produktionsdatum
 fahrzeug_oem1_typ11 <- fahrzeug_oem1_typ11 %>%
   select(-X1, -X1_1) %>%
@@ -476,40 +474,16 @@ if(all(all_einzelteile$id_richtig_einzel == TRUE)) {
     select(-id_richtig_einzel, -Einzelteil)
 }
 
-# delete unused objects
-t11 <- ""
-t14 <- ""
-t15 <- ""
-t16 <- ""
-t19 <- ""
-t20 <- ""
-gc()
-
 
 ## Join Bestandteile_Komponente datasets
 
-# bind the split tables into one
-bestandteile_k2le1 <- bind_rows(b_k2le1_part1, b_k2le1_part2, b_k2le1_part3)
-bestandteile_k2le2 <- bind_rows(b_k2le2_part1, b_k2le2_part2, b_k2le2_part3)
-
 # relation table for all Komponenten and Einzelteile
-bestandteile_komponenten <- bind_rows(bestandteile_k2le1, bestandteile_k2le2)
+bestandteile_komponenten <- bind_rows(bestandteile_k2le1_clean, bestandteile_k2le2_clean)
 
 # check if any values are missing in the joined dataset
 if(any(is.na(bestandteile_komponenten))==TRUE) {
    filter_all(bestandteile_komponenten, any_vars(is.na(.)))
 }
-
-# remove unused objects
-b_k2le1_part1 <- ""
-b_k2le1_part2 <- ""
-b_k2le1_part3 <- ""
-b_k2le2_part1 <- ""
-b_k2le2_part2 <- ""
-b_k2le2_part3 <- ""
-bestandteile_k2le1 <- ""
-bestandteile_k2le2 <- ""
-gc()
 
 
 ## Join Komponente data sets
@@ -534,11 +508,6 @@ if(all(komponenten$id_richtig_komp == TRUE)){
   komponenten <- komponenten %>%
     select(-id_richtig_komp, -Komponente)
 }
-
-# remove unused objects and free memory
-komponente_k2le1 <- ""
-komponente_k2le2 <- ""
-gc()
 
 
 ## Join Bestandteile_Fahrzeug datasets
@@ -566,13 +535,6 @@ if(any(is.na(fahrzeug_bestandteile))==TRUE) {
    filter_all(fahrzeug_bestandteile, any_vars(is.na(.)))
 }
 
-# remove unused objects and free memory
-bestandteile_oem1_typ11 <- ""
-bestandteile_oem1_typ12 <- ""
-bestandteile_oem2_typ21 <- ""
-bestandteile_oem2_typ22 <- ""
-gc()
-
 
 ## Join Fahrzeug datasets
 
@@ -597,13 +559,6 @@ if(all(all_fahrzeuge$id_richtig_fahrzeuge == TRUE)){
     select(-id_richtig_fahrzeuge, -Fahrzeugtyp)
 }
 
-# remove unused objects and free memory
-fahrzeug_oem1_typ11 <- ""
-fahrzeug_oem1_typ12 <- ""
-fahrzeug_oem2_typ21 <- ""
-fahrzeug_oem2_typ22 <- ""
-gc()
-
 
 ## Join einzelteile with relational bestandteile_komponenten dataset
 
@@ -611,11 +566,6 @@ gc()
 einzelteile <- right_join(all_einzelteile, bestandteile_komponenten, by = "ID_Einzelteil") %>%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
-
-# remove unused objects
-all_einzelteile <- ""
-bestandteile_komponenten <- ""
-gc()
 
 
 ## Join fahrzeuge with relational fahrzeug_bestandteile dataset
@@ -625,44 +575,30 @@ fahrzeuge <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug"
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
 
-# remove unused objects and free memory
-all_fahrzeuge <- ""
-fahrzeug_bestandteile <- ""
-gc()
-
 
 ## Join datasets with Geodaten and Zulassungen
 
 # Join einzelteile and komponenten with Geodaten to get coordinates of each manufactory ("Werk"), left join to keep all einzelteile / komponenten data and only relevant coordinates
 einzelteile_geo <- left_join(einzelteile, tier2_clean, by = "Werksnummer") %>%
-  select(-PLZ, -Ort)
+  # remove columns irrelevant for final dataset
+  select(-PLZ, -Ort, -Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
 komponenten_geo <- left_join(komponenten, tier1_clean, by = "Werksnummer") %>%
-  select(-PLZ, -Ort)
+  select(-PLZ, -Ort, -Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum, Herstellernummer_Komponente = Herstellernummer)
 
 # Join fahrzeuge with zulassungen and gemeinden_clean (containing coordinates), left joins to keep all fahrzeuge data and only relevant zulassungen and coordinates
 fahrzeuge_geo <- left_join(fahrzeuge, zulassungen, by = "ID_Fahrzeug") %>%
-  left_join(., gemeinden_clean, by = "Gemeinde")
-
-# Clean datasets from irrelevant columns in order to prepare for final join
-
-# remove irrevelant columns from einzelteile_geo, komponenten_geo and fahrzeuge_geo
-einzelteile_clean <- einzelteile_geo %>%
-  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
-komponenten_clean <- komponenten_geo %>%
-  select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum) %>%
-  rename(Herstellernummer_Komponente = Herstellernummer)
-fahrzeuge_clean <- fahrzeuge_geo %>%
+  left_join(., gemeinden_clean, by = "Gemeinde") %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Fehlerhaft)
 
 # check if any values are missing in the joined datasets
-if(any(is.na(einzelteile_clean))==TRUE) {
-  filter_all(einzelteile_clean, any_vars(is.na(.)))
+if(any(is.na(einzelteile_geo))==TRUE) {
+  filter_all(einzelteile_geo, any_vars(is.na(.)))
 }
-if(any(is.na(komponenten_clean))==TRUE) {
-  filter_all(komponenten_clean, any_vars(is.na(.)))
+if(any(is.na(komponenten_geo))==TRUE) {
+  filter_all(komponenten_geo, any_vars(is.na(.)))
 }
-if(any(is.na(fahrzeuge_clean))==TRUE) {
-  filter_all(fahrzeuge_clean, any_vars(is.na(.)))
+if(any(is.na(fahrzeuge_geo))==TRUE) {
+  filter_all(fahrzeuge_geo, any_vars(is.na(.)))
   # the filtered dataset initially showed that coordinates and PLZ are missing for the location "Seeg". The PLZ is 87637, Längengrad = 10.612874 and Breitengrad = 47.654894. The entry "Seeg" was completely missing in the "gemeinden" dataset and the NA occured after joining with zulassen. The Data was added too gemeinden dataset
 }
 
@@ -670,8 +606,8 @@ if(any(is.na(fahrzeuge_clean))==TRUE) {
 ## Final join, filter and cleaning
 
 # Final join: einzelteile_, komponenten_, and fahrzeuge_clean by ID_Komponente column
-final_join <- full_join(einzelteile_clean, komponenten_clean, by = "ID_Komponente", suffix = c("_Einzelteil", "_Komponente")) %>%
-  full_join(., fahrzeuge_clean, by ="ID_Komponente") %>%
+final_join <- full_join(einzelteile_geo, komponenten_geo, by = "ID_Komponente", suffix = c("_Einzelteil", "_Komponente")) %>%
+  full_join(., fahrzeuge_geo, by ="ID_Komponente") %>%
   rename(Produktionsdatum_Fahrzeug = Produktionsdatum, Werksnummer_Fahrzeug = Werksnummer)
 
 # filter for Herstellernummer_Komponente == 111 and Fehlerhaft == 1 to get faulty parts and components of seats produced by company "111"
@@ -680,10 +616,13 @@ final_filtered <- final_join %>%
   filter(Fehlerhaft_Einzelteil == 1 | Fehlerhaft_Komponente == 1) %>%
   select(-Herstellernummer_Komponente)
 
+# reorder columns
 final_order <- final_filtered[c(1:3,5,6,4,7:11,13,12,15,14,16,18,17)]
 
 final_joined <- final_order
 str(final_joined)
+
+
 ```
 
 ## Aufgabe 3
