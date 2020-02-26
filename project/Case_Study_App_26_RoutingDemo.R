@@ -32,8 +32,16 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 100)
+n <- 100 # Test size
+max <- 230000 # Number of observations
+beispiel <- floor(runif(n, min=1, max = max))
+str(beispiel)
+#auswahl <- seq(x, n, by=x) # subset data
 
+# Subset the data
+final_joined <- final_joined[beispiel, ]
+
+str(final_joined)
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
 start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
@@ -43,7 +51,7 @@ print(start_end_dates)
 
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
   
-    mainPanel(
+  mainPanel(
     # Link CSS file to main panel
     #tags$link(rel = "stylesheet", type = "text/css", href = "bootstrap.min.css"),
     
@@ -120,7 +128,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
       fluidRow(
         column(12,
                dataTableOutput('datatable_final_joined'),
-                style='white-space: nowrap;', # CSS no linebrake in data table column
+               style='white-space: nowrap;', # CSS no linebrake in data table column
                
         )
       )
@@ -185,7 +193,7 @@ server <- function(input, output, session) {
     datatable(
       gemeinden,
       options = list(
-        lengthMenu = list(c(3, 6, 20, -1), c('3', '6', '20', 'All')),
+        lengthMenu = list(c(3, 6, 20, 100), c('3', '6', '20', '100')),
         pageLength = 3
       ),
       rownames = FALSE
@@ -197,11 +205,11 @@ server <- function(input, output, session) {
   output$datatable_bauteile <- renderDataTable({
     input$reset_filters
     datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, c(1, 2, 4, 7, 11, 13)], # [1:30,c(1,4)],  # Betroffene Bauteile
-     options = list(
-       lengthMenu = list(c(3, 6, -1), c('3', '6', 'All')),
-       pageLength = 3
-     ),
-     rownames = FALSE)
+              options = list(
+                lengthMenu = list(c(3, 6, 100), c('3', '6', '100')),
+                pageLength = 3
+              ),
+              rownames = FALSE)
   })
   
   filtered_vehicles <- reactive({
@@ -212,6 +220,15 @@ server <- function(input, output, session) {
       fahrzeuge
     }
   })
+  filtered_data_dots <- reactive({
+    if(length(input$datatable_gemeinden_rows_selected)){
+      data_dots[beispiel, ] %>%
+        filter(lng_begin %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Längengrad_Einzelteil)
+    } else {
+      data_dots
+    }
+  })
+  
   
   # Data Preparation for the rendering of heatmap with markers and supply routes
   #
@@ -227,28 +244,10 @@ server <- function(input, output, session) {
   #
   # Create data frame with n supply routes: data_dots
   #load("./project/Datensatz_tidy.RData")
-  n <- 4
-  routes <- final_joined[1:n, ]
+  #n <- 1000
+  supply_routes <- final_joined
   
-  library(tidyverse)
-  #craete a column with unique id's per event-location combination
-  df <- df %>% mutate( id = row_number() )
-  #create a temporaty df with events
-  events.df <- df %>% 
-    select( id, Event_lat, Event_lon) %>% 
-    rename( latitude = Event_lat, longitude = Event_lon)
-  #create a temporaty df with locations
-  locations.df <- df %>% 
-    select( id, Location_latitude, Location_longitude) %>%
-    rename( latitude = Location_latitude, longitude = Location_longitude)
-  #merge the two temp.df's together
-  df.sp <- bind_rows( events.df, locations.df )
-  
-  
-  
-  
-  #
-  data_dots = data.frame(id = 1:n,
+  data_dots = data.frame(id = 1:length(beispiel),
                          lat_begin = supply_routes$Breitengrad_Einzelteil,
                          lat_via = supply_routes$Breitengrad_Komponente,
                          lat_end = supply_routes$Breitengrad,
@@ -256,6 +255,10 @@ server <- function(input, output, session) {
                          lng_via = supply_routes$Längengrad_Komponente,
                          lng_end = supply_routes$Längengrad,
                          ID_Fahrzeug = supply_routes$ID_Fahrzeug)
+  data
+  # Altenate displayed routes
+  selected_routes <- beispiel
+  beispiel
   #
   # Render map
   output$map <- renderLeaflet({
@@ -264,7 +267,7 @@ server <- function(input, output, session) {
       addTiles() %>%
       addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
                  intensity = ~fehleranzahl, blur = 14, max = 20, radius = 12) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
-      #fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>% # buggy after scaling
+      fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>% # buggy after scaling
       addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
@@ -275,13 +278,20 @@ server <- function(input, output, session) {
                                 "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
                                 "Zugelassen in: ", PLZ, " ", Gemeinde)
       )  %>%
-      
     
+    addMarkers(data = filtered_data_dots(), ~lat_via, ~lng_via,
+               #display large amounts of markers as clusters
+               clusterOptions = markerClusterOptions(),
+               popup = ~paste("<center><h5>Werksinfo Einzelteil</h5></center>",
+                              "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>")
+    )  %>%
+      
       # add dots of supply route
-    addCircles(data = data_dots, ~c(lng_begin, lng_via, lng_end) , ~c(lat_begin, lat_via, lat_end), 
-               weight = 5, stroke=FALSE, fillOpacity = 0.7) %>% 
+      addCircles(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
+                 color = 'black', weight = 1, radius = gemeinden$Zulassungen*10000, stroke=FALSE, fillOpacity = 0.7) %>%
+      
       # Render the polyroutes supply route
-      addPolylines(data = data_dots,
+      addPolylines(data = data_dots[1,],
                    lng= ~ c(lng_begin, lng_via, lng_end),
                    lat= ~ c(lat_begin, lat_via, lat_end),
                    #color = 'blue',
@@ -292,10 +302,76 @@ server <- function(input, output, session) {
                    fillOpacity = 0.2, dashArray = NULL, smoothFactor = 1,
                    noClip = TRUE, popup = ~ID_Fahrzeug, popupOptions = NULL, label = ~ID_Fahrzeug,
                    #labelOptions = NULL, options = pathOptions(),
-                   highlightOptions = NULL
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[2,],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = 'blue', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[3,],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = 'yellow', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[4,],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[5,],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[6],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[7],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[8],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
       )
     
-  
+    
+    
+    
   })
   
   observeEvent(input$reset, {
@@ -309,26 +385,26 @@ server <- function(input, output, session) {
   output$datatable_final_joined <- renderDataTable({
     input$reset_filters
     datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1,
-                c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil',
-                  'ID_Komponente', 'Werksnummer_Komponente', 'Fehlerhaft_Komponente',
-                  'ID_Fahrzeug', 'Werksnummer_Fahrzeug', 'Produktionsdatum_Fahrzeug', 'Zulassungsdatum', 'Gemeinde', 'PLZ') ],
-    filter = 'top',
-    options = list(
-      lengthMenu = list(c(3, 10, 20, 100, 1000,  -1), c('3', '10', '20', '100', '1000', 'All')),
-      pageLength = 10
-    ),
-    colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
-                'ID_Werk' = 'Werksnummer_Komponente',
-                'ID_Werk' =  'Werksnummer_Fahrzeug',
-                'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
-                'Fehlerhaft' = 'Fehlerhaft_Komponente'),
-    rownames = FALSE) %>% 
+                           c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil',
+                             'ID_Komponente', 'Werksnummer_Komponente', 'Fehlerhaft_Komponente',
+                             'ID_Fahrzeug', 'Werksnummer_Fahrzeug', 'Produktionsdatum_Fahrzeug', 'Zulassungsdatum', 'Gemeinde', 'PLZ') ],
+              filter = 'top',
+              options = list(
+                lengthMenu = list(c(3, 10, 20, 100, 1000, 10000), c('3', '10', '20', '100', '1000', '10000')),
+                pageLength = 10
+              ),
+              colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
+                           'ID_Werk' = 'Werksnummer_Komponente',
+                           'ID_Werk' =  'Werksnummer_Fahrzeug',
+                           'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
+                           'Fehlerhaft' = 'Fehlerhaft_Komponente'),
+              rownames = FALSE) %>% 
       # Add column grid to visually divide Einzelteil, Komponente and Fahrzeug
       formatStyle(
         c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = "solid 1px"
       )
   })
-    
+  
 } 
 
 # Shiny App starten
