@@ -116,7 +116,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                  
                                  # Info text map
                                  column(6, offset= 2, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                        "Man kann Bautteile und Gemeinden auswählen um die Ergebnisse auf der Karte zu filtern.",
+                                        "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
                                         actionButton("reset_filters", "Alle Filter zurücksetzen"),
                                  ),
                                  # Display the heatmap  with car markers
