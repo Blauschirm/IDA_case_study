@@ -1,0 +1,217 @@
+---
+title: "Lieferweg"
+output: html_notebook
+---
+
+Lieferweg visualisieren
+https://stackoverflow.com/questions/50867215/leaflet-add-multiple-polylines
+```{r}
+df <- read.table( text = "Event_lat   Event_lon   Event   Location    Location_latitude   Location_longitude
+40.791151   -124.054008 704832643   60005   40.790961   -124.1825609
+38.900882   -122.660353 704653051   60009   38.873889   -122.709722
+38.921488   -122.600049 704681147   60011   38.85111099 -122.593333
+38.921488   -122.600049 704681147   60011   38.85111099 -122.593333
+39.141877   -123.044724 706777142   60012   39.22794396 -123.064722
+38.928113   -122.611386 708644013   60016   38.98950003 -122.7695828
+39.02361    -122.72195  708582623   60016   38.98950003 -122.7695828
+38.87586    -122.842684 708336092   60016   38.98950003 -122.7695828
+39.239926   -123.145497 709020144   60017   39.24138798 -123.2163878
+39.3307 -123.221674 708875205   60017   39.24138798 -123.2163878", header = TRUE)
+
+
+library(sf)
+library(data.table)
+
+setDT(df)   
+
+## create an 'id' / index value. This assumes each row of your data is a separate line. 
+df[, idx := .I]
+
+## create an `sfc` column (where each row is an `sfg` object)
+sf <- df[
+  , {
+    geometry <- sf::st_linestring(x = matrix(c(Event_lon, Event_lat, Location_longitude, Location_latitude), ncol = 2, byrow = T))
+    geometry <- sf::st_sfc(geometry)
+    geometry <- sf::st_sf(geometry = geometry)
+  }
+  , by = idx
+  ]
+
+## convert to sf
+sf <- sf::st_as_sf(sf)
+
+library(leaflet)
+
+leaflet() %>%
+  addTiles() %>%
+  addPolylines(data = sf) %>%
+  addCircles(data = df, lng = ~Event_lon, lat = ~Event_lat, radius=20, color = "red", group = "events") %>% 
+  addCircles(data = df, lng = ~Location_longitude, lat = ~Location_latitude, radius=20, color = "blue", group = 'Locations')
+```
+
+
+
+```{r}
+if( !require(leaflet)){
+  install.packages("leaflet")
+}
+library(leaflet)
+library(leaflet.extras)
+if( !require(dplyr)){
+  install.packages("dplyr")
+}
+library(dplyr)
+
+#load("/Users/jank/Documents/Privat/Uni/Uni Unterlagen/Engineering in R/Github Projects in R/IDA_case_study/project/Datensatz_tidy.RData")
+
+# for debugging: reducing the amount of data to be loaded
+lines <- final_joined[6:8, ]
+
+%>%
+  addPolylines(lines, 
+               lng = ~c(NA, Längengrad_Einzelteil, Längengrad_Komponente, Längengrad, NA),
+               lat = ~c(NA, Breitengrad_Einzelteil, Breitengrad_Komponente, Breitengrad, NA),
+               group = ~ID_Fahrzeug,
+               color = "#03F",
+               weight = 5,
+               opacity = 0.5, fill = FALSE, fillColor = "#c50e1",
+               fillOpacity = 0.2, dashArray = NULL, smoothFactor = 1,
+               noClip = TRUE, popup = NULL, popupOptions = NULL, label = NULL,
+               #labelOptions = NULL, options = pathOptions(),
+               highlightOptions = NULL
+  )
+
+
+
+```
+
+
+Routing: Vector mit Gemeinde -> Komponente -> Einzelteil
+```{r}
+if( !require(purrrlyr)){
+  install.packages("purrrlyr")
+}
+library(purrrlyr)
+
+if( !require(stringr)){
+  install.packages("stringr")
+}
+library(stringr)
+
+if( !require(sf)){
+  install.packages("sf")
+}
+library(sf)
+
+
+# Add 2-hop path vector add the end of table
+final_paths = final_joined %>%
+  dplyr::mutate(
+    # str_c returns NA when one of the arguments is NA
+    # last lead() element is NA and will be dropped
+    geom_wkt = stringr::str_c(
+      "LINESTRING (",
+      stringr::str_c(
+        str_c(Längengrad, Breitengrad, sep = " "),
+        str_c(Längengrad_Einzelteil, Breitengrad_Einzelteil, sep = " "),
+        str_c(Längengrad_Komponente, Breitengrad_Komponente, sep = " "),
+        sep = ", "
+      ),
+      ")"
+    )
+  ) %>%
+  sf::st_as_sf(wkt = "geom_wkt", crs = 4326)
+```
+
+# Shiny leaflet add large amount of separated polylines
+
+https://stackoverflow.com/questions/53813758/shiny-leaflet-add-large-amount-of-separated-polylines
+
+```{r}
+library(dplyr)
+library(shiny)
+library(leaflet)
+library(mapview)
+library(sf)
+
+
+n = 10 # small number of lines 
+data_dots = data.frame(id = 1:n,
+                       lat_begin = round(runif(n,45,50),2),
+                       lat_end = round(runif(n,45,50),2),
+                       lng_begin = round(runif(n,0,8),2),
+                       lng_end = round(runif(n,0,8),2))
+
+ui <- fluidPage(
+  leafletOutput("map")
+)
+
+server <- function(input, output) {
+  # Initiate the map
+  output$map <- renderLeaflet({
+    data_dots_sf_begin <- data_dots %>% 
+      st_as_sf(coords=c("lng_begin", "lat_begin"))
+
+    data_dots_sf_end <- data_dots %>% 
+      st_as_sf(coords=c("lng_end", "lat_end"))
+
+    data_dots_sf <- st_combine(cbind(data_dots_sf_begin, data_dots_sf_end)) %>% 
+      st_cast("LINESTRING")
+
+    st_crs(data_dots_sf) <- 4326
+
+    leaflet() %>% 
+      addTiles(options = providerTileOptions(noWrap = TRUE)) %>%
+      addFeatures(data = data_dots_sf,
+                  color = 'blue',
+                  weight = 1)
+  })
+}
+shinyApp(ui = ui, server = server)
+```
+
+```{r}
+library(leaflet)
+df <- read.table( text = "Event_lat   Event_lon   Event   Location    Location_latitude   Location_longitude
+40.791151   -124.054008 704832643   60005   40.790961   -124.1825609
+38.900882   -122.660353 704653051   60009   38.873889   -122.709722
+38.921488   -122.600049 704681147   60011   38.85111099 -122.593333
+38.921488   -122.600049 704681147   60011   38.85111099 -122.593333
+39.141877   -123.044724 706777142   60012   39.22794396 -123.064722
+38.928113   -122.611386 708644013   60016   38.98950003 -122.7695828
+39.02361    -122.72195  708582623   60016   38.98950003 -122.7695828
+38.87586    -122.842684 708336092   60016   38.98950003 -122.7695828
+39.239926   -123.145497 709020144   60017   39.24138798 -123.2163878
+39.3307 -123.221674 708875205   60017   39.24138798 -123.2163878", header = TRUE)
+
+library(sf)
+library(data.table)
+
+setDT(df)   
+
+## create an 'id' / index value. This assumes each row of your data is a separate line. 
+df[, idx := .I]
+
+## create an `sfc` column (where each row is an `sfg` object)
+sf <- df[
+    , {
+        geometry <- sf::st_linestring(x = matrix(c(Event_lon, Event_lat, Location_longitude, Location_latitude), ncol = 2, byrow = T))
+        geometry <- sf::st_sfc(geometry)
+        geometry <- sf::st_sf(geometry = geometry)
+    }
+    , by = idx
+]
+
+## convert to sf
+sf <- sf::st_as_sf(sf)
+
+library(leaflet)
+
+leaflet() %>%
+    addTiles() %>%
+    addPolylines(data = sf) %>%
+    addCircles(data = df, lng = ~Event_lon, lat = ~Event_lat, radius=20, color = "red", group = "events") %>% 
+    addCircles(data = df, lng = ~Location_longitude, lat = ~Location_latitude, radius=20, color = "blue", group = 'Locations')
+
+```
+
