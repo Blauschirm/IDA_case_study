@@ -32,7 +32,7 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-n <- 100 # Test size
+n <- 1200 # Test size
 max <- 230000 # Number of observations
 beispiel <- floor(runif(n, min=1, max = max))
 str(beispiel)
@@ -60,20 +60,20 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
       
       img(src='https://www.qw.tu-berlin.de/fileadmin/_processed_/8/8d/csm_QW_ohne_Text_print_a4670877cd.jpg',
           align = "right"),
-      img(src='https://www.qw.tu-berlin.de/fileadmin/Aperto_design/img/logo_01.gif',
-          align = "left"),
+      #img(src='https://www.qw.tu-berlin.de/fileadmin/Aperto_design/img/logo_01.gif',
+          #align = "left"),
       titlePanel("Case_Study_App_26"),
       
       fluidRow(
         column(12,
-               "Zulassungsverlauf, Gemeinde-Suche und Bauteil-Suche",
-               style='font-size: 26px; color: #c50e1f;'
+               "Schadensschwerpunkte und Lieferwege von betroffenen Bauteilen",
+               style='font-size: 32px; color: #c50e1f;'
                # CSS no linebrake in data table column
         )
       )
     ),
     wellPanel(
-      titlePanel("Darstellung 1: Zeitlicher Zulassungsverlauf"),
+      titlePanel("Zeitlicher Zulassungsverlauf der betroffenen Fahrzeuge aufgeteilt nach OEM-Werken"),
       fluidRow(
         column(12,
                plotOutput("plot_zulassungsverlauf")
@@ -81,14 +81,13 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
       )
     ),
     wellPanel(
-      titlePanel("Darstellung 2: Heatmap mit Gemeinde-Suche und Bauteil-Suche"),
+      titlePanel("Interaktive Karte mit Gemeinde-Suche und Bauteilsuche"),
+      
       fluidRow(
         column(12,
+            
                fluidRow(
                  column(12,
-                        fluidRow(
-                          actionButton("reset_filters", "Alle Filter zurücksetzen")
-                        ),
                         fluidRow(
                           column(3, 
                                  (h4("Betroffene Gemeinden")),
@@ -110,11 +109,21 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                    choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
                                  ),
                                  
+                                 # Reset search filter section
+                                 column(4, offset = 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                                        "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken.",
+                                 ),
+                                 
+                                 # Info text map
+                                 column(6, offset= 2, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                                        "Man kann Bautteile und Gemeinden auswählen um die Ergebnisse auf der Karte zu filtern.",
+                                        actionButton("reset_filters", "Alle Filter zurücksetzen"),
+                                 ),
                                  # Display the heatmap  with car markers
                                  leafletOutput(outputId = "map", width = '100%', height = 600),
                                  "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"),
                           
-                          column(12, 
+                          column(12,
                                  "Bottombox: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
                           ),
                         )
@@ -128,7 +137,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
       fluidRow(
         column(12,
                dataTableOutput('datatable_final_joined'),
-               style='white-space: nowrap;', # CSS no linebrake in data table column
+               style='white-space: nowrap;' # CSS no linebrake in data table column
                
         )
       )
@@ -266,7 +275,7 @@ server <- function(input, output, session) {
       setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>% # centered to Germany map
       addTiles() %>%
       addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
-                 intensity = ~fehleranzahl, blur = 14, max = 20, radius = 12) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
+                 intensity = ~fehleranzahl, blur = 14, max = 15, radius = 24) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
       fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>% # buggy after scaling
       addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
                  #display large amounts of markers as clusters
@@ -288,7 +297,7 @@ server <- function(input, output, session) {
       
       # add dots of supply route
       addCircles(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
-                 color = 'black', weight = 1, radius = gemeinden$Zulassungen*10000, stroke=FALSE, fillOpacity = 0.7) %>%
+                 color = 'grey', weight = 1, radius = gemeinden$Zulassungen*5000, stroke=FALSE, fillOpacity = 0.3) %>%
       
       # Render the polyroutes supply route
       addPolylines(data = data_dots[1,],
@@ -391,7 +400,19 @@ server <- function(input, output, session) {
               filter = 'top',
               options = list(
                 lengthMenu = list(c(3, 10, 20, 100, 1000, 10000), c('3', '10', '20', '100', '1000', '10000')),
-                pageLength = 10
+                pageLength = 10,
+                
+                # Define German translaton of data table UI
+                language = list(
+                  info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergenissen',
+                  paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zurück', `next` = 'Vor'),
+                  infoEmpty = 'Keine Daten vorhanden',
+                  loadingRecords = 'Lädt...',
+                  processing = 'Ergebnisse werden geladen...',
+                  lengthMenu = 'Zeige _MENU_ Ergebnisse',
+                  search = 'Suche nach betroffenen Bauteilen:')
+                  #search = 'Suche nach betroffenen Gemeinden:')
+                
               ),
               colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
                            'ID_Werk' = 'Werksnummer_Komponente',
@@ -401,7 +422,7 @@ server <- function(input, output, session) {
               rownames = FALSE) %>% 
       # Add column grid to visually divide Einzelteil, Komponente and Fahrzeug
       formatStyle(
-        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = "solid 1px"
+        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = 'solid 1px'
       )
   })
   
