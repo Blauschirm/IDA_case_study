@@ -198,6 +198,12 @@ Um einen Eindruck zur Datenstruktur zu erhalten, wurden die Funktionen str() (f�
 Alle Einzelteil-Datensätze hatten jeweils zwei überflüssige Spalten mit den Variablen X1 und X1_1, deren Werte lediglich eine fortlaufende Nummerierung der Spalten darstellten. Diese Spalten wurden entsprechend entfernt. Die Spaltennamen für die IDs wurden als "Einzelteil_ID" für den späteren Join vereinheitlicht. 
 
 Die Einzelteil-Datensätze lagen außerdem in zwei unterschiedlichen Strukturen vor. In den Tabellen "T11", T14", "T19" und "T20" waren die Werte für das jeweilige Produktionsdatum über zwei Spalten verteilt: In der Spalte "Produktionsdatum_01011970_origin" als Anzahl von Tagen im integer-Format basierend auf dem Wert "01-01-1970" in der "origin"-Spalte im Date-Format. Die integer-Werte mussten deshalb entsprechend mit der mutate() Funktion auf das origin-Datum addiert, in einer neuen Variable "Produktionsdatum" gespeichert und die übrigen Spalten gelöscht werden. 
+<<<<<<< HEAD
+=======
+
+```{r tidy data einzteile}
+### Tidy data
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 
 ```{r tidy data einzteile}
 ## Clean and tidy Einzelteile datasets
@@ -222,13 +228,21 @@ t20 <- t20 %>%
   mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970) %>%
   select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970, ID_Einzelteil = ID_T20) %>%
   mutate(Einzelteil="20")
-
 ```
 
 In den Datensätzen "T15" und "T16" waren die wesentlichen Variablen jeweils auf zwei (T15) bzw. drei (T16) Spalten (z.B. ID_T16.x, ID_T16.y und ID_T16) verteilt, was eventuell auf einen nicht ordnungsgemäßen Join zurückzuführen ist. Folglich beinhaltete die Tabelle viele fehlende Werte. Nach diesen wurde der Datensatz respektiv gefiltert per Selektierung der Spaltenzahlen in zwei bzw. drei Parts aufgespaltet. Hinterher wurden die Spaltennamen vereinheitlicht und die zwei bzw. drei Parts mittel bind_rows() in jeweils einen Datensatz zusammengeführt.
 
 Außerdem haben alle Einzelteil-Datensätze jeweils eine zusätzliche Spalte "Einzelteil" mit dem Anfangswert ihrer ID-Nummer bekommen, um die Richtigkeit des ID-Werts später prüfen zu können (s. Join-Abschnitt).
 
+<<<<<<< HEAD
+```
+
+In den Datensätzen "T15" und "T16" waren die wesentlichen Variablen jeweils auf zwei (T15) bzw. drei (T16) Spalten (z.B. ID_T16.x, ID_T16.y und ID_T16) verteilt, was eventuell auf einen nicht ordnungsgemäßen Join zurückzuführen ist. Folglich beinhaltete die Tabelle viele fehlende Werte. Nach diesen wurde der Datensatz respektiv gefiltert per Selektierung der Spaltenzahlen in zwei bzw. drei Parts aufgespaltet. Hinterher wurden die Spaltennamen vereinheitlicht und die zwei bzw. drei Parts mittel bind_rows() in jeweils einen Datensatz zusammengeführt.
+
+Außerdem haben alle Einzelteil-Datensätze jeweils eine zusätzliche Spalte "Einzelteil" mit dem Anfangswert ihrer ID-Nummer bekommen, um die Richtigkeit des ID-Werts später prüfen zu können (s. Join-Abschnitt).
+
+=======
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 ```{r tidy data einzteile 2}
 # remove unnecessary columns in t15 and t16
 t15 <- select(t15, -X1, -X1_1)
@@ -271,13 +285,21 @@ t16_part1 <- ""
 t16_part2 <- ""
 t16_part3 <- ""
 gc()
+```
 
+### Relationstabelle: Bestandteile_Komponenten
+
+<<<<<<< HEAD
 ```
 
 ### Relationstabelle: Bestandteile_Komponenten
 
 Die beiden relevanten Komponenten "K2LE1" und "K2LE2" stehen jeweils in Relation zu drei unterschiedlichen Einzelteilen, deren IDs in den "Bestandteile_Komponente"-Datensätzen jeweils als eine Spalte aufgeführt sind. Um alle Einzelteile in einer Spalte und damit eine Variable "ID_Einzelteil" unterzubringen und den späteren Join zu erleichtern, wurden die Datensätze jeweils nach den drei Einzelteilen aufgeteilt und deren Zeilen mittels bind_rows() zu einem Datensatz verbunden. Analog zu den Einzelteil-Datensätzen wurden unnütze Spalten entfernt und die ID in "ID_Komponente" unbenannt.
 
+=======
+Die beiden relevanten Komponenten "K2LE1" und "K2LE2" stehen jeweils in Relation zu drei unterschiedlichen Einzelteilen, deren IDs in den "Bestandteile_Komponente"-Datensätzen jeweils als eine Spalte aufgeführt sind. Um alle Einzelteile in einer Spalte und damit eine Variable "ID_Einzelteil" unterzubringen und den späteren Join zu erleichtern, wurden die Datensätze jeweils nach den drei Einzelteilen aufgeteilt und deren Zeilen mittels bind_rows() zu einem Datensatz verbunden. Analog zu den Einzelteil-Datensätzen wurden unnütze Spalten entfernt und die ID in "ID_Komponente" unbenannt.
+
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 ```{r tidy data bestandteile_komponenten}
 ## Clean and tidy Bestandteile_Komponente datasets (relational table between einzelteile and komponenten)
 
@@ -318,11 +340,19 @@ gc()
 ```
 
 ### Komponenten
+<<<<<<< HEAD
 
 So wie bei den Einzelteil-Datensätzen "T15" und "T16" waren die Variablen im Komponenten-Datensatz "K2LE1" auf zwei Spalten aufgeteilt. Entsprechend wurde der Datensatz aufgeteilt und per bind_rows() zusammengeführt. In "K2LE2" war das Produktionsdatum ebenfalls auf zwei Variablen aufgeteilt und musste per mutate() zusammenaddiert werden.
 
 Überflüssige Spalten (X1 und X2) wurden gelöscht und eine Vergleichswert für die ID in der Variable "Komponente" für die spätere Prüfung der ID-Werte hinzugefügt.
 
+=======
+
+So wie bei den Einzelteil-Datensätzen "T15" und "T16" waren die Variablen im Komponenten-Datensatz "K2LE1" auf zwei Spalten aufgeteilt. Entsprechend wurde der Datensatz aufgeteilt und per bind_rows() zusammengeführt. In "K2LE2" war das Produktionsdatum ebenfalls auf zwei Variablen aufgeteilt und musste per mutate() zusammenaddiert werden.
+
+Überflüssige Spalten (X1 und X2) wurden gelöscht und eine Vergleichswert für die ID in der Variable "Komponente" für die spätere Prüfung der ID-Werte hinzugefügt.
+
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 ```{r tidy data komponenten}
 ## Clean and tidy Komponente datasets
 
@@ -404,6 +434,10 @@ bestandteile_oem2_typ21 <- bestandteile_oem2_typ21 %>%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
 bestandteile_oem2_typ22 <- bestandteile_oem2_typ22 %>%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 
 ## Tidy and clean Fahrzeug datasets
 
@@ -423,9 +457,13 @@ fahrzeug_oem2_typ22 <- fahrzeug_oem2_typ22 %>%
   mutate(origin = (as.Date(origin, format = "%d-%m-%Y")), Produktionsdatum = as.Date(Produktionsdatum_Origin_01011970, origin = origin)) %>%
   select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970) %>%
   mutate(Fahrzeugtyp = 22)
-
 ```
 
+<<<<<<< HEAD
+```
+
+=======
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 ### Zulassungen
 
 In den "Zulassungen"-Daten wurden Beobachtungen mit fehlende ID-Werten gelöscht, da diese nicht verwertet werden können und Variablen umbenannt, um Joins zu erleichtern.
@@ -437,11 +475,19 @@ Die Geodaten bringen besondere Anforderungen für die spätere Darstellung in de
 - Postleitzahlen sollten 5 Zeichen und alle Gemeinden Deutschlands beinhalten
 
 Nach dem Import wurden die Umlaute korrigiert und Postleitzahlen in PLZ umbenannt. Die Postleitzahlen wurden als nächstes normiert, indem eine anführende "0"-Ziffer eingefügt wurde, wenn die PLZ weniger als 5 Ziffern hatte.
+<<<<<<< HEAD
 
 Nach der Erstellung des finalen Datensatzes wurde festgestellt, dass Daten für die Gemeinde "Seeg" im "Gemeinden"-Datensatz nicht enthalten waren, der Ort jedoch in den "Zulassungen"-Daten aufgeführt war. Der Ort "Seeg" musste demnach mitsamt PLZ und Koordinaten als weitere Beobachtung bzw. Zeile in den Gemeinden hinzugefügt werden.
 
 Zuletzt wurden leere Spalten gelöscht, die Koordinaten normiert und Spaltennamen geändert. Hier bestanden insbesondere Unregelmäßigkeiten im Format und der Ziffernanzahl der Längen- und Breitengrade. Dazu wurde die Funktion addZerosUntil8Digits() geschrieben, die den Koordinaten "0"-Ziffern anfügt, bis 8 Stellen erreicht sind, um alle Koordinaten später auf eine zweistellige Zahl mit Nachkommastellen dividieren zu können. Dabei ergab sich jedoch das Problem, dass manche Längengrade vor dem Komma einstellig sein müssen, da Deutschland zwischen ~6 und ~16°E liegt. Eine weitere Funktion chopBigLongitudes() diviert den Längegrad deshalb ein weiteres Mal durch 10, wenn er den Wert 20 vor dem Komma überschreitet.
 
+=======
+
+Nach der Erstellung des finalen Datensatzes wurde festgestellt, dass Daten für die Gemeinde "Seeg" im "Gemeinden"-Datensatz nicht enthalten waren, der Ort jedoch in den "Zulassungen"-Daten aufgeführt war. Der Ort "Seeg" musste demnach mitsamt PLZ und Koordinaten als weitere Beobachtung bzw. Zeile in den Gemeinden hinzugefügt werden.
+
+Zuletzt wurden leere Spalten gelöscht, die Koordinaten normiert und Spaltennamen geändert. Hier bestanden insbesondere Unregelmäßigkeiten im Format und der Ziffernanzahl der Längen- und Breitengrade. Dazu wurde die Funktion addZerosUntil8Digits() geschrieben, die den Koordinaten "0"-Ziffern anfügt, bis 8 Stellen erreicht sind, um alle Koordinaten später auf eine zweistellige Zahl mit Nachkommastellen dividieren zu können. Dabei ergab sich jedoch das Problem, dass manche Längengrade vor dem Komma einstellig sein müssen, da Deutschland zwischen ~6 und ~16°E liegt. Eine weitere Funktion chopBigLongitudes() diviert den Längegrad deshalb ein weiteres Mal durch 10, wenn er den Wert 20 vor dem Komma überschreitet.
+
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 ```{r tidy data zulassungen und geodaten}
 ## Clean and tidy Zulassungen
 
@@ -511,6 +557,16 @@ tier2_clean <- tier2  %>%
 
 ## Erstellen des finalen Datensatzes Auswertung
 
+<<<<<<< HEAD
+=======
+
+
+### Zusammenführen der einzelnen Datensätze nach Kategorie
+
+
+
+```{r bind rows}
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 
 
 ### Zusammenführen der einzelnen Datensätze nach Kategorie
@@ -621,6 +677,9 @@ if(all(all_fahrzeuge$id_richtig_fahrzeuge == TRUE)){
   all_fahrzeuge <- all_fahrzeuge %>%
     select(-id_richtig_fahrzeuge, -Fahrzeugtyp)
 }
+```
+
+### Joining mit relationalen Datensätzen
 
 ```
 
@@ -643,11 +702,20 @@ fahrzeuge <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug"
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
 ```
+<<<<<<< HEAD
+=======
 
 ### Joining mit Geodaten
 
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
+
+### Joining mit Geodaten
+
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 ```{r join geodata}
 ## Join datasets with Geodaten and Zulassungen
 
@@ -675,11 +743,20 @@ if(any(is.na(fahrzeuge_geo))==TRUE) {
   # the filtered dataset initially showed that coordinates and PLZ are missing for the location "Seeg". The PLZ is 87637, Längengrad = 10.612874 and Breitengrad = 47.654894. The entry "Seeg" was completely missing in the "gemeinden" dataset and the NA occured after joining with zulassen. The Data was added too gemeinden dataset
 }
 ```
+<<<<<<< HEAD
+=======
 
 ### Finaler Datensatz
 
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
+
+### Finaler Datensatz
+
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 1f74c56b318cd26de803a5c029761f961a7690bc
 ```{r final join}
 ## Final join, filter and cleaning
 
