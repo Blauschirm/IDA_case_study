@@ -36,8 +36,8 @@ load("Datensatz_tidy.RData")
 # Error: n <- 15680
 #n <- 15680
 #n <- 15679 # Test size
-n <- 60000#322707#5
-radius_factor <- 10 # 700
+n <- 10000#322707#5
+radius_factor <- 20 # 700
 max <- 3227075 # Number of observations
 beispiel <- floor(runif(8, min=1, max = n))
 summary(beispiel)
@@ -95,7 +95,9 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
       
       fluidRow(
         column(12,
-            
+               checkboxGroupInput("fahrzeuge", "Kartenebenen auswählen", 
+                                  inline = TRUE,
+                                  choices = c('Heatmap (Schadensschwerpunkte)', "Defekte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
                fluidRow(
                  column(12,
                         fluidRow(
@@ -114,18 +116,25 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                  dataTableOutput('datatable_bauteile'),
                                  
                                  # Select map type
-                                 selectizeInput(
-                                   'e1', 'Wählen Sie den Kartentyp aus',
-                                   choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
-                                 ),
+                                 # selectizeInput(
+                                 #   'e1', 'Wählen Sie den Kartentyp aus',
+                                 #   choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
+                                 # ),
                                  
+                                 
+                                 #verbatimTextOutput("value"),
+                                   #checkboxInput("lieferwege", "Lieferwege anzeigen", FALSE),
+                                 #verbatimTextOutput("value2"),
+
                                  # Reset search filter section
-                                 column(4, offset = 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                        "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken.",
+                                 column(6, offset = 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                                        "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
+                                        actionButton(inputId = "reset", "Karte zurücksetzen")
+                                        
                                  ),
                                  
                                  # Info text map
-                                 column(6, offset= 2, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                                 column(6, offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                                         "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
                                         actionButton("reset_filters", "Alle Filter zurücksetzen"),
                                  ),
@@ -317,6 +326,9 @@ server <- function(input, output, session) {
     iconWidth = 40, iconHeight = 40
   )
 
+  output$value <- renderText({ input$fahrzeuge })
+  output$value1 <- renderText({ input$lieferwege })
+  
   # Render map
   output$map <- renderLeaflet({
     leaflet(final_joined) %>%
@@ -470,6 +482,12 @@ server <- function(input, output, session) {
     
   })
   
+  observe({
+    input$reset
+    leafletProxy("map") %>%
+      setView(lng = 10.46, lat = 51.15, zoom = 6.25)
+  })
+  
   # Render full database
   output$datatable_final_joined <- renderDataTable({
     input$reset_filters
@@ -486,11 +504,11 @@ server <- function(input, output, session) {
                 language = list(
                   info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
                   paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zurück', `next` = 'Vor'),
-                  infoEmpty = 'Keine Daten vorhanden.',
+                  infoEmpty = 'Keine Daten vorhanden',
                   loadingRecords = 'Lädt...',
                   processing = 'Ergebnisse werden geladen...',
                   lengthMenu = 'Zeige _MENU_ Ergebnisse',
-                  infoFiltered =  'Gefiltert von _MAX_ Einträgen',
+                  infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
                   search = 'Suche nach betroffenen Bauteilen:')
                   #search = 'Suche nach betroffenen Gemeinden:')
                 
