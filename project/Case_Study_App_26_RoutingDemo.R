@@ -32,14 +32,24 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-n <- 1200 # Test size
-max <- 230000 # Number of observations
-beispiel <- floor(runif(n, min=1, max = max))
+
+# Error: n <- 15680
+#n <- 15680
+#n <- 15679 # Test size
+n <- 60000#322707#5
+radius_factor <- 10 # 700
+max <- 3227075 # Number of observations
+beispiel <- floor(runif(8, min=1, max = n))
+summary(beispiel)
 str(beispiel)
 #auswahl <- seq(x, n, by=x) # subset data
 
+#final_joined_error <- final_joined[c(n-1, n, n+1), ]
+
 # Subset the data
-final_joined <- final_joined[beispiel, ]
+#final_joined <- final_joined[beispiel, ]
+final_joined <- final_joined[c(1:(n-8), beispiel), ]
+str(final_joined)
 
 str(final_joined)
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
@@ -152,7 +162,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
 server <- function(input, output, session) {
   
   # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
-  fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
+  fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
   
   zulassungen <- reactive({
     if(length(input$datatable_gemeinden_rows_selected)){
@@ -190,11 +200,33 @@ server <- function(input, output, session) {
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
   
   gemeinden <- fahrzeuge %>% 
-    select(Gemeinde, PLZ) %>%
+    select(Gemeinde, PLZ, Werksnummer_Komponente) %>%
     group_by(Gemeinde, PLZ) %>%
     summarise(Zulassungen = length(PLZ)) %>%
     arrange(Gemeinde) %>%
     ungroup()
+  
+  tier1_werke <- final_joined %>% 
+    select(ID_Fahrzeug, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
+    group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
+    summarise(Einzelteile_hergestellt = sum(Fehlerhaft_Einzelteil)) %>%
+    arrange(Einzelteile_hergestellt) %>%
+    ungroup()
+  #summary(tier1_werke)
+  
+  
+  tier2_werke <- final_joined %>% 
+    select(ID_Fahrzeug, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
+    group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
+    summarise(defekte_Einzelteile_erhalten = sum(Fehlerhaft_Einzelteil),
+              Sitze_hergestellt = sum(Fehlerhaft_Komponente)) %>%
+    #arrange(Gemeinde) %>%
+    ungroup()
+  
+  summary(tier2_werke)
+  sum(tier2_werke$Sitze_hergestellt)
+  sum(tier2_werke$defekte_Einzelteile_erhalten)
+
   
   # Render data table: gemeinden
   output$datatable_gemeinden <- renderDataTable({
@@ -210,7 +242,7 @@ server <- function(input, output, session) {
   })
   
   # Render data table: bauteile
-  # fehlt noch: input$reset_filters
+  # fehlt noch: input$reset_filters # fixed!
   output$datatable_bauteile <- renderDataTable({
     input$reset_filters
     datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, c(1, 2, 4, 7, 11, 13)], # [1:30,c(1,4)],  # Betroffene Bauteile
@@ -225,18 +257,22 @@ server <- function(input, output, session) {
     if(length(input$datatable_gemeinden_rows_selected)){
       fahrzeuge %>%
         filter(PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ)
+      
+      # input$datatable_gemeinden_rows_selected,]$PLZ
+# filtered_facilites_tier2() <- filtered_vehicles()[!duplicated(filtered_vehicles()$Werksnummer_Komponente),]
     } else {
       fahrzeuge
     }
   })
-  filtered_data_dots <- reactive({
-    if(length(input$datatable_gemeinden_rows_selected)){
-      data_dots[beispiel, ] %>%
-        filter(lng_begin %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Längengrad_Einzelteil)
-    } else {
-      data_dots
-    }
-  })
+  
+  # filtered_data_dots <- reactive({
+  #   if(length(input$datatable_gemeinden_rows_selected)){
+  #     data_dots[beispiel, ] %>%
+  #       filter(lng_begin %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Längengrad_Einzelteil)
+  #   } else {
+  #     data_dots
+  #   }
+  # })
   
   
   # Data Preparation for the rendering of heatmap with markers and supply routes
@@ -256,7 +292,7 @@ server <- function(input, output, session) {
   #n <- 1000
   supply_routes <- final_joined
   
-  data_dots = data.frame(id = 1:length(beispiel),
+  data_dots = data.frame(id = 1:n, # 1:length(beispiel)
                          lat_begin = supply_routes$Breitengrad_Einzelteil,
                          lat_via = supply_routes$Breitengrad_Komponente,
                          lat_end = supply_routes$Breitengrad,
@@ -269,14 +305,28 @@ server <- function(input, output, session) {
   selected_routes <- beispiel
   beispiel
   #
+  
+  
+  tier1Icon <- makeIcon(
+    iconUrl = "https://pngimage.net/wp-content/uploads/2018/05/facility-png-2.png",
+    iconWidth = 40, iconHeight = 25
+  )
+  
+  tier2Icon <- makeIcon(
+    iconUrl = "http://icons.iconarchive.com/icons/icons8/windows-8/512/Household-Interior-icon.png",
+    iconWidth = 40, iconHeight = 40
+  )
+
   # Render map
   output$map <- renderLeaflet({
     leaflet(final_joined) %>%
       setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>% # centered to Germany map
+      # do not use:
+      #fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>% # buggy after scaling
       addTiles() %>%
       addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
-                 intensity = ~fehleranzahl, blur = 14, max = 15, radius = 24) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
-      fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>% # buggy after scaling
+                 intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
+      
       addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
@@ -287,17 +337,47 @@ server <- function(input, output, session) {
                                 "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
                                 "Zugelassen in: ", PLZ, " ", Gemeinde)
       )  %>%
-    
-    addMarkers(data = filtered_data_dots(), ~lat_via, ~lng_via,
-               #display large amounts of markers as clusters
-               clusterOptions = markerClusterOptions(),
-               popup = ~paste("<center><h5>Werksinfo Einzelteil</h5></center>",
-                              "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>")
-    )  %>%
       
-      # add dots of supply route
-      addCircles(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
-                 color = 'grey', weight = 1, radius = gemeinden$Zulassungen*5000, stroke=FALSE, fillOpacity = 0.3) %>%
+    
+     # fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
+    #filtered_faclities_tier1() <- filtered_vehicles()[!duplicated(Werksnummer_Einzelteil),]
+    #filtered_facilites_tier2() <- filtered_vehicles()[!duplicated(filtered_vehicles()$Werksnummer_Komponente),]
+      
+      # Display tier1 facilities with custom icon
+      addMarkers(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = tier1Icon, # filtered_data_dots(), ~lat_via, ~lng_via,
+                 #display large amounts of markers as clusters
+                 #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
+                 popup = ~paste("<center><h5>Einzelteil-Werk</h5></center>",
+                                "Werksnummer: ", Werksnummer_Einzelteil, "<br/>",
+                                "defekte Einzelteile hergestellt: ", Einzelteile_hergestellt, "<br/>")
+      )  %>% 
+      
+      # Display tier2 facilities with custom icon
+      addMarkers(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = tier2Icon, # filtered_data_dots(), ~lat_via, ~lng_via,
+                 #display large amounts of markers as clusters
+                 #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
+                 popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
+                                "Werksnummer: ", Werksnummer_Komponente, "<br/>",
+                                "defekte Einzelteile erhalten: ", defekte_Einzelteile_erhalten, "<br/>",
+                                "defekte Komponenten (Sitze) hergestellt: ", Sitze_hergestellt, "<br/>")
+      )  %>%
+    
+      # add circles of facility
+      
+      #Radius: Number of production errors Einzelteile
+      addCircles(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
+                 color = 'white', weight = 1, stroke=FALSE, fillOpacity = 0.6,
+                 radius = tier1_werke$Einzelteile_hergestellt*radius_factor) %>%
+      
+      #Radius: Number of production errors: Komponenten
+      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 stroke=FALSE, fillOpacity = 0.7, color = 'black', weight = 0.3,
+                 radius = tier2_werke$Sitze_hergestellt*radius_factor/2) %>%
+      
+      #Radius: Number of production errors: Einzelteile geliefert
+      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 color = 'lightgrey', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+                 radius = tier2_werke$defekte_Einzelteile_erhalten*radius_factor/2) %>%
       
       # Render the polyroutes supply route
       addPolylines(data = data_dots[1,],
@@ -404,12 +484,13 @@ server <- function(input, output, session) {
                 
                 # Define German translaton of data table UI
                 language = list(
-                  info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergenissen',
+                  info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
                   paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zurück', `next` = 'Vor'),
-                  infoEmpty = 'Keine Daten vorhanden',
+                  infoEmpty = 'Keine Daten vorhanden.',
                   loadingRecords = 'Lädt...',
                   processing = 'Ergebnisse werden geladen...',
                   lengthMenu = 'Zeige _MENU_ Ergebnisse',
+                  infoFiltered =  'Gefiltert von _MAX_ Einträgen',
                   search = 'Suche nach betroffenen Bauteilen:')
                   #search = 'Suche nach betroffenen Gemeinden:')
                 
