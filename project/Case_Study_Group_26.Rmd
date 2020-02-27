@@ -31,13 +31,13 @@ library(readr)
 
 
 
-### Aufgabe 1
+# Aufgabe 1
 
 Importieren Sie relevante Datensätze aus dem bereitgestellten tubcloud-Ordner. Listen sie zunächst in der Dokumentation auf, welche Dateien sie importieren.
 
 ## Importieren der Daten
 
-# Auswahl der relevanten Daten
+### Auswahl der relevanten Daten
 
 Die Aufgabe bestand grundsätzlich darin, aus Sicht des Herstellers "111" für die Komponente Premium-Ledersitze alle Fahrzeuge mit fehlerhaften Komponenten des entsprechenden Typs bzw. fehlerhaften Einzelteilen, die in jenen Komponenten enthalten sind, zu identifizieren und Fahrzeughalter und -hersteller (OEM) zu isolieren und informieren.
 
@@ -45,21 +45,14 @@ Dazu galt es zunächst, alle für die Analyse und Fehleridentifizierung relevant
 
 Um die Datensätze zu einem zusammenfassen, standen die relationalen Tabellen "Bestandteile_Komponente" (für Einzeilteile und Komponenten) und "Bestandteile_Fahrzeug" (für Komponenten und Fahrzeuge) zur Verfügung.
 
-# Vorgehensweise zur Importierung der Datensätze
+### Vorgehensweise zur Importierung der Datensätze
 
 Die zur Verfügung gestellten Dateien wurden mit dem readr-Package importiert. Die Daten lagen in unterschiedlichen Datei-Formaten (.txt und .csv) und unterschiedlichen Strukturen (verschiedene Delimiter und Spaltenanzahlen) vor.
 
 Die Schwierigkeit beim Import der Einzelteile "T11", "T16" und "T20" sowie der Komponenten "K2LE1" und "K2LE2" lag zunächst im .txt-Format und in unregelmäßigen Delimitern zwischen den Spalten und Zeilen. Deshalb mussten die genannten Daten zunächst mit der Funktion read_file() als string eingelesen und in einem Objekt zwischengespeichert werden, um Performance-Probleme und Parsing-Fehler zu vermeiden. Danach wurden die Delimiter zwischen den Spalten mit für .csv-Dateien üblichen Delimitern ersetzt und dann der Delimiter zwischen den Zeilen mit einem Line-Break ertsetzt. Außerdem hat in den betroffenen Datensätzen jeweils die erste Variable gefehlt, während die Spalte jedoch mit Werten befüllt war, was beim Einlesen zu Parsing-Fehlern führen würde. Deshalb wurde mit paste() eine entsprechende Variable mit Namen "X1_1" oder "X2" an den Beginn des Datensatzes als Platzhalter eingefügt. Hinterher konnten die fertig vorbereiteten Datensätze mit read_delim() bzw. read_csv2() importiert werden. Die Platzhalterobjekte wurden im Anschluss gelöscht, um Speicherressourcen freizugeben.
 
-Alle anderen Datensätze konnten ohne weitere Eingriffe entsprechend ihres Delimiters mit read_csv() (Delimiter ";") oder read_csv2() (Delimiter ",") importiert werden. Bei den Datensätzen "T15", T16", "K2LE1" und den Geodaten mussten die Klassen für die einzelnen Variablen bzw. Spalten per col_types() vorgegeben werden, da es sonst aufgrund einer hohen Zahl fehlender Werte in diesen Datensätzen zu Parsing-Fehlern kam.
-
-
 ```{r import data}
-### Import relevant datasets
-
-## Import Einzelteil data sets
-
-# Import all the relevant parts (T11, T14, T15, T16, T19, T20) which are contained in relevant Komponente sets
+## Import relevant Einzelteil data sets
 
 # read files with exotic delimiters in txt-files (T11, T16, T20) as string (for better performance)
 einzelteil_t11_string <- read_file("Data/Einzelteil/Einzelteil_T11.txt")
@@ -85,26 +78,13 @@ einzelteil_t20_string <- gsub(" ", "\n", einzelteil_t20_string)
 # read_csv (delim = ","), coerce col_type for t16 because data is split on several columns which causes parsing errors
 t11 <- read_delim(einzelteil_t11_string, delim = ",")
 t16 <- read_delim(einzelteil_t16_string, delim = ",", col_types = c("nncDnnnDncDnnnDncDnnnDn"))
-t19 <- read_csv("Data/Einzelteil/Einzelteil_T19.csv")
 t20 <- read_delim(einzelteil_t20_string, delim = ",")
-
-# read_csv2 (delim = ";"), coerce col_type for t15 because data is split on several columns which causes parsing errors
-t14 <- read_csv2("Data/Einzelteil/Einzelteil_T14.csv")
-t15 <- read_csv2("Data/Einzelteil/Einzelteil_T15.csv", col_types = c("nncDnnnDncDnnnDn"))
 
 # remove unused objects and return memory
 einzelteil_t11_string <- ""
 einzelteil_t16_string <- ""
 einzelteil_t20_string <- ""
 gc()
-
-
-## Import Bestandteile_Komponente sets as relation tables between Komponente and Einzelteil sets
-
-# read Bestandteile_Komponenten for relevant Kompenenten (K2LE1, K2LE2)
-bestandteile_k2le1 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE1.csv")
-bestandteile_k2le2 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE2.csv")
-
 
 ## Import revelant Komponente datasets
 
@@ -143,6 +123,23 @@ temp2 <- ""
 myFile2 <- ""
 gc()
 
+```
+
+Alle anderen Datensätze konnten ohne weitere Eingriffe entsprechend ihres Delimiters mit read_csv() (Delimiter ";") oder read_csv2() (Delimiter ",") importiert werden. Bei den Datensätzen "T15", T16", "K2LE1" und den Geodaten mussten die Klassen für die einzelnen Variablen bzw. Spalten per col_types() vorgegeben werden, da es sonst aufgrund einer hohen Zahl fehlender Werte in diesen Datensätzen zu Parsing-Fehlern kam.
+
+```{r import data 2}
+## Import Einzelteil data sets
+
+# read_csv2 (delim = ";") and read_csv (delim = ","), coerce col_type for t15 because data is split on several columns which causes parsing errors
+t19 <- read_csv("Data/Einzelteil/Einzelteil_T19.csv")
+t14 <- read_csv2("Data/Einzelteil/Einzelteil_T14.csv")
+t15 <- read_csv2("Data/Einzelteil/Einzelteil_T15.csv", col_types = c("nncDnnnDncDnnnDn"))
+
+## Import Bestandteile_Komponente sets as relation tables between Komponente and Einzelteil sets
+
+# read Bestandteile_Komponenten for relevant Kompenenten (K2LE1, K2LE2)
+bestandteile_k2le1 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE1.csv")
+bestandteile_k2le2 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE2.csv")
 
 ## Import Fahrzeuge und deren Bestandteile
 
@@ -158,12 +155,10 @@ bestandteile_oem1_typ12 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_
 bestandteile_oem2_typ21 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv")
 bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv")
 
-
 ## Import Zulassungen and Geodaten
 
 # read zulassungen
 zulassungen <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
-
 
 ## Import Geodaten
 
@@ -182,7 +177,7 @@ gemeinden <- read_csv2("Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv
 
 ```
 
-### Aufgabe 2: Datenaufbereitung
+# Aufgabe 2: Datenaufbereitung
 
 Bereiten Sie die für Ihre Aufgabe relevanten Daten nach den Prinzipien von tidy data auf und fügen Sie diese in einem einzigen Datensatz zusammen.
 
@@ -198,13 +193,13 @@ Außerdem mussten die Datensätze von unnützlichen Einträgen wie Zeilen oder S
 
 Um einen Eindruck zur Datenstruktur zu erhalten, wurden die Funktionen str() (für die allgemeine Struktur und die Klassen der Variablen) sowie head() und tail() (für Einträge am Anfang und Ende des Datensatzes) angewandt.
 
-# Einzeilteile
+### Einzeilteile
 
-Die Einzelteil-Datensätze lagen in zwei unterschiedlichen Strukturen vor. "T11", T14", "T19" und "T20" hatten jeweils zwei überflüssige Spalten mit den Namen X1 und X1_1, deren Werte lediglich eine fortlaufende Nummerierung der Spalten darstellten. Diese Spalten wurden entsprechend entfernt. 
+Alle Einzelteil-Datensätze hatten jeweils zwei überflüssige Spalten mit den Variablen X1 und X1_1, deren Werte lediglich eine fortlaufende Nummerierung der Spalten darstellten. Diese Spalten wurden entsprechend entfernt. Die Spaltennamen für die IDs wurden als "Einzelteil_ID" für den späteren Join vereinheitlicht. 
 
-```{r tidy data}
-### Tidy data
+Die Einzelteil-Datensätze lagen außerdem in zwei unterschiedlichen Strukturen vor. In den Tabellen "T11", T14", "T19" und "T20" waren die Werte für das jeweilige Produktionsdatum über zwei Spalten verteilt: In der Spalte "Produktionsdatum_01011970_origin" als Anzahl von Tagen im integer-Format basierend auf dem Wert "01-01-1970" in der "origin"-Spalte im Date-Format. Die integer-Werte mussten deshalb entsprechend mit der mutate() Funktion auf das origin-Datum addiert, in einer neuen Variable "Produktionsdatum" gespeichert und die übrigen Spalten gelöscht werden. 
 
+```{r tidy data einzteile}
 ## Clean and tidy Einzelteile datasets
 
 # Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
@@ -228,6 +223,13 @@ t20 <- t20 %>%
   select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970, ID_Einzelteil = ID_T20) %>%
   mutate(Einzelteil="20")
 
+```
+
+In den Datensätzen "T15" und "T16" waren die wesentlichen Variablen jeweils auf zwei (T15) bzw. drei (T16) Spalten (z.B. ID_T16.x, ID_T16.y und ID_T16) verteilt, was eventuell auf einen nicht ordnungsgemäßen Join zurückzuführen ist. Folglich beinhaltete die Tabelle viele fehlende Werte. Nach diesen wurde der Datensatz respektiv gefiltert per Selektierung der Spaltenzahlen in zwei bzw. drei Parts aufgespaltet. Hinterher wurden die Spaltennamen vereinheitlicht und die zwei bzw. drei Parts mittel bind_rows() in jeweils einen Datensatz zusammengeführt.
+
+Außerdem haben alle Einzelteil-Datensätze jeweils eine zusätzliche Spalte "Einzelteil" mit dem Anfangswert ihrer ID-Nummer bekommen, um die Richtigkeit des ID-Werts später prüfen zu können (s. Join-Abschnitt).
+
+```{r tidy data einzteile 2}
 # remove unnecessary columns in t15 and t16
 t15 <- select(t15, -X1, -X1_1)
 t16 <- select(t16, -X1, -X1_1)
@@ -270,7 +272,13 @@ t16_part2 <- ""
 t16_part3 <- ""
 gc()
 
+```
 
+### Relationstabelle: Bestandteile_Komponenten
+
+Die beiden relevanten Komponenten "K2LE1" und "K2LE2" stehen jeweils in Relation zu drei unterschiedlichen Einzelteilen, deren IDs in den "Bestandteile_Komponente"-Datensätzen jeweils als eine Spalte aufgeführt sind. Um alle Einzelteile in einer Spalte und damit eine Variable "ID_Einzelteil" unterzubringen und den späteren Join zu erleichtern, wurden die Datensätze jeweils nach den drei Einzelteilen aufgeteilt und deren Zeilen mittels bind_rows() zu einem Datensatz verbunden. Analog zu den Einzelteil-Datensätzen wurden unnütze Spalten entfernt und die ID in "ID_Komponente" unbenannt.
+
+```{r tidy data bestandteile_komponenten}
 ## Clean and tidy Bestandteile_Komponente datasets (relational table between einzelteile and komponenten)
 
 # tidy and transform: Rename "ID_K2LE*" columns to ID_Komponente in order to match with komponenten dataset and remove unnecessary columns
@@ -307,7 +315,15 @@ b_k2le2_part2 <- ""
 b_k2le2_part3 <- ""
 gc()
 
+```
 
+### Komponenten
+
+So wie bei den Einzelteil-Datensätzen "T15" und "T16" waren die Variablen im Komponenten-Datensatz "K2LE1" auf zwei Spalten aufgeteilt. Entsprechend wurde der Datensatz aufgeteilt und per bind_rows() zusammengeführt. In "K2LE2" war das Produktionsdatum ebenfalls auf zwei Variablen aufgeteilt und musste per mutate() zusammenaddiert werden.
+
+Überflüssige Spalten (X1 und X2) wurden gelöscht und eine Vergleichswert für die ID in der Variable "Komponente" für die spätere Prüfung der ID-Werte hinzugefügt.
+
+```{r tidy data komponenten}
 ## Clean and tidy Komponente datasets
 
 # remove irrevelant columns
@@ -364,6 +380,30 @@ komponente_k2le2 <- komponente_k2le2 %>%
   select(-X1, ID_Komponente = ID_Sitze, -X2, -origin, -Produktionsdatum_Origin_01011970) %>%
   mutate(Komponente = "K2LE2")
 
+```
+
+### Relationstabelle: Bestandteile_Fahrzeuge
+
+In den "Bestandteile_Fahrzeug"-Datensätzen mussten lediglich die Variablen der Spalten für den späteren Join umbenannten werden.
+
+### Fahrzeuge
+
+In den "Fahrzeug"-Datensätzen wurden überflüssige Spalten (X1 und X1_1), welche wie bei den anderen Daten lediglich Zeilennummern darstellten, entfernt und der Anfangswert der ID_Fahrzeug in der Spalte "Fahrzeugtyp" für den späteren Vergleich gespeichert.
+
+Analog zu "K2LE2" war das Produktionsdatum in den Datensätzen der Fahrzeuge "Typ21" und "Typ22" über zwei Spalten verteilt und musste entsprechend zusammenaddiert werden.
+
+```{r tidy data fahrzeuge und bestandteile}
+## Clean Bestandteile_Fahrzeug dataset
+
+# select and rename columns
+bestandteile_oem1_typ11 <- bestandteile_oem1_typ11 %>%
+  select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
+bestandteile_oem1_typ12 <- bestandteile_oem1_typ12 %>%
+  select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
+bestandteile_oem2_typ21 <- bestandteile_oem2_typ21 %>%
+  select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
+bestandteile_oem2_typ22 <- bestandteile_oem2_typ22 %>%
+  select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
 
 ## Tidy and clean Fahrzeug datasets
 
@@ -384,20 +424,25 @@ fahrzeug_oem2_typ22 <- fahrzeug_oem2_typ22 %>%
   select(-X1, -X1_1, -origin, -Produktionsdatum_Origin_01011970) %>%
   mutate(Fahrzeugtyp = 22)
 
+```
 
-## Clean Bestandteile_Fahrzeug dataset
+### Zulassungen
 
-# select and rename columns
-bestandteile_oem1_typ11 <- bestandteile_oem1_typ11 %>%
-  select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
-bestandteile_oem1_typ12 <- bestandteile_oem1_typ12 %>%
-  select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
-bestandteile_oem2_typ21 <- bestandteile_oem2_typ21 %>%
-  select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
-bestandteile_oem2_typ22 <- bestandteile_oem2_typ22 %>%
-  select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
+In den "Zulassungen"-Daten wurden Beobachtungen mit fehlende ID-Werten gelöscht, da diese nicht verwertet werden können und Variablen umbenannt, um Joins zu erleichtern.
 
+### Geodaten
 
+Die Geodaten bringen besondere Anforderungen für die spätere Darstellung in der shiny-App mit sich:
+- Die Koordinaten sollten vom Typ double sein, um sie anschließend in der App von leaflet in der Kartendarstellung anzuzeigen
+- Postleitzahlen sollten 5 Zeichen und alle Gemeinden Deutschlands beinhalten
+
+Nach dem Import wurden die Umlaute korrigiert und Postleitzahlen in PLZ umbenannt. Die Postleitzahlen wurden als nächstes normiert, indem eine anführende "0"-Ziffer eingefügt wurde, wenn die PLZ weniger als 5 Ziffern hatte.
+
+Nach der Erstellung des finalen Datensatzes wurde festgestellt, dass Daten für die Gemeinde "Seeg" im "Gemeinden"-Datensatz nicht enthalten waren, der Ort jedoch in den "Zulassungen"-Daten aufgeführt war. Der Ort "Seeg" musste demnach mitsamt PLZ und Koordinaten als weitere Beobachtung bzw. Zeile in den Gemeinden hinzugefügt werden.
+
+Zuletzt wurden leere Spalten gelöscht, die Koordinaten normiert und Spaltennamen geändert. Hier bestanden insbesondere Unregelmäßigkeiten im Format und der Ziffernanzahl der Längen- und Breitengrade. Dazu wurde die Funktion addZerosUntil8Digits() geschrieben, die den Koordinaten "0"-Ziffern anfügt, bis 8 Stellen erreicht sind, um alle Koordinaten später auf eine zweistellige Zahl mit Nachkommastellen dividieren zu können. Dabei ergab sich jedoch das Problem, dass manche Längengrade vor dem Komma einstellig sein müssen, da Deutschland zwischen ~6 und ~16°E liegt. Eine weitere Funktion chopBigLongitudes() diviert den Längegrad deshalb ein weiteres Mal durch 10, wenn er den Wert 20 vor dem Komma überschreitet.
+
+```{r tidy data zulassungen und geodaten}
 ## Clean and tidy Zulassungen
 
 # Clean ID from NA and rename columns in zulassungen
@@ -405,14 +450,7 @@ zulassungen <- zulassungen %>%
   drop_na(IDNummer) %>%
   select(ID_Fahrzeug = IDNummer, Gemeinde = Gemeinden, Zulassungsdatum = Zulassung)
 
-
 ## Clean and tidy Geodaten
-
-## Besondere Anforderungen an die Daten:
-# - Koordinaten sollen vom Typ double sein um sie anschließend in der App von leaflet in der Kartendarstellung anzuzeigen. 
-# - Postleitzahlen sollen 5 Zeichen und alle Gemeinden Deutschlands beinhalten.
-
-# Nach dem Import mit read_csv2() werden die Umlaute korrigiert und Postleitzahlen in PLZ umbenannt.
 
 # Change ae to ä in Längengrad
 colnames(tier1)[5] <- "Längengrad"
@@ -421,9 +459,6 @@ colnames(oem)[5] <- "Längengrad"
 colnames(gemeinden)[3] <- "Längengrad"
 # Change Postleitzahl to PLZ
 colnames(gemeinden)[1] <- "PLZ"
-
-### Geodaten Gemeinden: gemeinden_clean
-# Als nächstes werden die Postleitzahlen  normiert.
 
 # Function that add leading zero to PLZ
 addLeadingZero <- function(char) {
@@ -435,14 +470,9 @@ gemeinden <- gemeinden %>%
   rowwise() %>%
   mutate(PLZ = addLeadingZero(PLZ))
 
-# Dann werden fehlende Einträge hinzugefügt
-# After final join in the end missing coordinates and PLZ for location "Seeg" were detected.
-# Data was missing in gemeinden dataset: Add missing data as row to gemeinden dataframe
+# After final join in the end missing coordinates and PLZ for location "Seeg" were detected. Data was missing in gemeinden dataset: Add missing data as row to gemeinden dataframe
 gemeinden_clean <- rbind(gemeinden, list("87637", "SEEG", 10.610416, 47.654222))
 str(gemeinden_clean)
-
-### Geodaten Werke: tier1_clean, tier2_clean
-# Zuletzt werden leere Spalten gelöscht, die Koordinaten normiert und Spaltennamen geändert.
 
 # Function that add zeros at the end of the number until it has 8 digits
 addZerosUntil8Digits <- function(num) {
@@ -476,14 +506,18 @@ tier2_clean <- tier2  %>%
   mutate(Längengrad = Längengrad/1000000) %>%
   mutate(Längengrad = chopBigLongitudes(Längengrad)) %>%
   rename(Werksnummer = Werk, Ort = ORT)
+
 ```
 
 ## Erstellen des finalen Datensatzes Auswertung
 
-```{r join data}
 
-### Join
 
+### Zusammenführen der einzelnen Datensätze nach Kategorie
+
+
+
+```{r bind rows}
 ## Join Einzelteil datasets into one
 
 # use bind_rows(), seperate values in ID_Einzelteil column and test if it matches with the values of other columns
@@ -507,7 +541,6 @@ if(all(all_einzelteile$id_richtig_einzel == TRUE)) {
     select(-id_richtig_einzel, -Einzelteil)
 }
 
-
 ## Join Bestandteile_Komponente datasets
 
 # relation table for all Komponenten and Einzelteile
@@ -517,7 +550,6 @@ bestandteile_komponenten <- bind_rows(bestandteile_k2le1_clean, bestandteile_k2l
 if(any(is.na(bestandteile_komponenten))==TRUE) {
    filter_all(bestandteile_komponenten, any_vars(is.na(.)))
 }
-
 
 ## Join Komponente data sets
 
@@ -541,7 +573,6 @@ if(all(komponenten$id_richtig_komp == TRUE)){
   komponenten <- komponenten %>%
     select(-id_richtig_komp, -Komponente)
 }
-
 
 ## Join Bestandteile_Fahrzeug datasets
 
@@ -568,7 +599,6 @@ if(any(is.na(fahrzeug_bestandteile))==TRUE) {
    filter_all(fahrzeug_bestandteile, any_vars(is.na(.)))
 }
 
-
 ## Join Fahrzeug datasets
 
 # bind Fahrzeug data sets by row together in one table, check if IDs are correct
@@ -592,7 +622,13 @@ if(all(all_fahrzeuge$id_richtig_fahrzeuge == TRUE)){
     select(-id_richtig_fahrzeuge, -Fahrzeugtyp)
 }
 
+```
 
+### Joining mit relationalen Datensätzen
+
+
+
+```{r join relational tables}
 ## Join einzelteile with relational bestandteile_komponenten dataset
 
 # right_join to keep all relevant Komponenten (leather seats) and the related Einzelteile, transform dates in correct class and format
@@ -600,15 +636,19 @@ einzelteile <- right_join(all_einzelteile, bestandteile_komponenten, by = "ID_Ei
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
 
-
 ## Join fahrzeuge with relational fahrzeug_bestandteile dataset
 
 # right_join to keep all fahrzeuge with leather seats, transform dates in correct format
 fahrzeuge <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug") %>%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
+```
+
+### Joining mit Geodaten
 
 
+
+```{r join geodata}
 ## Join datasets with Geodaten and Zulassungen
 
 # Join einzelteile and komponenten with Geodaten to get coordinates of each manufactory ("Werk"), left join to keep all einzelteile / komponenten data and only relevant coordinates
@@ -634,8 +674,13 @@ if(any(is.na(fahrzeuge_geo))==TRUE) {
   filter_all(fahrzeuge_geo, any_vars(is.na(.)))
   # the filtered dataset initially showed that coordinates and PLZ are missing for the location "Seeg". The PLZ is 87637, Längengrad = 10.612874 and Breitengrad = 47.654894. The entry "Seeg" was completely missing in the "gemeinden" dataset and the NA occured after joining with zulassen. The Data was added too gemeinden dataset
 }
+```
+
+### Finaler Datensatz
 
 
+
+```{r final join}
 ## Final join, filter and cleaning
 
 # Final join: einzelteile_, komponenten_, and fahrzeuge_clean by ID_Komponente column
@@ -655,10 +700,9 @@ final_order <- final_filtered[c(1:3,5,6,4,7:11,13,12,15,14,16,18,17)]
 final_joined <- final_order
 str(final_joined)
 
-
 ```
 
-## Aufgabe 3
+# Aufgabe 3
 
 Entwickeln Sie eine Shiny-App welche folgende Kriterien erfüllt:
 Alle verwendeten Packages müssen auf der aktuellen R-Version lauffähig sein.
@@ -674,14 +718,14 @@ Das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Untern
 # Shiny Server
 
 # Shiny App
-runApp("Case_Study_App_26.r")
+#runApp("Case_Study_App_26.r")
 ```
 
 ```{r run previous}
 # profiler stats
 ```
 
-## Aufgabe 4
+# Aufgabe 4
 
 Visualisieren Sie folgendes in der Applikation
 a. Einen Graphen, der den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in den Gemeinden darstellt. Verwenden Sie zusätzlich eine Heatmapdarstellung zur Visualisierung von Schadensschwerpunkten. Integrieren Sie Popups in die Kartendarstellung, die Informationen zu den zugelassenen Fahrzeugen enthalten.
@@ -697,7 +741,7 @@ ggplot()
 # d) Print table
 ```
 
-## Aufgabe 5
+# Aufgabe 5
 
 Dokumentieren Sie die Ergebnisse Ihrer Analyse in einer R Markdown Datei. Beschreiben Sie Ihren Datenanalyseprozess schrittweise und diskutieren Sie das Ergebnis anhand aussagekräftiger Graphiken aus Ihrer entwickelten App. Das Beschreiben Ihres Vorgehens dient der Nachvollziehbarkeit Ihrer Lösungsschritte. Falls es Probleme mit Ihrem R-Code gibt, kann durch die Dokumentation ein grundsätzlich richtiges Vorgehen anerkannt werden. Kommentieren Sie deshalb Ihren Code sorgfältig und beachten Sie den tidyverse Style-Guide. Erstellen Sie ein Inhaltsverzeichnis, welches im html-File eingeblendet wird und anklickbar ist. Folgende Gliederungspunkte sollen im Inhaltsverzeichnis mindestens aufgeführt werden:
 Importieren der Daten Datenaufbereitung
@@ -708,7 +752,7 @@ Ergebnis
 # Table of Contents
 ```
 
-## Aufgabe 6
+# Aufgabe 6
 
 Im Abgabeordner sollen folgende Dateien zu finden sein, XX ist mit der Gruppennummer zu ersetzen:
 - Final_Data_Group_XX
