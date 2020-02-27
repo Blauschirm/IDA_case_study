@@ -31,9 +31,28 @@ library(readr)
 
 
 
-## Aufgabe 1
+### Aufgabe 1
 
 Importieren Sie relevante Datensätze aus dem bereitgestellten tubcloud-Ordner. Listen sie zunächst in der Dokumentation auf, welche Dateien sie importieren.
+
+## Importieren der Daten
+
+# Auswahl der relevanten Daten
+
+Die Aufgabe bestand grundsätzlich darin, aus Sicht des Herstellers "111" für die Komponente Premium-Ledersitze alle Fahrzeuge mit fehlerhaften Komponenten des entsprechenden Typs bzw. fehlerhaften Einzelteilen, die in jenen Komponenten enthalten sind, zu identifizieren und Fahrzeughalter und -hersteller (OEM) zu isolieren und informieren.
+
+Dazu galt es zunächst, alle für die Analyse und Fehleridentifizierung relevanten Datzensätze zu importieren. Diese entsprechen der Komponente "K2LE1" mit den Einzelteilen "T11", "T14" und "T15" sowie "K2LE2" mit den Einzelteilen "T16", "T19" und "T20", den Fahrzeugen "Typ11" und "Typ12" des Herstellers "OEM1" sowie "Typ21" und "Typ22" des Herstellers "OEM2" und die entsprechenden Geodaten für Werke der "Tier2" (Einzelteile), "Tier1" (Komponenten) und "OEM". Für die Zuordnung zu Fahrzeughaltern und die spätere visuelle Darstellung der räumlichen Verteilung der Defekte waren die Datensätze "Zulassungen" mit den entsprechenden Geodaten "Gemeinden" relevant.
+
+Um die Datensätze zu einem zusammenfassen, standen die relationalen Tabellen "Bestandteile_Komponente" (für Einzeilteile und Komponenten) und "Bestandteile_Fahrzeug" (für Komponenten und Fahrzeuge) zur Verfügung.
+
+# Vorgehensweise zur Importierung der Datensätze
+
+Die zur Verfügung gestellten Dateien wurden mit dem readr-Package importiert. Die Daten lagen in unterschiedlichen Datei-Formaten (.txt und .csv) und unterschiedlichen Strukturen (verschiedene Delimiter und Spaltenanzahlen) vor.
+
+Die Schwierigkeit beim Import der Einzelteile "T11", "T16" und "T20" sowie der Komponenten "K2LE1" und "K2LE2" lag zunächst im .txt-Format und in unregelmäßigen Delimitern zwischen den Spalten und Zeilen. Deshalb mussten die genannten Daten zunächst mit der Funktion read_file() als string eingelesen und in einem Objekt zwischengespeichert werden, um Performance-Probleme und Parsing-Fehler zu vermeiden. Danach wurden die Delimiter zwischen den Spalten mit für .csv-Dateien üblichen Delimitern ersetzt und dann der Delimiter zwischen den Zeilen mit einem Line-Break ertsetzt. Außerdem hat in den betroffenen Datensätzen jeweils die erste Variable gefehlt, während die Spalte jedoch mit Werten befüllt war, was beim Einlesen zu Parsing-Fehlern führen würde. Deshalb wurde mit paste() eine entsprechende Variable mit Namen "X1_1" oder "X2" an den Beginn des Datensatzes als Platzhalter eingefügt. Hinterher konnten die fertig vorbereiteten Datensätze mit read_delim() bzw. read_csv2() importiert werden. Die Platzhalterobjekte wurden im Anschluss gelöscht, um Speicherressourcen freizugeben.
+
+Alle anderen Datensätze konnten ohne weitere Eingriffe entsprechend ihres Delimiters mit read_csv() (Delimiter ";") oder read_csv2() (Delimiter ",") importiert werden. Bei den Datensätzen "T15", T16", "K2LE1" und den Geodaten mussten die Klassen für die einzelnen Variablen bzw. Spalten per col_types() vorgegeben werden, da es sonst aufgrund einer hohen Zahl fehlender Werte in diesen Datensätzen zu Parsing-Fehlern kam.
+
 
 ```{r import data}
 ### Import relevant datasets
@@ -163,11 +182,25 @@ gemeinden <- read_csv2("Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv
 
 ```
 
-## Aufgabe 2
+### Aufgabe 2: Datenaufbereitung
 
 Bereiten Sie die für Ihre Aufgabe relevanten Daten nach den Prinzipien von tidy data auf und fügen Sie diese in einem einzigen Datensatz zusammen.
 
-## Importieren der Daten Datenaufbereitung
+## Tidy Data
+
+Nach dem Importieren galt es die Daten aufzubereiten und in ein analysierbares Format zu bringen. Dazu wurde das "Tidy Data"-Prinzip mit Funktionen aus dem tidyverse-Package angewandt. Ein Datensatz gilt demnach als "tidy", wenn folgende Bedigungen erfüllt sind:
+
+- Jede Spalte ist eine Variable
+- Jede Zeile ist eine Beobachtung
+- Jede Zelle ist ein Wert
+
+Außerdem mussten die Datensätze von unnützlichen Einträgen wie Zeilen oder Spalten, die keine Daten enthielten, bereinigt werden.
+
+Um einen Eindruck zur Datenstruktur zu erhalten, wurden die Funktionen str() (für die allgemeine Struktur und die Klassen der Variablen) sowie head() und tail() (für Einträge am Anfang und Ende des Datensatzes) angewandt.
+
+# Einzeilteile
+
+Die Einzelteil-Datensätze lagen in zwei unterschiedlichen Strukturen vor. "T11", T14", "T19" und "T20" hatten jeweils zwei überflüssige Spalten mit den Namen X1 und X1_1, deren Werte lediglich eine fortlaufende Nummerierung der Spalten darstellten. Diese Spalten wurden entsprechend entfernt. 
 
 ```{r tidy data}
 ### Tidy data
