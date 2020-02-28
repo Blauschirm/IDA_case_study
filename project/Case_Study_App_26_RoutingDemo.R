@@ -4,12 +4,12 @@ library(DT)
 
 # scales to be able to use dates as ggplot limits
 if (!require(scales)){
-  installed.packages("scales")
+  install.packages("scales")
 }
 library(scales)
 
 if (!require(lubridate)){
-  installed.packages("lubridate")
+  install.packages("lubridate")
 }
 library(lubridate)
 
@@ -37,7 +37,7 @@ load("Datensatz_tidy.RData")
 #n <- 15680
 #n <- 15679 # Test size
 max <- 322075 # Number of observations
-n <-   322
+n <-   3220
 radius_factor <- 15000 # 700
 
 beispiel <- floor(runif(8, min=1, max = n))
@@ -101,7 +101,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                fluidRow(
                  column(12,
                         fluidRow(
-                          column(4, 
+                          column(3, 
                                  (h4("Betroffene Gemeinden")),
                                  
                                  # Display Betroffene Gemeinden as data table
@@ -109,7 +109,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                           ),
                           
                           # Heatmap with search bar section
-                          column(8,
+                          column(9,
                                  (h4("Betroffene Bauteile")),
                                  
                                  # Display ID-search by ID_einzelteile & ID_Komponente
@@ -129,7 +129,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                  # Reset search filter section
                                  column(6, offset = 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
                                         "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
-                                        actionButton(inputId = "reset", "Karte zurücksetzen")
+                                        actionButton(inputId = "reset", "Position zurücksetzen")
                                         
                                  ),
                                  
@@ -169,6 +169,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
 
 # Shiny Server
 server <- function(input, output, session) {
+  
   
   
   start_zulassungen <- min(final_joined$Zulassungsdatum)
@@ -258,17 +259,49 @@ server <- function(input, output, session) {
     )
   })
   
+  
+  # show defective parts bools as factors: Ja / Nein 
+  final_joined$Fehlerhaft_Einzelteil = factor(final_joined$Fehlerhaft_Einzelteil, c(0, 1), c('Ja', 'Nein'))
+  final_joined$Fehlerhaft_Komponente = factor(final_joined$Fehlerhaft_Komponente, c(0, 1), c('Ja', 'Nein'))
+  
   # Render data table: bauteile
-  # fehlt noch: input$reset_filters # fixed!
   output$datatable_bauteile <- renderDataTable({
     input$reset_filters
-    datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1, c(1, 2, 4, 7, 11, 13)], # [1:30,c(1,4)],  # Betroffene Bauteile
-              options = list(
-                lengthMenu = list(c(3, 6, 100), c('3', '6', '100')),
-                pageLength = 3
-              ),
-              rownames = FALSE)
+    datatable(
+      final_joined[ ,c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil', 'ID_Komponente', 'Fehlerhaft_Komponente', 'ID_Fahrzeug')], 
+      
+      #filter = list(position = 'bottom', clear = TRUE),
+      
+      options = list(
+        pageLength = 3,
+        lengthMenu = list(c(3, 6, 10, 20, 100, 1000, 10000), c('3', '6', '10', '20', '100', '1000', '10000')),
+        
+        # Search wit regex Ja/Nein
+        search = list(regex = TRUE, caseInsensitive = FALSE, search = ""), # 'ä=ae, ö=oe, ü=ue'
+        
+        # Define German translaton of data table UI
+        language = list(
+          info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
+          paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zurück', `next` = 'Vor'),
+          infoEmpty = 'Keine Daten vorhanden',
+          loadingRecords = 'Lädt...',
+          processing = 'Ergebnisse werden geladen...',
+          lengthMenu = 'Zeige _MENU_ Ergebnisse',
+          infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
+          search = 'Suche nach betroffenen Bauteilen:')
+      ),
+      
+      colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
+                   'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
+                   'Fehlerhaft' = 'Fehlerhaft_Komponente'),
+      
+      rownames = FALSE
+    ) %>% 
+      formatStyle(
+        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = 'solid 1px'
+      )
   })
+  
   
   filtered_vehicles <- reactive({
     if(length(input$datatable_gemeinden_rows_selected)){
@@ -627,22 +660,24 @@ server <- function(input, output, session) {
       setView(lng = 10.46, lat = 51.15, zoom = 6.25)
   })
   
-  # show defective parts bools as factors: Ja / Nein 
-  final_joined$Fehlerhaft_Einzelteil = factor(final_joined$Fehlerhaft_Einzelteil, c(0, 1), c('Ja', 'Nein'))
-  final_joined$Fehlerhaft_Komponente = factor(final_joined$Fehlerhaft_Komponente, c(0, 1), c('Ja', 'Nein'))
   
   # Render full database
   output$datatable_final_joined <- renderDataTable({
     input$reset_filters
-    datatable(final_joined[,
-                           c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil',
-                             'ID_Komponente', 'Werksnummer_Komponente', 'Fehlerhaft_Komponente',
-                             'ID_Fahrzeug', 'Werksnummer_Fahrzeug', 'Produktionsdatum_Fahrzeug', 'Zulassungsdatum', 'Gemeinde', 'PLZ') ],
+    datatable(
+      final_joined[, c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil',
+                       'ID_Komponente', 'Werksnummer_Komponente', 'Fehlerhaft_Komponente',
+                       'ID_Fahrzeug',   'Werksnummer_Fahrzeug',   'Produktionsdatum_Fahrzeug', 'Zulassungsdatum', 'Gemeinde', 'PLZ') ],
+      
               filter = list(position = 'top', clear = TRUE),
+      
               options = list(
-                lengthMenu = list(c(3, 10, 20, 100, 1000, 10000), c('3', '10', '20', '100', '1000', '10000')),
                 pageLength = 10,
+                lengthMenu = list(c(3, 10, 20, 100, 1000, 10000), c('3', '10', '20', '100', '1000', '10000')),
+                
+                # Search wit regex Ja/Nein
                 search = list(regex = TRUE, caseInsensitive = FALSE, search = ""), # 'ä=ae, ö=oe, ü=ue'
+                
                 # Define German translaton of data table UI
                 language = list(
                   info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
@@ -653,21 +688,19 @@ server <- function(input, output, session) {
                   lengthMenu = 'Zeige _MENU_ Ergebnisse',
                   infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
                   search = 'Suche nach betroffenen Bauteilen:')
-                  #search = 'Suche nach betroffenen Gemeinden:')
-                
               ),
+      
               colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
                            'ID_Werk' = 'Werksnummer_Komponente',
                            'ID_Werk' =  'Werksnummer_Fahrzeug',
                            'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
                            'Fehlerhaft' = 'Fehlerhaft_Komponente'),
                            
-              rownames = FALSE) %>% 
-      #formatDate(1, method = 'toLocaleString') %>% 
-      # Add column grid to visually divide Einzelteil, Komponente and Fahrzeug
+              rownames = FALSE
+      ) %>% 
       formatStyle(
-        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = 'solid 1px'
-          
+        c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = 'solid 1px',
+        'border' = 'solid 2px'
       )
   })
   
