@@ -3,10 +3,10 @@ title: "Case Study zur Analyse der Lieferkette defekter Fahrzeugkomponenten"
 author: 'Gruppe 26, Kurs: Introduction to Data Analytics with R, TU Berlin'
 date: "WS 19/20, 28.2.2020"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     theme: paper
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
@@ -105,8 +105,8 @@ Dazu galt es zunächst, alle für die Analyse und Fehleridentifizierung relevant
 
 Um die Datensätze zu einem zusammenfassen, standen die relationalen Tabellen "Bestandteile_Komponente" (für Einzeilteile und Komponenten) und "Bestandteile_Fahrzeug" (für Komponenten und Fahrzeuge) zur Verfügung.
 
-```{r, echo = FALSE, results = 'asis', cache=TRUE}
-
+```{r overview import, echo = FALSE, results = 'asis', cache=TRUE}
+# print overview of imported data as table in .Rmd document
 a <- c("Einzelteil_T11.txt", "Einzelteil_T14.csv", "Einzelteil_T15.csv", "Einzelteil_T16.txt", "Einzelteil_T19.csv", "Einzelteil_T20.txt")
 
 b <- c("Komponente_K2LE1.txt", "Komponente_K2LE2.txt", "Fahrzeuge_OEM1_Typ11.csv", "Fahrzeuge_OEM1_Typ12.csv", "Fahrzeuge_OEM1_Typ21.csv", "Fahrzeuge_OEM1_Typ22.csv")
@@ -128,9 +128,7 @@ Die zur Verfügung gestellten Dateien wurden mit dem readr-Package importiert. D
 Die Schwierigkeit beim Import der Einzelteile "T11", "T16" und "T20" sowie der Komponenten "K2LE1" und "K2LE2" lag zunächst im .txt-Format und in unregelmäßigen Delimitern zwischen den Spalten und Zeilen. Deshalb mussten die genannten Daten zunächst mit der Funktion read_file() als string eingelesen und in einem Objekt zwischengespeichert werden, um Performance-Probleme und Parsing-Fehler zu vermeiden. Danach wurden die Delimiter zwischen den Spalten mit für .csv-Dateien üblichen Delimitern ersetzt und dann der Delimiter zwischen den Zeilen mit einem Line-Break ertsetzt. Außerdem hat in den betroffenen Datensätzen jeweils die erste Variable gefehlt, während die Spalte jedoch mit Werten befüllt war, was beim Einlesen zu Parsing-Fehlern führen würde. Deshalb wurde mit paste() eine entsprechende Variable mit Namen "X1_1" oder "X2" an den Beginn des Datensatzes als Platzhalter eingefügt. Hinterher konnten die fertig vorbereiteten Datensätze mit read_delim() bzw. read_csv2() importiert werden. Die Platzhalterobjekte wurden im Anschluss gelöscht, um Speicherressourcen freizugeben.
 
 ```{r import data, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Import relevant Einzelteil data sets
-
-# read files with exotic delimiters in txt-files (T11, T16, T20) as string (for better performance)
+# read relevant Einzelteil files with exotic delimiters in txt-files (T11, T16, T20) as string (for better performance)
 einzelteil_t11_string <- read_file("Data/Einzelteil/Einzelteil_T11.txt")
 einzelteil_t16_string <- read_file("Data/Einzelteil/Einzelteil_T16.txt")
 einzelteil_t20_string <- read_file("Data/Einzelteil/Einzelteil_T20.txt")
@@ -162,11 +160,7 @@ einzelteil_t16_string <- ""
 einzelteil_t20_string <- ""
 gc()
 
-## Import revelant Komponente datasets
-
-# read Komponenete_K2LE1
-
-# read file and replace delim with single character delim
+# read file for Komponenete_K2LE1 and replace delim with single character delim
 tx  <- read_file("Data/Komponente/Komponente_K2LE1.txt")
 tx2 <- gsub(pattern = "II", replace = ";", x = tx, fixed = TRUE)
 # add column name 
@@ -177,12 +171,10 @@ out <- gsub(pattern = "", replace = "\n", x = tx3, fixed = TRUE)
 myFile <- tempfile()
 writeLines(out, con=myFile)
 
-# read Komponente
+# read final komponente_k2le1
 komponente_k2le1 <- read_csv2(myFile, col_types = c("nncDnnnDncDnnnDn"))
 
-# read Komponenete_K2LE2
-
-# read file because first column name is missing
+# read file for Komponenete_K2LE2 because first column name is missing
 temp1 <- read_file("Data/Komponente/Komponente_K2LE2.txt")
 # add first column name
 temp2 <- paste("X2", temp1, sep = "\\")
@@ -190,7 +182,7 @@ temp2 <- paste("X2", temp1, sep = "\\")
 myFile2 <- tempfile()
 writeLines(temp2, con=myFile2)
 
-# read file
+# read final komponente_k2le1
 komponente_k2le2 <- read_delim(myFile2, delim = "\\") 
 
 # remove unused objects and free memory
@@ -204,20 +196,14 @@ gc()
 Alle anderen Datensätze konnten ohne weitere Eingriffe entsprechend ihres Delimiters mit read_csv() (Delimiter ";") oder read_csv2() (Delimiter ",") importiert werden. Bei den Datensätzen "T15", T16", "K2LE1" und den Geodaten mussten die Klassen für die einzelnen Variablen bzw. Spalten per col_types() vorgegeben werden, da es sonst aufgrund einer hohen Zahl fehlender Werte in diesen Datensätzen zu Parsing-Fehlern kam.
 
 ```{r import data 2, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Import Einzelteil data sets
-
-# read_csv2 (delim = ";") and read_csv (delim = ","), coerce col_type for t15 because data is split on several columns which causes parsing errors
+# read_csv2 (delim = ";") and read_csv (delim = ",") for remaining relevant Einzelteil datasets, coerce col_type for t15 because data is split on several columns which causes parsing errors
 t19 <- read_csv("Data/Einzelteil/Einzelteil_T19.csv")
 t14 <- read_csv2("Data/Einzelteil/Einzelteil_T14.csv")
 t15 <- read_csv2("Data/Einzelteil/Einzelteil_T15.csv", col_types = c("nncDnnnDncDnnnDn"))
 
-## Import Bestandteile_Komponente sets as relation tables between Komponente and Einzelteil sets
-
 # read Bestandteile_Komponenten for relevant Kompenenten (K2LE1, K2LE2)
 bestandteile_k2le1 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE1.csv")
 bestandteile_k2le2 <- read_csv2("Data/Komponente/Bestandteile_Komponente_K2LE2.csv")
-
-## Import Fahrzeuge und deren Bestandteile
 
 # read Fahrzeuge, use right function for different delims (, and ;) 
 fahrzeug_oem1_typ11 <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv")
@@ -231,14 +217,9 @@ bestandteile_oem1_typ12 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_
 bestandteile_oem2_typ21 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv")
 bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv")
 
-## Import Zulassungen and Geodaten
-
 # read zulassungen
 zulassungen <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
 
-## Import Geodaten
-
-# 
 locale = locale(encoding = 'ISO-8859-1')
 
 # Import with readr
@@ -272,9 +253,7 @@ Alle Einzelteil-Datensätze hatten jeweils zwei überflüssige Spalten mit den V
 Die Einzelteil-Datensätze lagen außerdem in zwei unterschiedlichen Strukturen vor. In den Tabellen "T11", T14", "T19" und "T20" waren die Werte für das jeweilige Produktionsdatum über zwei Spalten verteilt: In der Spalte "Produktionsdatum_01011970_origin" als Anzahl von Tagen im integer-Format basierend auf dem Wert "01-01-1970" in der "origin"-Spalte im Date-Format. Die integer-Werte mussten deshalb entsprechend mit der mutate() Funktion auf das origin-Datum addiert, in einer neuen Variable "Produktionsdatum" gespeichert und die übrigen Spalten gelöscht werden. 
 
 ```{r tidy data einzteile, results = 'hide', message = FALSE, warning = FALSE, cache = TRUE}
-## Clean and tidy Einzelteile datasets
-
-# Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
+## Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
 # Transform origin column into Class Date, use mutate to add Produktionsdatum_Origin_01011970 values to origin values
 t11 <- t11 %>% 
   mutate(Produktionsdatum = as.Date(origin, format = "%d-%m-%Y") + Produktionsdatum_Origin_01011970) %>% 
@@ -351,8 +330,6 @@ gc()
 Die beiden relevanten Komponenten "K2LE1" und "K2LE2" stehen jeweils in Relation zu drei unterschiedlichen Einzelteilen, deren IDs in den "Bestandteile_Komponente"-Datensätzen jeweils als eine Spalte aufgeführt sind. Um alle Einzelteile in einer Spalte und damit eine Variable "ID_Einzelteil" unterzubringen und den späteren Join zu erleichtern, wurden die Datensätze jeweils nach den drei Einzelteilen aufgeteilt und deren Zeilen mittels bind_rows() zu einem Datensatz verbunden. Analog zu den Einzelteil-Datensätzen wurden unnütze Spalten entfernt und die ID in "ID_Komponente" unbenannt.
 
 ```{r tidy data bestandteile_komponenten, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Clean and tidy Bestandteile_Komponente datasets (relational table between einzelteile and komponenten)
-
 # tidy and transform: Rename "ID_K2LE*" columns to ID_Komponente in order to match with komponenten dataset and remove unnecessary columns
 bestandteile_k2le1 <- bestandteile_k2le1 %>%
   select(-X1, ID_Komponente = ID_K2LE1)
@@ -396,10 +373,7 @@ So wie bei den Einzelteil-Datensätzen "T15" und "T16" waren die Variablen im Ko
 Überflüssige Spalten (X1 und X2) wurden gelöscht und eine Vergleichswert für die ID in der Variable "Komponente" für die spätere Prüfung der ID-Werte hinzugefügt.
 
 ```{r tidy data komponenten, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Clean and tidy Komponente datasets
-
 # remove irrevelant columns
-
 komponente_k2le1 <- select(komponente_k2le1, -X1, -X2)
 
 # variables in komponente_k2le1 are split into two parts,  split table in two (x and y)
@@ -465,8 +439,6 @@ In den "Fahrzeug"-Datensätzen wurden überflüssige Spalten (X1 und X1_1), welc
 Analog zu "K2LE2" war das Produktionsdatum in den Datensätzen der Fahrzeuge "Typ21" und "Typ22" über zwei Spalten verteilt und musste entsprechend zusammenaddiert werden.
 
 ```{r tidy data fahrzeuge und bestandteile, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Clean Bestandteile_Fahrzeug dataset
-
 # select and rename columns
 bestandteile_oem1_typ11 <- bestandteile_oem1_typ11 %>%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
@@ -476,8 +448,6 @@ bestandteile_oem2_typ21 <- bestandteile_oem2_typ21 %>%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
 bestandteile_oem2_typ22 <- bestandteile_oem2_typ22 %>%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
-
-## Tidy and clean Fahrzeug datasets
 
 # deselect irrelevant columns and mutate a type column for a later check
 # transform origin in date format and create Produktionsdatum
@@ -515,14 +485,10 @@ Nach der Erstellung des finalen Datensatzes wurde festgestellt, dass Daten für 
 Zuletzt wurden leere Spalten gelöscht, die Koordinaten normiert und Spaltennamen geändert. Hier bestanden insbesondere Unregelmäßigkeiten im Format und der Ziffernanzahl der Längen- und Breitengrade. Dazu wurde die Funktion addZerosUntil8Digits() geschrieben, die den Koordinaten "0"-Ziffern anfügt, bis 8 Stellen erreicht sind, um alle Koordinaten später auf eine zweistellige Zahl mit Nachkommastellen dividieren zu können. Dabei ergab sich jedoch das Problem, dass manche Längengrade vor dem Komma einstellig sein müssen, da Deutschland zwischen ~6 und ~16°E liegt. Eine weitere Funktion chopBigLongitudes() diviert den Längegrad deshalb ein weiteres Mal durch 10, wenn er den Wert 20 vor dem Komma überschreitet.
 
 ```{r tidy data zulassungen and geodaten, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Clean and tidy Zulassungen
-
 # Clean ID from NA and rename columns in zulassungen
 zulassungen <- zulassungen %>%
   drop_na(IDNummer) %>%
   select(ID_Fahrzeug = IDNummer, Gemeinde = Gemeinden, Zulassungsdatum = Zulassung)
-
-## Clean and tidy Geodaten
 
 # Change ae to ä in Längengrad
 colnames(tier1)[5] <- "Längengrad"
@@ -600,8 +566,6 @@ Zur Überprüfung der ID-Spalten in den Einzelteil-, Komponente- und Fahrzeugdat
 Die relationalen Tabellen wurden nach dem Join zusätzlich nach fehlenden Werten untersucht, wobei keine aufgetreten sind.
 
 ```{r bind rows, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Join Einzelteil datasets into one
-
 # use bind_rows(), seperate values in ID_Einzelteil column and test if it matches with the values of other columns
 all_einzelteile <- bind_rows(t11, t14, t15, t16, t19, t20) %>%
   mutate(id_richtig_einzel =
@@ -623,8 +587,6 @@ if(all(all_einzelteile$id_richtig_einzel == TRUE)) {
     select(-id_richtig_einzel, -Einzelteil)
 }
 
-## Join Bestandteile_Komponente datasets
-
 # relation table for all Komponenten and Einzelteile
 bestandteile_komponenten <- bind_rows(bestandteile_k2le1_clean, bestandteile_k2le2_clean)
 
@@ -632,8 +594,6 @@ bestandteile_komponenten <- bind_rows(bestandteile_k2le1_clean, bestandteile_k2l
 if(any(is.na(bestandteile_komponenten))==TRUE) {
    filter_all(bestandteile_komponenten, any_vars(is.na(.)))
 }
-
-## Join Komponente data sets
 
 # bind tables into one and check if IDs are correct
 komponenten <- bind_rows(komponente_k2le1, komponente_k2le2) %>%
@@ -655,8 +615,6 @@ if(all(komponenten$id_richtig_komp == TRUE)){
   komponenten <- komponenten %>%
     select(-id_richtig_komp, -Komponente)
 }
-
-## Join Bestandteile_Fahrzeug datasets
 
 # bind Bestandteile together in one table and check if IDs correct
 fahrzeug_bestandteile <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
@@ -680,8 +638,6 @@ if(all(fahrzeug_bestandteile$id_richtig_fahrz_bestandteile == TRUE)){
 if(any(is.na(fahrzeug_bestandteile))==TRUE) {
    filter_all(fahrzeug_bestandteile, any_vars(is.na(.)))
 }
-
-## Join Fahrzeug datasets
 
 # bind Fahrzeug data sets by row together in one table, check if IDs are correct
 all_fahrzeuge <- bind_rows(fahrzeug_oem1_typ11, fahrzeug_oem1_typ12) %>%
@@ -715,14 +671,10 @@ Zur Zusammenführung wurde zunächst jeweils ein right_join() auf Einzelteile un
 
 
 ```{r join relational tables, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Join einzelteile with relational bestandteile_komponenten dataset
-
 # right_join to keep all relevant Komponenten (leather seats) and the related Einzelteile, transform dates in correct class and format
 einzelteile_rel <- right_join(all_einzelteile, bestandteile_komponenten, by = "ID_Einzelteil") %>%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
-
-## Join fahrzeuge with relational fahrzeug_bestandteile dataset
 
 # right_join to keep all fahrzeuge with leather seats, transform dates in correct format
 fahrzeuge_rel <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug") %>%
@@ -742,8 +694,6 @@ Die Fahrzeug-Datensätze wurden ebenfalls per left_join() mit den Zulassungs- un
 Bei der Suche nach fehlenden Werten wurden in den gejointen Fahrzeug-Zulassung-Gemeindedaten traten fehlende Gemeindedaten zu dem Zulassungsort "Seeg" auf, welche nachträglich im Gemeinden-Datensatz hinzugefügt wurden.
 
 ```{r join geodata, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Join datasets with Geodaten and Zulassungen
-
 # Join einzelteile_rel with respective geodata to get coordinates of each manufactory ("Werk"), left join to keep all einzelteile data and only relevant coordinates
 einzelteile_geo <- left_join(einzelteile_rel, tier2_clean, by = "Werksnummer") %>%
   # remove columns irrelevant for final dataset
@@ -781,8 +731,6 @@ Da wir nur Komponenten des Herstellers "111" auswerten, wurde der zusammengefüh
 Zwecks Übersichtlichkeit wurden die Spalten im finalen Datensatz neu sortiert.
 
 ```{r final join, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
-## Final join, filter and cleaning
-
 # Final join: einzelteile_, komponenten_, and fahrzeuge_clean by ID_Komponente column
 final_join <- full_join(einzelteile_geo, komponenten_geo, by = "ID_Komponente", suffix = c("_Einzelteil", "_Komponente")) %>%
   full_join(., fahrzeuge_geo, by ="ID_Komponente") %>%
@@ -804,8 +752,9 @@ str(final_joined)
 
 Der finale Datensatz beinhaltet nun alle Fahrzeuge mit fehlerhaften Komponenten ("Ledersitzen") des Herstellers "111" bzw. in Komponenten des Herstellers "111" verbaute, fehlerhafte Einzelteile sowie alle für die Anaylse und Darstellung relavanten Daten zu Einzelteilen, Komponenten und Fahrzeugen. Der Datensatz ist wie folgt strukturiert:
 
-```{r, echo = FALSE, results = 'asis'}
+```{r print head final, echo = FALSE, results = 'asis'}
 
+# print head of final dataset
 kable(final_joined[1:5, 1:5], caption = "Finaler Datensatz Teil 1 - Einzelteile")
 kable(final_joined[1:5, 6:10], caption = "Finaler Datensatz Teil 2 - Komponenten (Ledersitze) des Herstellers '111'")
 kable(final_joined[1:5, 11:18], caption = "Finaler Datensatz Teil 3 - Fahrzeuge")
@@ -814,24 +763,30 @@ kable(final_joined[1:5, 11:18], caption = "Finaler Datensatz Teil 3 - Fahrzeuge"
 
 Die kritische Produktionsmenge an Fahrzeugen mit fehlerhaften Bauteilen (Komponenten und/oder Einzelteilen) lautet damit wie folgt:
 
-```{r, echo = FALSE, results = 'asis', cache=TRUE}
+```{r print summary 1, echo = FALSE, results = 'asis', cache=TRUE}
 
+# give total number of data entries
 data_entries <- summarise(final_joined, data_entries = n())
 
+# give total number individual cars affected
 defective_cars <- final_joined[!duplicated(final_joined$ID_Fahrzeug),] %>%
   summarise(defective_cars = n())
 
+# give total number of individual components marked as defective
 defective_components <- final_joined[!duplicated(final_joined$ID_Komponente),] %>%
   filter(Fehlerhaft_Komponente == 1) %>%
   summarise(defective_components = n())
 
+# give total number of individual single parts marked as defective
 defective_parts <- filter(final_joined, Fehlerhaft_Einzelteil == 1) %>%
   summarise(defective_parts = n())
 
+# bind results into one table
 final_data_table <- cbind(data_entries, defective_cars, defective_components, defective_parts)
 
 colnames(final_data_table) <- c("Anzahl der Dateneinträge", "Fahrzeuge mit defekten Bauteilen", "Als defekt markierte Komponenten", "Als defekt markierte Einzelteile")
 
+# print table in .Rmd document
 kable(final_data_table, caption = "Anzahl der defekten Fahrzeuge und Bauteile")
 
 ```
@@ -840,8 +795,9 @@ Jeder Dateneintrag entspricht einem Einzelteil, dass defekt ist und/oder einer d
 
 Folgende Tabelle stellt fehlerhafte Komponenten ohne als fehlerhaft markierte Einzelteile und fehlerhafte Einzelteile, die nicht als fehlerhaft markierten Komponenten zugeordnet sind, dar:
 
-```{r, echo = FALSE, results = 'asis', cache=TRUE}
+```{r print summary 2, echo = FALSE, results = 'asis', cache=TRUE}
 
+# filter final dataset for individual defective components mutual exclusive to defective single parts
 defective_components_excl <- final_joined %>%
   filter(Fehlerhaft_Komponente == 1) %>%
   group_by(ID_Komponente) %>%
@@ -850,11 +806,12 @@ defective_components_excl <- final_joined %>%
   ungroup() %>%
   summarise(defective_components_excl = n())
 
-
+# filter final dataset for individual defective single parts mutual exclusive to defective components
 defective_parts_excl <- final_joined %>%
   filter(Fehlerhaft_Einzelteil == 1 & Fehlerhaft_Komponente == 0) %>%
   summarise(defective_parts_excl = n())
 
+# bind and print table in .Rmd document
 final_data_table_excl <- cbind(defective_components_excl, defective_parts_excl)
 
 colnames(final_data_table_excl) <- c("Exklusiv als defekt markierte Komponenten", "Exklusiv als defekt markierte Einzelteile")
@@ -862,6 +819,7 @@ colnames(final_data_table_excl) <- c("Exklusiv als defekt markierte Komponenten"
 kable(final_data_table_excl, caption = "Exklusiv defekte Komponenten und Einzelteile")
  
 ```
+
 
 Weitere Zusammenhänge sind im Zuge der grafischen Analyse mittels Shiny-App zu ermitteln.
 
