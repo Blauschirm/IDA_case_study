@@ -728,7 +728,7 @@ if(any(is.na(fahrzeuge_geo))==TRUE) {
 
 ### Finaler Datensatz
 
-
+DADADDD
 
 ```{r final join, results = 'hide', message= FALSE, warning = FALSE}
 ## Final join, filter and cleaning
