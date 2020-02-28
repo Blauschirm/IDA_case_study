@@ -52,9 +52,18 @@ library("rmdformats")
 ```
 
 
-# Libraries einbinden
+# Einleitung
 
-```{r libraries, eval = FALSE, message = FALSE, warning = FALSE}
+<<<<<<< HEAD
+Das Ziel dieser Case Study ist die Verdeutlichung und Aufklärung von und über Produktionsproblemen eines Unternehmens "111", das Ledersitze für Automobilhersteller aus eingekauften Einzelteilen zusammenbaut. Nach Hinweis durch den Automobilhersteller auf Kundenreklamationen sollen von allen beteiltigten Schritten der Kette vom Einzelteilhersteller bis zum Kunden Daten zu defekten Fahrzeugen zusammengetragen, aufbereitet und ausgewertet werden.
+
+Zusätzlich soll ein Tool generiert werden mit dessen Hilfe Automobilbesitzer anhand ihrer Zulassungsnummer überprüfen können ob ihr Fahrzeug von den Defekten betroffen ist.
+
+
+
+# Benötigte Libraries
+
+```{r libraries, message = FALSE, warning = FALSE}
 if(!require(knitr)){
   install.packages("knitr")
 }
@@ -82,11 +91,7 @@ library(readr)
 ```
 
 
-# Aufgabe 1
-
-Importieren Sie relevante Datensätze aus dem bereitgestellten tubcloud-Ordner. Listen sie zunächst in der Dokumentation auf, welche Dateien sie importieren.
-
-## Importieren der Daten
+# Importieren der Daten
 
 ### Auswahl der relevanten Daten
 
@@ -244,11 +249,7 @@ gemeinden <- read_csv2("Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv
 
 ```
 
-# Aufgabe 2: Datenaufbereitung
-
-Bereiten Sie die für Ihre Aufgabe relevanten Daten nach den Prinzipien von tidy data auf und fügen Sie diese in einem einzigen Datensatz zusammen.
-
-## Tidy Data
+# Datenaufbereitung
 
 Nach dem Importieren galt es die Daten aufzubereiten und in ein analysierbares Format zu bringen. Dazu wurde das "Tidy Data"-Prinzip mit Funktionen aus dem tidyverse-Package angewandt. Ein Datensatz gilt demnach als "tidy", wenn folgende Bedigungen erfüllt sind:
 
