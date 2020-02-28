@@ -32,11 +32,17 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 1000)
+#final_joined <- head(final_joined, n = 100000)
+final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
-start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
+str(fahrzeuge$Zulassungsdatum)
+
+str(min(fahrzeuge$Zulassungsdatum))
+
+start_end_dates <- c( min(fahrzeuge$Zulassungsdatum) - 28, max(fahrzeuge$Zulassungsdatum) + 28 )
+#start_end_dates <- c( "2012-05-02", "2012-05-24" )
 #start_end_dates <- c( as.Date("2009-1-1", "Y-m-d"),as.Date("2017-1-1", "Y-m-d") )
 print(start_end_dates)
 #
@@ -148,7 +154,7 @@ server <- function(input, output, session) {
     zulassungen_out <- zulassungen_out %>%
       mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
       group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
-      summarise(anzahl = n()) %>%
+      summarise(Anzahl = n()) %>%
       ungroup()
     
     zulassungen_out
@@ -156,14 +162,15 @@ server <- function(input, output, session) {
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
-    ggplot(zulassungen(), aes(x = Monat, y = anzahl, fill=factor(Werksnummer_Fahrzeug))) +
-      geom_bar(stat = "identity") +
+    ggplot(zulassungen(), aes(x = Monat, y = Anzahl, fill=factor(Werksnummer_Fahrzeug))) +
+      geom_bar(stat = "identity", width = 20) +
       scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
       guides(fill = guide_legend(title="Werknummer der OEM")) + 
-      scale_x_date(breaks = scales::breaks_width("1 month"), 
-                   labels = scales::label_date_short(format = c("%Y, %b")),
-                   limits = start_end_dates) +
-      scale_y_continuous(breaks= pretty_breaks()) +
+      scale_x_date(breaks = breaks_width("3 month"),
+                   labels = date_format(format = "%Y-%b", tz = "ECT"),
+                   limits = start_end_dates
+                  )+ 
+      scale_y_continuous(breaks=pretty_breaks()) +
       theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
   })
   
