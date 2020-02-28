@@ -54,7 +54,6 @@ library("rmdformats")
 
 # Einleitung
 
-<<<<<<< HEAD
 Das Ziel dieser Case Study ist die Verdeutlichung und Aufklärung von und über Produktionsproblemen eines Unternehmens "111", das Ledersitze für Automobilhersteller aus eingekauften Einzelteilen zusammenbaut. Nach Hinweis durch den Automobilhersteller auf Kundenreklamationen sollen von allen beteiltigten Schritten der Kette vom Einzelteilhersteller bis zum Kunden Daten zu defekten Fahrzeugen zusammengetragen, aufbereitet und ausgewertet werden.
 
 Zusätzlich soll ein Tool generiert werden mit dessen Hilfe Automobilbesitzer anhand ihrer Zulassungsnummer überprüfen können ob ihr Fahrzeug von den Defekten betroffen ist.
