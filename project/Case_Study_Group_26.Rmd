@@ -1,12 +1,38 @@
 ---
-title: "GruppenAufgaben"
-author: "Gruppe 26"
-date: "15 2 2020"
-output: html_document
+title: "Case Stud zur Analyse der Lieferkette defekter Fahrzeugkomponenten"
+author: "Gruppe 26, Kurs: Introduction to Data Analytics with R, TU Berlin"
+date: "WS 19/20, 28.2.2020"
+output: 
+  html_document:
+    theme: readthedown
 ---
+
+<style>
+
+  /*
+  font-family: "Times New Roman";
+  background-color: "beige";
+  
+  p {
+    font-size: 16px;
+  }
+  
+  header {
+    border-radius: 10px;
+    border: solid;
+  }
+  */
+  
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+if(!require(rmdformats)){
+  install.packages("rmdformats")
+}
+library("rmdformats")
+
 ```
 
 
