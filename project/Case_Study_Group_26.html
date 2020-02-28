@@ -394,15 +394,13 @@ summary {
 
 <div id="TOC">
 <ul>
-<li><a href="#libraries-einbinden">Libraries einbinden</a></li>
-<li><a href="#aufgabe-1">Aufgabe 1</a><ul>
+<li><a href="#einleitung">Einleitung</a></li>
+<li><a href="#benötigte-libraries">Benötigte Libraries</a></li>
 <li><a href="#importieren-der-daten">Importieren der Daten</a><ul>
 <li><a href="#auswahl-der-relevanten-daten">Auswahl der relevanten Daten</a></li>
 <li><a href="#vorgehensweise-zur-importierung-der-datensätze">Vorgehensweise zur Importierung der Datensätze</a></li>
 </ul></li>
-</ul></li>
-<li><a href="#aufgabe-2-datenaufbereitung">Aufgabe 2: Datenaufbereitung</a><ul>
-<li><a href="#tidy-data">Tidy Data</a><ul>
+<li><a href="#datenaufbereitung">Datenaufbereitung</a><ul>
 <li><a href="#einzeilteile">Einzeilteile</a></li>
 <li><a href="#relationstabelle-bestandteile_komponenten">Relationstabelle: Bestandteile_Komponenten</a></li>
 <li><a href="#komponenten">Komponenten</a></li>
@@ -410,7 +408,6 @@ summary {
 <li><a href="#fahrzeuge">Fahrzeuge</a></li>
 <li><a href="#zulassungen">Zulassungen</a></li>
 <li><a href="#geodaten">Geodaten</a></li>
-</ul></li>
 <li><a href="#erstellen-des-finalen-datensatzes-für-die-auswertung">Erstellen des finalen Datensatzes für die Auswertung</a><ul>
 <li><a href="#zusammenführen-der-einzelnen-datensätze-nach-kategorie">Zusammenführen der einzelnen Datensätze nach Kategorie</a></li>
 <li><a href="#joining-mit-relationalen-datensätzen">Joining mit relationalen Datensätzen</a></li>
@@ -456,53 +453,40 @@ summary {
   
   
 </style>
-<div id="libraries-einbinden" class="section level1">
-<h1>Libraries einbinden</h1>
+<div id="einleitung" class="section level1">
+<h1>Einleitung</h1>
+<p>Das Ziel dieser Case Study ist die Verdeutlichung und Aufklärung von und über Produktionsproblemen eines Unternehmens “111”, das Ledersitze für Automobilhersteller aus eingekauften Einzelteilen zusammenbaut. Nach Hinweis durch den Automobilhersteller auf Kundenreklamationen sollen von allen beteiltigten Schritten der Kette vom Einzelteilhersteller bis zum Kunden Daten zu defekten Fahrzeugen zusammengetragen, aufbereitet und ausgewertet werden.</p>
+<p>Zusätzlich soll ein Tool generiert werden mit dessen Hilfe Automobilbesitzer anhand ihrer Zulassungsnummer überprüfen können ob ihr Fahrzeug von den Defekten betroffen ist.</p>
+</div>
+<div id="benötigte-libraries" class="section level1">
+<h1>Benötigte Libraries</h1>
 <pre class="r"><code>if(!require(knitr)){
   install.packages(&quot;knitr&quot;)
-}</code></pre>
-<pre><code>## Loading required package: knitr</code></pre>
-<pre class="r"><code>library(knitr)
+}
+library(knitr)
 
 if(!require(kableExtra)){
   install.packages(&quot;kableExtra&quot;)
-}</code></pre>
-<pre><code>## Loading required package: kableExtra</code></pre>
-<pre class="r"><code>library(kableExtra)
+}
+library(kableExtra)
 
 if(!require(magrittr)){
   install.packages(&quot;magrittr&quot;)
-}</code></pre>
-<pre><code>## Loading required package: magrittr</code></pre>
-<pre class="r"><code>library(magrittr)
+}
+library(magrittr)
 
 if(!require(tidyverse)){
   install.packages(&quot;tidyverse&quot;)
-}</code></pre>
-<pre><code>## Loading required package: tidyverse</code></pre>
-<pre><code>## -- Attaching packages ------------------------------------------------------------------------------------------------------------- tidyverse 1.3.0 --</code></pre>
-<pre><code>## v ggplot2 3.2.1     v purrr   0.3.3
-## v tibble  2.1.3     v dplyr   0.8.4
-## v tidyr   1.0.2     v stringr 1.4.0
-## v readr   1.3.1     v forcats 0.4.0</code></pre>
-<pre><code>## -- Conflicts ---------------------------------------------------------------------------------------------------------------- tidyverse_conflicts() --
-## x tidyr::extract()    masks magrittr::extract()
-## x dplyr::filter()     masks stats::filter()
-## x dplyr::group_rows() masks kableExtra::group_rows()
-## x dplyr::lag()        masks stats::lag()
-## x purrr::set_names()  masks magrittr::set_names()</code></pre>
-<pre class="r"><code>library(tidyverse)
+}
+library(tidyverse)
 
 if(!require(readr)){
   install.packages(&quot;readr&quot;)
 }
 library(readr)</code></pre>
 </div>
-<div id="aufgabe-1" class="section level1">
-<h1>Aufgabe 1</h1>
-<p>Importieren Sie relevante Datensätze aus dem bereitgestellten tubcloud-Ordner. Listen sie zunächst in der Dokumentation auf, welche Dateien sie importieren.</p>
-<div id="importieren-der-daten" class="section level2">
-<h2>Importieren der Daten</h2>
+<div id="importieren-der-daten" class="section level1">
+<h1>Importieren der Daten</h1>
 <div id="auswahl-der-relevanten-daten" class="section level3">
 <h3>Auswahl der relevanten Daten</h3>
 <p>Die Aufgabe bestand grundsätzlich darin, aus Sicht des Herstellers “111” für die Komponente Premium-Ledersitze alle Fahrzeuge mit fehlerhaften Komponenten des entsprechenden Typs bzw. fehlerhaften Einzelteilen, die in jenen Komponenten enthalten sind, zu identifizieren und Fahrzeughalter und -hersteller (OEM) zu isolieren und informieren.</p>
@@ -738,12 +722,8 @@ gemeinden &lt;- read_csv2(&quot;Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22
                    locale = locale, col_types = &quot;__ccnn&quot;)</code></pre>
 </div>
 </div>
-</div>
-<div id="aufgabe-2-datenaufbereitung" class="section level1">
-<h1>Aufgabe 2: Datenaufbereitung</h1>
-<p>Bereiten Sie die für Ihre Aufgabe relevanten Daten nach den Prinzipien von tidy data auf und fügen Sie diese in einem einzigen Datensatz zusammen.</p>
-<div id="tidy-data" class="section level2">
-<h2>Tidy Data</h2>
+<div id="datenaufbereitung" class="section level1">
+<h1>Datenaufbereitung</h1>
 <p>Nach dem Importieren galt es die Daten aufzubereiten und in ein analysierbares Format zu bringen. Dazu wurde das “Tidy Data”-Prinzip mit Funktionen aus dem tidyverse-Package angewandt. Ein Datensatz gilt demnach als “tidy”, wenn folgende Bedigungen erfüllt sind:</p>
 <ul>
 <li>Jede Spalte ist eine Variable</li>
@@ -1033,7 +1013,6 @@ tier2_clean &lt;- tier2  %&gt;%
   mutate(Längengrad = Längengrad/1000000) %&gt;%
   mutate(Längengrad = chopBigLongitudes(Längengrad)) %&gt;%
   rename(Werksnummer = Werk, Ort = ORT)</code></pre>
-</div>
 </div>
 <div id="erstellen-des-finalen-datensatzes-für-die-auswertung" class="section level2">
 <h2>Erstellen des finalen Datensatzes für die Auswertung</h2>
