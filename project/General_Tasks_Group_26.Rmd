@@ -9,6 +9,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Import der benötigten Bibliotheken
 ```{r}
+if(!require(fitdistrplus)){
+  install.packages("fitdistrplus")
+}
+library(fitdistrplus)
+
 if(!require(magrittr)){
   install.packages("magrittr")
 }
@@ -62,7 +67,57 @@ bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_
 # Aufgabe 1
 
 ```{r}
+Logistikverzug <- right_join(komponente_k7, logistikverzug_k7) %>%
+  mutate(Verzug = as.numeric(difftime(Wareneingang, Produktionsdatum, units = "days")))
 
+x <- c(na.exclude(Logistikverzug$Verzug))
+min_datum <- min(na.omit(Logistikverzug$Produktionsdatum))
+max_datum <- max(Logistikverzug$Wareneingang)
+
+```
+a
+```{r}
+h <- hist(x, breaks = 10)
+
+qqnorm(x)
+qqline(x)
+
+descdist(x, discrete=FALSE)
+
+p <- fitdist(x, "weibull")
+p2 <- fitdist(x, "lnorm")
+p3 <- fitdist(x, "gamma")
+
+plot.legend <- c("Weibull", "Lognormal", "Gamma")
+denscomp(list(p, p2, p3), legendtext = plot.legend)
+cdfcomp (list(p, p2, p3), legendtext = plot.legend)
+qqcomp  (list(p, p2, p3), legendtext = plot.legend)
+ppcomp  (list(p, p2, p3), legendtext = plot.legend)
+```
+Um einen Überblick über die Daten zu bekommen, wird zunächst ein Histogram geplottet. Dem Histogram zufolge könnte es sich um eine Normalverteilung handeln. Um dies zu bestätigen wird ein QQ-Plot erstellt. Jedoch ergeben die Punkte im QQ Plot keine Gerade, somit handelt es sich hier um keine Normalverteilung. 
+Um die Verteilung nun herauszufinden, wird die Funktion *descdist* verwendet. Dem Diagramm zu Folge könnte es sich um eine Lognormale, eine gamma oder einer Weibull Verteilung handeln. Nun werden die drei Verteilungen miteinander verglichen. Beim Vergleich stellt sich heraus, dass die Lognormale Verteilung am besten passt.
+
+b
+```{r}
+max <- max(x)
+min <- min(x)
+```
+Es vergehen zwischen Warenausgang und Wareneingang mindestens `r min` und höchstens `r max` Tage.
+
+c
+```{r}
+mean <- mean(x)
+```
+
+d
+```{r}
+time <- paste("Zeitraum zwischen", min_datum, "und", max_datum, sep = " ")
+
+ggplot(Logistikverzug, aes(x = Verzug)) +
+  geom_histogram(binwidth = 1, fill = "blue") +
+  stat_bin(aes(y=..count.., label=..count..), geom="text", vjust=-.5, binwidth = 1) +
+  xlim(4, 15)+
+  labs(title = "Logistikverzug", subtitle = time, x = "Verzug in Tagen", y = "Häufigkeit")
 ```
 
 # Aufgabe 2
