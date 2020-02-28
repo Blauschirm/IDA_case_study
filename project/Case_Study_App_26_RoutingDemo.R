@@ -36,24 +36,24 @@ load("Datensatz_tidy.RData")
 # Error: n <- 15680
 #n <- 15680
 #n <- 15679 # Test size
-n <- 10000#322707#5
-radius_factor <- 20 # 700
-max <- 3227075 # Number of observations
+max <- 322075 # Number of observations
+n <-   32500
+radius_factor <- 40000 # 700
+
 beispiel <- floor(runif(8, min=1, max = n))
-summary(beispiel)
-str(beispiel)
+#beispiel <- c(1:8)
+print("Beispiel Set: "); str(beispiel)
+
 #auswahl <- seq(x, n, by=x) # subset data
 
 #final_joined_error <- final_joined[c(n-1, n, n+1), ]
 
 # Subset the data
 #final_joined <- final_joined[beispiel, ]
-final_joined <- final_joined[c(1:(n-8), beispiel), ]
-str(final_joined)
+final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
 
-str(final_joined)
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
-fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
+fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
 start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
 #start_end_dates <- c( as.Date("2009-1-1", "Y-m-d"),as.Date("2017-1-1", "Y-m-d") )
 print(start_end_dates)
@@ -95,7 +95,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
       
       fluidRow(
         column(12,
-               checkboxGroupInput("fahrzeuge", "Kartenebenen auswählen", 
+               checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
                                   inline = TRUE,
                                   choices = c('Heatmap (Schadensschwerpunkte)', "Defekte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
                fluidRow(
@@ -215,7 +215,7 @@ server <- function(input, output, session) {
     arrange(Gemeinde) %>%
     ungroup()
   
-  tier1_werke <- final_joined %>% 
+  tier1_werke <- final_joined[beispiel, ] %>% 
     select(ID_Fahrzeug, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
     group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
     summarise(Einzelteile_hergestellt = sum(Fehlerhaft_Einzelteil)) %>%
@@ -224,7 +224,7 @@ server <- function(input, output, session) {
   #summary(tier1_werke)
   
   
-  tier2_werke <- final_joined %>% 
+  tier2_werke <- final_joined[beispiel, ] %>% 
     select(ID_Fahrzeug, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
     group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
     summarise(defekte_Einzelteile_erhalten = sum(Fehlerhaft_Einzelteil),
@@ -284,24 +284,22 @@ server <- function(input, output, session) {
   # })
   
   
-  # Data Preparation for the rendering of heatmap with markers and supply routes
-  #
-  # Create datapoints for the heatmap
-  treshold_fehleranzahl <- 1
-  #treshold_fehleranzahl <- 10
+  #### Data Preparation for the rendering of (1) heatmap with (2) markers and (3) supply routes (and circles)
+  
+  # 1. Create datapoints for the heatmap
+  treshold_fehleranzahl <- 1 # recommended values: 1, 10, 20, 40, ...
   datapoints_heat <- final_joined %>%
     group_by(Längengrad, Breitengrad) %>%
     summarise(fehleranzahl = n())  %>%
     ungroup()  %>%
     #select(-Gemeinde)  %>%
     filter(fehleranzahl > treshold_fehleranzahl)
-  #
-  # Create data frame with n supply routes: data_dots
-  #load("./project/Datensatz_tidy.RData")
-  #n <- 1000
-  supply_routes <- final_joined
   
-  data_dots = data.frame(id = 1:n, # 1:length(beispiel)
+  # 2. 
+  # Not finished: Filter supply_routes data linked to table selections
+  supply_routes <- final_joined
+
+  data_dots = data.frame(id = 1:nrow(final_joined), # 1:length(beispiel)
                          lat_begin = supply_routes$Breitengrad_Einzelteil,
                          lat_via = supply_routes$Breitengrad_Komponente,
                          lat_end = supply_routes$Breitengrad,
@@ -309,25 +307,38 @@ server <- function(input, output, session) {
                          lng_via = supply_routes$Längengrad_Komponente,
                          lng_end = supply_routes$Längengrad,
                          ID_Fahrzeug = supply_routes$ID_Fahrzeug)
-  data
+  
   # Altenate displayed routes
-  selected_routes <- beispiel
-  beispiel
-  #
+  # Not finished: Filter supply_routes data linked to table selections
+  selected_routes <- beispiel # <- Hier einfügen: Gefilterte Auwahl der Tabellenauswahl
   
-  
+  # Custom icons for markers of facilities
   tier1Icon <- makeIcon(
     iconUrl = "https://pngimage.net/wp-content/uploads/2018/05/facility-png-2.png",
-    iconWidth = 40, iconHeight = 25
-  )
+    iconWidth = 40, iconHeight = 25)
+  carIcon <- makeIcon(
+    iconUrl = "https://gkv.com/wp-content/uploads/leaflet-maps-marker-icons/map_marker-red1.png",
+    iconAnchorX = 18, iconAnchorY = 40,
+    iconWidth = 35, iconHeight = 40)
   
-  tier2Icon <- makeIcon(
-    iconUrl = "http://icons.iconarchive.com/icons/icons8/windows-8/512/Household-Interior-icon.png",
-    iconWidth = 40, iconHeight = 40
-  )
+  # Colors for the supply routes
+  colors_polyline <- c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")
 
-  output$value <- renderText({ input$fahrzeuge })
-  output$value1 <- renderText({ input$lieferwege })
+  #output$value <- renderText({ input$fahrzeuge })
+  #output$value1 <- renderText({ input$lieferwege })
+  
+  # Conditionally adding markers to map
+  # Select supply route 
+  
+  # if(input$map == checkbox_fahrzeuge){
+  #   mapdata = data1
+  #   mapcol = rgb(215,48,39, max = 255)
+  # }
+  # if(input$map == "2"){
+  #   mapdata = data2
+  #   mapcol = rgb(....blah)
+  # }
+  
   
   # Render map
   output$map <- renderLeaflet({
@@ -336,24 +347,130 @@ server <- function(input, output, session) {
       # do not use:
       #fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>% # buggy after scaling
       addTiles() %>%
-      addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
-                 intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
       
-      addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
-                 #display large amounts of markers as clusters
-                 clusterOptions = markerClusterOptions(),
-                 popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
-                                "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
-                                "ID_Sitz: ", ID_Komponente, "<br/>",
-                                "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
-                                "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
-                                "Zugelassen in: ", PLZ, " ", Gemeinde)
-      )  %>%
+      # Layer 1: Heatmap
+      # addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
+      #            intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
+      # END Layer 2
       
+      # Layer 2: defekte Fahrzeuge
+      # addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
+      #            #display large amounts of markers as clusters
+      #            clusterOptions = markerClusterOptions(),
+      #            popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+      #                           "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+      #                           "ID_Sitz: ", ID_Komponente, "<br/>",
+      #                           "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+      #                           "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+      #                           "Zugelassen in: ", PLZ, " ", Gemeinde)
+      # )  %>%
+      # END Layer 2
     
      # fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
     #filtered_faclities_tier1() <- filtered_vehicles()[!duplicated(Werksnummer_Einzelteil),]
     #filtered_facilites_tier2() <- filtered_vehicles()[!duplicated(filtered_vehicles()$Werksnummer_Komponente),]
+      
+      # Layer 3: Lieferwege
+      # Render the polyroutes supply route 
+      addPolylines(data = data_dots[selected_routes[1],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   #color = 'blue',
+                   #group = ~ID_Fahrzeug,
+                   color = colors_polyline[1],
+                   weight = 4,
+                   opacity = 0.5, fill = FALSE, fillColor = "#c50e1",
+                   fillOpacity = 0.5, dashArray = NULL, smoothFactor = 1,
+                   noClip = TRUE, popup = ~ID_Fahrzeug, popupOptions = NULL, label = ~ID_Fahrzeug,
+                   #labelOptions = NULL, options = pathOptions(),
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[2],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = colors_polyline[2], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      
+      
+        
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[3],], # Hier die Conditionals einfügen
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = colors_polyline[3], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[4],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = colors_polyline[4], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[5],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = colors_polyline[1], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[6],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = colors_polyline[2], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[7],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = colors_polyline[3], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      ) %>%
+      # Render the polyroutes supply route
+      addPolylines(data = data_dots[selected_routes[8],],
+                   lng= ~ c(lng_begin, lng_via, lng_end),
+                   lat= ~ c(lat_begin, lat_via, lat_end),
+                   color = colors_polyline[4], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
+                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
+                   highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                       bringToFront = TRUE)
+      )  %>%
+    
+      # Layer 4: Standorte
+      
+      # Add circles of facility
+      #Radius: Number of production errors Einzelteile
+      addCircles(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
+                 color = 'white', weight = 1, stroke=TRUE, fillOpacity = 0.6,
+                 radius = tier1_werke$Einzelteile_hergestellt*radius_factor) %>%
+      
+      #Radius: Number of production errors: Komponenten
+      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 stroke=TRUE, fillOpacity = 0.7, color = 'black', weight = 0.3,
+                 radius = tier2_werke$Sitze_hergestellt*radius_factor/3) %>%
+      
+      #Radius: Number of production errors: Einzelteile geliefert
+      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 color = 'white', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+                 radius = tier2_werke$defekte_Einzelteile_erhalten*radius_factor/3) %>%
       
       # Display tier1 facilities with custom icon
       addMarkers(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = tier1Icon, # filtered_data_dots(), ~lat_via, ~lng_via,
@@ -365,7 +482,7 @@ server <- function(input, output, session) {
       )  %>% 
       
       # Display tier2 facilities with custom icon
-      addMarkers(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = tier2Icon, # filtered_data_dots(), ~lat_via, ~lng_via,
+      addMarkers(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = tier1Icon,# filtered_data_dots(), ~lat_via, ~lng_via,
                  #display large amounts of markers as clusters
                  #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
                  popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
@@ -373,104 +490,97 @@ server <- function(input, output, session) {
                                 "defekte Einzelteile erhalten: ", defekte_Einzelteile_erhalten, "<br/>",
                                 "defekte Komponenten (Sitze) hergestellt: ", Sitze_hergestellt, "<br/>")
       )  %>%
-    
-      # add circles of facility
       
-      #Radius: Number of production errors Einzelteile
-      addCircles(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
-                 color = 'white', weight = 1, stroke=FALSE, fillOpacity = 0.6,
-                 radius = tier1_werke$Einzelteile_hergestellt*radius_factor) %>%
+      # Add marker for car location
+      addMarkers(data = filtered_vehicles()[selected_routes[1], ], ~Längengrad, ~Breitengrad, icon = carIcon,
+               #display large amounts of markers as clusters
+               clusterOptions = markerClusterOptions(),
+               popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                              "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                              "ID_Sitz: ", ID_Komponente, "<br/>",
+                              "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                              "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                              "Zugelassen in: ", PLZ, " ", Gemeinde)
+    )  %>%
+      # Add marker for car location
+      addMarkers(data = final_joined[selected_routes[2], ], ~Längengrad, ~Breitengrad,  icon = carIcon,
+                   #display large amounts of markers as clusters
+                   clusterOptions = markerClusterOptions(),
+                   popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                  "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                  "ID_Sitz: ", ID_Komponente, "<br/>",
+                                  "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                  "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                  "Zugelassen in: ", PLZ, " ", Gemeinde)
+        )  %>%
+      # Add marker for car location
+      addMarkers(data = final_joined[selected_routes[3], ], ~Längengrad, ~Breitengrad,  icon = carIcon,
+                   #display large amounts of markers as clusters
+                   clusterOptions = markerClusterOptions(),
+                   popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                  "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                  "ID_Sitz: ", ID_Komponente, "<br/>",
+                                  "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                  "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                  "Zugelassen in: ", PLZ, " ", Gemeinde)
+        )  %>%
+      # Add marker for car location
+        addMarkers(data = final_joined[selected_routes[4], ], ~Längengrad, ~Breitengrad, icon = carIcon,
+                   #display large amounts of markers as clusters
+                   clusterOptions = markerClusterOptions(),
+                   popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                  "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                  "ID_Sitz: ", ID_Komponente, "<br/>",
+                                  "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                  "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                  "Zugelassen in: ", PLZ, " ", Gemeinde)
+        )  %>%
+      # Add marker for car location
+        addMarkers(data = final_joined[selected_routes[5], ], ~Längengrad, ~Breitengrad, icon = carIcon,
+                   #display large amounts of markers as clusters
+                   clusterOptions = markerClusterOptions(),
+                   popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                  "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                  "ID_Sitz: ", ID_Komponente, "<br/>",
+                                  "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                  "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                  "Zugelassen in: ", PLZ, " ", Gemeinde)
+        )  %>%
       
-      #Radius: Number of production errors: Komponenten
-      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                 stroke=FALSE, fillOpacity = 0.7, color = 'black', weight = 0.3,
-                 radius = tier2_werke$Sitze_hergestellt*radius_factor/2) %>%
+      # Add marker for car location
+      addMarkers(data = final_joined[selected_routes[6], ], ~Längengrad, ~Breitengrad, icon = carIcon,
+                 #display large amounts of markers as clusters
+                 clusterOptions = markerClusterOptions(),
+                 popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                "ID_Sitz: ", ID_Komponente, "<br/>",
+                                "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                "Zugelassen in: ", PLZ, " ", Gemeinde)
+      )  %>%
       
-      #Radius: Number of production errors: Einzelteile geliefert
-      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                 color = 'lightgrey', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-                 radius = tier2_werke$defekte_Einzelteile_erhalten*radius_factor/2) %>%
-      
-      # Render the polyroutes supply route
-      addPolylines(data = data_dots[1,],
-                   lng= ~ c(lng_begin, lng_via, lng_end),
-                   lat= ~ c(lat_begin, lat_via, lat_end),
-                   #color = 'blue',
-                   #group = ~ID_Fahrzeug,
-                   color = "#c50e1f",
-                   weight = 5,
-                   opacity = 0.5, fill = FALSE, fillColor = "#c50e1",
-                   fillOpacity = 0.2, dashArray = NULL, smoothFactor = 1,
-                   noClip = TRUE, popup = ~ID_Fahrzeug, popupOptions = NULL, label = ~ID_Fahrzeug,
-                   #labelOptions = NULL, options = pathOptions(),
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
-      ) %>%
-      # Render the polyroutes supply route
-      addPolylines(data = data_dots[2,],
-                   lng= ~ c(lng_begin, lng_via, lng_end),
-                   lat= ~ c(lat_begin, lat_via, lat_end),
-                   color = 'blue', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
-                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
-      ) %>%
-      # Render the polyroutes supply route
-      addPolylines(data = data_dots[3,],
-                   lng= ~ c(lng_begin, lng_via, lng_end),
-                   lat= ~ c(lat_begin, lat_via, lat_end),
-                   color = 'yellow', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
-                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
-      ) %>%
-      # Render the polyroutes supply route
-      addPolylines(data = data_dots[4,],
-                   lng= ~ c(lng_begin, lng_via, lng_end),
-                   lat= ~ c(lat_begin, lat_via, lat_end),
-                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
-                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
-      ) %>%
-      # Render the polyroutes supply route
-      addPolylines(data = data_dots[5,],
-                   lng= ~ c(lng_begin, lng_via, lng_end),
-                   lat= ~ c(lat_begin, lat_via, lat_end),
-                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
-                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
-      ) %>%
-      # Render the polyroutes supply route
-      addPolylines(data = data_dots[selected_routes[6],],
-                   lng= ~ c(lng_begin, lng_via, lng_end),
-                   lat= ~ c(lat_begin, lat_via, lat_end),
-                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
-                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
-      ) %>%
-      # Render the polyroutes supply route
-      addPolylines(data = data_dots[selected_routes[7],],
-                   lng= ~ c(lng_begin, lng_via, lng_end),
-                   lat= ~ c(lat_begin, lat_via, lat_end),
-                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
-                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
-      ) %>%
-      # Render the polyroutes supply route
-      addPolylines(data = data_dots[selected_routes[8],],
-                   lng= ~ c(lng_begin, lng_via, lng_end),
-                   lat= ~ c(lat_begin, lat_via, lat_end),
-                   color = 'pink', weight = 5, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 0.5, smoothFactor = 4,
-                   popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
-      )
-    
-    
+      # Add marker for car location
+      addMarkers(data = final_joined[selected_routes[7], ], ~Längengrad, ~Breitengrad, icon = carIcon,
+                 #display large amounts of markers as clusters
+                 clusterOptions = markerClusterOptions(),
+                 popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                "ID_Sitz: ", ID_Komponente, "<br/>",
+                                "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                "Zugelassen in: ", PLZ, " ", Gemeinde)
+      )  %>%
+      # Add marker for car location
+        addMarkers(data = final_joined[8, ], ~Längengrad, ~Breitengrad, icon = carIcon,
+               #display large amounts of markers as clusters
+               clusterOptions = markerClusterOptions(),
+               popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                              "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                              "ID_Sitz: ", ID_Komponente, "<br/>",
+                              "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                              "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                              "Zugelassen in: ", PLZ, " ", Gemeinde)
+    )
     
     
   })
