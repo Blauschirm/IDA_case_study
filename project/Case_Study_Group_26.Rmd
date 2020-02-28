@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Libraries einbinden
 
-```{r libraries}
+```{r libraries, eval = FALSE, message = FALSE, warning = FALSE}
 if(!require(knitr)){
   install.packages("knitr")
 }
@@ -187,7 +187,7 @@ zulassungen <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
 
 ## Import Geodaten
 
-#
+# 
 locale = locale(encoding = 'ISO-8859-1')
 
 # Import with readr
@@ -546,6 +546,8 @@ Gegenstand der Analyse sind die Fahrzeuge, welche die Komponente "Ledersitze" (K
 
 Zunächst mussten die einzelnen Datensätze der Kategorien "Einzelteil", "Komponente" und "Fahrzeug" sowie deren relationalen Tabellen "Bestandteile_Komponente" und "Bestandteile_Fahrzeug" jeweils in einem Datensatz zusammengeführt werden. Da die Spaltennamen und -anzahlen in vorangegangen Schritten entsprechend vereinheitlicht wurden, konnte jeweils die Funktion bind_rows() angewandt werden. 
 
+Weiterhin wurde der Datensatz "Bestandteile_Fahrzeuge", welche sich aus unterschiedlichen Komponenten zusammensetzen, auf Komponenten-IDs beginnend mit "K2LE" gefiltert, damit nur noch die zu untersuchenden Ledersitze und ihre entsprechend zugeordneten Fahrzeuge angezeigt.
+
 Zur Überprüfung der ID-Spalten in den Einzelteil-, Komponente- und Fahrzeugdatensätzen wurden diese jeweils in ihre Bestandteile, "Herstellernummer", "Werksnummer" und Typnummer ("Einzelteil", "Komponente" und "Fahrzeugtyp") aufgetrennt und mit den Werten der jeweils korrespondierenden Spalte nach Übereinstimmung verglichen und das Ergebnis als logischer Wert in der Spalte "id_richtig_*" gespeichert. Hierbei wurden keine Fehler detektiert, sodass die nun überflüssigen, dem Vergleich dienenden Spalten entfernt werden konnten.
 
 Die relationalen Tabellen wurden nach dem Join zusätzlich nach fehlenden Werten untersucht, wobei keine aufgetreten sind.
@@ -657,42 +659,56 @@ if(all(all_fahrzeuge$id_richtig_fahrzeuge == TRUE)){
 
 ```
 
-### Joining mit relationalen Datensätzen
+### Joining mit relationalen Datensätzen und Transforming
 
-Die "Einzelteil"-Datensätze sind mit den Komponenten über die relationalen Tabellen " durch die Variablen "ID_Einzelteile" und "ID_Komponente" verbunden
+Die "Einzelteil"-Datensätze sind mit den Komponenten über die relationalen Tabellen "Bestandteile_Komponenten" durch die Schlüsselvariable "ID_Einzelteile" verknüpft. Analog dazu sind die Komponenten mit den Fahrzeugen über "Fahrzeug_Bestandteile" durch die Variable "ID_Fahrzeug" verknüpft.
+
+Zur Zusammenführung wurde zunächst jeweils ein right_join() auf Einzelteile und Relationstabelle und Fahrzeuge mit Relationstabelle über die entsprechenden Schlüsselvariablen angewandt, um respektiv alle relevanten Komponenten (Ledesitze) und alle Fahrzeuge, die diese enthalten, zu behalten und die dazugehörigen Informationen zu Einzelteilen und Fahrzeugen zu erhalten. Zusätzlich wurden die Werte der Spalte "Produktionsdatum" und "Fehlerhaft_Datum" in ein einheitliches Date-Format transformiert. 
+
 
 ```{r join relational tables, results = 'hide', message= FALSE, warning = FALSE}
+
 ## Join einzelteile with relational bestandteile_komponenten dataset
 
 # right_join to keep all relevant Komponenten (leather seats) and the related Einzelteile, transform dates in correct class and format
-einzelteile <- right_join(all_einzelteile, bestandteile_komponenten, by = "ID_Einzelteil") %>%
+einzelteile_rel <- right_join(all_einzelteile, bestandteile_komponenten, by = "ID_Einzelteil") %>%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
 
 ## Join fahrzeuge with relational fahrzeug_bestandteile dataset
 
 # right_join to keep all fahrzeuge with leather seats, transform dates in correct format
-fahrzeuge <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug") %>%
+fahrzeuge_rel <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrzeug") %>%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = "%Y-%m-%d"),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = "%Y-%m-%d"))
+
 ```
 
-### Joining mit Geodaten
+### Joining der Datensätze mit Geodaten und Transforming
 
+Im nächsten Schritt galt es die Datensätze, die Werksinformationen (Einzelteile, Komponenten und Fahrzeuge) enthalten, mit den entsprechenden Geodaten zu verbinden.
 
+Für die Einzelteile und Komponenten wurde jeweils ein left_join() über die Schlüssevariable "Werksnummer" angewandt, um nur geografische Informationen zu Werken relevanter Bauteile beizubehalten. Da aus den gejointen Datensätzen für die spätere Analyse nur noch die ID, Werksnummer und die geografischen Koordinaten relevant sind, wurden die restlichen Spalten entfernt. Für die Komponenten war vorübergehend noch die Herstellernummer relevant, um diese später für unseren Anwendungsfall filtern zu können.
+
+Die Fahrzeug-Datensätze wurden ebenfalls per left_join() mit den Zulassungs- und Gemeinde-Daten, welche geografische Informationen zu den Zulassungsorten enthalten, über die Schlüsselvariable "ID_Fahrzeug" zusammengeführt, um alle bisher gefilterten Fahrzeuge und die dazu relevanten Zulassungsinformationen sowie Gemeindaten zu behalten. Informationen zu den OEM-Werken sind für die Auswertung nicht relevant.
+
+Bei der Suche nach fehlenden Werten wurden in den gejointen Fahrzeug-Zulassung-Gemeindedaten traten fehlende Gemeindedaten zu dem Zulassungsort "Seeg" auf, welche nachträglich im Gemeinden-Datensatz hinzugefügt wurden.
 
 ```{r join geodata, results = 'hide', message= FALSE, warning = FALSE}
+
 ## Join datasets with Geodaten and Zulassungen
 
-# Join einzelteile and komponenten with Geodaten to get coordinates of each manufactory ("Werk"), left join to keep all einzelteile / komponenten data and only relevant coordinates
-einzelteile_geo <- left_join(einzelteile, tier2_clean, by = "Werksnummer") %>%
+# Join einzelteile_rel with respective geodata to get coordinates of each manufactory ("Werk"), left join to keep all einzelteile data and only relevant coordinates
+einzelteile_geo <- left_join(einzelteile_rel, tier2_clean, by = "Werksnummer") %>%
   # remove columns irrelevant for final dataset
   select(-PLZ, -Ort, -Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
+
+# Join komponenten with respective geodata to get coordinates of each manufactory ("Werk"), left join to keep all komponenten data and only relevant coordinates
 komponenten_geo <- left_join(komponenten, tier1_clean, by = "Werksnummer") %>%
   select(-PLZ, -Ort, -Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Produktionsdatum, Herstellernummer_Komponente = Herstellernummer)
 
 # Join fahrzeuge with zulassungen and gemeinden_clean (containing coordinates), left joins to keep all fahrzeuge data and only relevant zulassungen and coordinates
-fahrzeuge_geo <- left_join(fahrzeuge, zulassungen, by = "ID_Fahrzeug") %>%
+fahrzeuge_geo <- left_join(fahrzeuge_rel, zulassungen, by = "ID_Fahrzeug") %>%
   left_join(., gemeinden_clean, by = "Gemeinde") %>%
   select(-Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Fehlerhaft)
 
@@ -707,6 +723,7 @@ if(any(is.na(fahrzeuge_geo))==TRUE) {
   filter_all(fahrzeuge_geo, any_vars(is.na(.)))
   # the filtered dataset initially showed that coordinates and PLZ are missing for the location "Seeg". The PLZ is 87637, Längengrad = 10.612874 and Breitengrad = 47.654894. The entry "Seeg" was completely missing in the "gemeinden" dataset and the NA occured after joining with zulassen. The Data was added too gemeinden dataset
 }
+
 ```
 
 ### Finaler Datensatz
@@ -739,9 +756,9 @@ Der finale Datensatz beinhaltet nun alle Fahrzeuge mit fehlerhaften Komponenten 
 
 ```{r, echo = FALSE, results = 'asis'}
 
-kable(final_joined[1:5, 1:6], caption = "Finaler Datensatz Teil 1")
-kable(final_joined[1:5, 7:12], caption = "Finaler Datensatz Teil 2")
-kable(final_joined[1:5, 13:18], caption = "Finaler Datensatz Teil 3")
+kable(final_joined[1:5, 1:5], caption = "Finaler Datensatz Teil 1 - Einzelteile")
+kable(final_joined[1:5, 6:10], caption = "Finaler Datensatz Teil 2 - Komponenten (Ledersitze) des Herstellers '111'")
+kable(final_joined[1:5, 11:18], caption = "Finaler Datensatz Teil 3 - Fahrzeuge")
 
 ```
 
@@ -793,7 +810,7 @@ final_data_table_excl <- cbind(defective_components_excl, defective_parts_excl)
 colnames(final_data_table_excl) <- c("Exklusiv als defekt markierte Komponenten", "Exklusiv als defekt markierte Einzelteile")
 
 kable(final_data_table_excl, caption = "Exklusiv defekte Komponenten und Einzelteile")
-
+ 
 ```
 
 Weitere Zusammenhänge sind im Zuge der grafischen Analyse mittels Shiny-App zu ermitteln.
