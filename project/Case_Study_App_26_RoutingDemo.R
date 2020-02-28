@@ -37,8 +37,8 @@ load("Datensatz_tidy.RData")
 #n <- 15680
 #n <- 15679 # Test size
 max <- 322075 # Number of observations
-n <-   32500
-radius_factor <- 40000 # 700
+n <-   322
+radius_factor <- 15000 # 700
 
 beispiel <- floor(runif(8, min=1, max = n))
 #beispiel <- c(1:8)
@@ -54,9 +54,9 @@ final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
-start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
-#start_end_dates <- c( as.Date("2009-1-1", "Y-m-d"),as.Date("2017-1-1", "Y-m-d") )
-print(start_end_dates)
+
+start_end_dates <- c( as.Date("2009-01-01", "Y-m-d"), as.Date("2017-01-01", "Y-m-d") )
+start_end_dates
 #
 
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
@@ -97,11 +97,11 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
         column(12,
                checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
                                   inline = TRUE,
-                                  choices = c('Heatmap (Schadensschwerpunkte)', "Defekte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
+                                  choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
                fluidRow(
                  column(12,
                         fluidRow(
-                          column(3, 
+                          column(4, 
                                  (h4("Betroffene Gemeinden")),
                                  
                                  # Display Betroffene Gemeinden as data table
@@ -109,7 +109,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                           ),
                           
                           # Heatmap with search bar section
-                          column(9,
+                          column(8,
                                  (h4("Betroffene Bauteile")),
                                  
                                  # Display ID-search by ID_einzelteile & ID_Komponente
@@ -170,6 +170,10 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
 # Shiny Server
 server <- function(input, output, session) {
   
+  
+  start_zulassungen <- min(final_joined$Zulassungsdatum)
+  end_zulassungen <- max(final_joined$Zulassungsdatum)
+  
   # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
   fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
   
@@ -182,9 +186,9 @@ server <- function(input, output, session) {
     
     
     zulassungen_out <- zulassungen_out %>%
-      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
+      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-d"), "%Y-%m-%d"), fehlerhaft= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
       group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
-      summarise(anzahl = n()) %>%
+      summarise(Anzahl = n()) %>%
       ungroup()
     
     zulassungen_out
@@ -192,18 +196,18 @@ server <- function(input, output, session) {
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
-    ggplot(zulassungen(), aes(x = Monat, y = anzahl, fill=factor(Werksnummer_Fahrzeug))) +
+    ggplot(zulassungen(), aes(x = Monat, y = Anzahl, fill=factor(Werksnummer_Fahrzeug))) +
       geom_bar(stat = "identity") +
       scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
       guides(fill = guide_legend(title="Werknummer der OEM")) + 
-      scale_x_date(breaks = scales::breaks_width("1 month"), 
-                   labels = scales::label_date_short(format = c("%Y, %b")),
-                   limits = start_end_dates) +
+      scale_x_date(breaks = scales::breaks_width("2 year"), 
+                   #labels = scales::label_date_short(format = c("%Y, %b")),
+                   limits = c(start_zulassungen, end_zulassungen)) +
       scale_y_continuous(breaks= pretty_breaks()) +
       theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
   })
   
-  
+  str(start_zulassungen)
   # Render data tables: gemeinden / bauteile
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
@@ -218,23 +222,27 @@ server <- function(input, output, session) {
   tier1_werke <- final_joined[beispiel, ] %>% 
     select(ID_Fahrzeug, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
     group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
-    summarise(Einzelteile_hergestellt = sum(Fehlerhaft_Einzelteil)) %>%
-    arrange(Einzelteile_hergestellt) %>%
-    ungroup()
+    summarise(Einzelteile_fehlerhaft = sum(Fehlerhaft_Einzelteil),
+              Einzelteile_hergestellt = n() ) %>%
+    ungroup() %>%
+    arrange(Einzelteile_fehlerhaft)
   #summary(tier1_werke)
   
   
   tier2_werke <- final_joined[beispiel, ] %>% 
-    select(ID_Fahrzeug, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
+    select(ID_Fahrzeug, ID_Fahrzeug, ID_Komponente, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
     group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
-    summarise(defekte_Einzelteile_erhalten = sum(Fehlerhaft_Einzelteil),
-              Sitze_hergestellt = sum(Fehlerhaft_Komponente)) %>%
-    #arrange(Gemeinde) %>%
+    summarise(Einzelteile_fehlerhaft = sum(Fehlerhaft_Einzelteil),
+              Einzelteile_hergestellt = n(),
+              Sitze_fehlerhaft = sum(Fehlerhaft_Komponente),
+              Sitze_hergestellt = sum(!duplicated(ID_Fahrzeug)),
+              Komponenten = toString(c(ID_Komponente)) ) %>%
+    #arrange(Sitze_fehlerhaft) %>%
     ungroup()
   
   summary(tier2_werke)
   sum(tier2_werke$Sitze_hergestellt)
-  sum(tier2_werke$defekte_Einzelteile_erhalten)
+  sum(tier2_werke$fehlerhafte_Einzelteile_erhalten)
 
   
   # Render data table: gemeinden
@@ -349,11 +357,11 @@ server <- function(input, output, session) {
       addTiles() %>%
       
       # Layer 1: Heatmap
-      # addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
-      #            intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
-      # END Layer 2
+      addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
+                 intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
+      # END Layer 1
       
-      # Layer 2: defekte Fahrzeuge
+      # Layer 2: fehlerhafte Fahrzeuge
       # addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
       #            #display large amounts of markers as clusters
       #            clusterOptions = markerClusterOptions(),
@@ -383,8 +391,7 @@ server <- function(input, output, session) {
                    fillOpacity = 0.5, dashArray = NULL, smoothFactor = 1,
                    noClip = TRUE, popup = ~ID_Fahrzeug, popupOptions = NULL, label = ~ID_Fahrzeug,
                    #labelOptions = NULL, options = pathOptions(),
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
+                   highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
       ) %>%
       
       # Render the polyroutes supply route
@@ -393,20 +400,15 @@ server <- function(input, output, session) {
                    lat= ~ c(lat_begin, lat_via, lat_end),
                    color = colors_polyline[2], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
                    popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
+                   highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
       ) %>%
-      
-      
-        
       # Render the polyroutes supply route
       addPolylines(data = data_dots[selected_routes[3],], # Hier die Conditionals einfügen
                    lng= ~ c(lng_begin, lng_via, lng_end),
                    lat= ~ c(lat_begin, lat_via, lat_end),
                    color = colors_polyline[3], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
                    popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
+                   highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
       ) %>%
       # Render the polyroutes supply route
       addPolylines(data = data_dots[selected_routes[4],],
@@ -414,8 +416,7 @@ server <- function(input, output, session) {
                    lat= ~ c(lat_begin, lat_via, lat_end),
                    color = colors_polyline[4], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
                    popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
+                   highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
       ) %>%
       # Render the polyroutes supply route
       addPolylines(data = data_dots[selected_routes[5],],
@@ -423,8 +424,7 @@ server <- function(input, output, session) {
                    lat= ~ c(lat_begin, lat_via, lat_end),
                    color = colors_polyline[1], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
                    popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
+                   highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
       ) %>%
       # Render the polyroutes supply route
       addPolylines(data = data_dots[selected_routes[6],],
@@ -432,8 +432,7 @@ server <- function(input, output, session) {
                    lat= ~ c(lat_begin, lat_via, lat_end),
                    color = colors_polyline[2], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
                    popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
+                   highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
       ) %>%
       # Render the polyroutes supply route
       addPolylines(data = data_dots[selected_routes[7],],
@@ -441,8 +440,7 @@ server <- function(input, output, session) {
                    lat= ~ c(lat_begin, lat_via, lat_end),
                    color = colors_polyline[3], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
                    popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
+                   highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
       ) %>%
       # Render the polyroutes supply route
       addPolylines(data = data_dots[selected_routes[8],],
@@ -450,27 +448,52 @@ server <- function(input, output, session) {
                    lat= ~ c(lat_begin, lat_via, lat_end),
                    color = colors_polyline[4], weight = 4, opacity = 0.5, fillColor = "#c50e1", fillOpacity = 1, smoothFactor = 4,
                    popup = ~ID_Fahrzeug, label = ~ID_Fahrzeug,
-                   highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                       bringToFront = TRUE)
+                   highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
       )  %>%
     
       # Layer 4: Standorte
       
       # Add circles of facility
-      #Radius: Number of production errors Einzelteile
+      
+      # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       addCircles(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
-                 color = 'white', weight = 1, stroke=TRUE, fillOpacity = 0.6,
+                 color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
                  radius = tier1_werke$Einzelteile_hergestellt*radius_factor) %>%
       
-      #Radius: Number of production errors: Komponenten
+      # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
+      addCircles(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
+                 color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
+                 radius = tier1_werke$Einzelteile_fehlerhaft*radius_factor) %>%
+      
+      # # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
+      # addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
+      #            color = 'weiß', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+      #            radius = tier2_werke$Einzelteile_hergestellt*radius_factor/3) %>%
+      # 
+      # # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
+      # addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
+      #            color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+      #            radius = tier2_werke$Einzelteile_fehlerhaft*radius_factor/3) %>%
+      
+      # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
       addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                 stroke=TRUE, fillOpacity = 0.7, color = 'black', weight = 0.3,
+                 stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
                  radius = tier2_werke$Sitze_hergestellt*radius_factor/3) %>%
       
-      #Radius: Number of production errors: Einzelteile geliefert
+      # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
       addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                 color = 'white', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-                 radius = tier2_werke$defekte_Einzelteile_erhalten*radius_factor/3) %>%
+                 stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
+                 radius = tier2_werke$Sitze_fehlerhaft*radius_factor/3) %>%
+
+      
+      
+      
+
+      
+      
+      
+      
+
       
       # Display tier1 facilities with custom icon
       addMarkers(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = tier1Icon, # filtered_data_dots(), ~lat_via, ~lng_via,
@@ -478,7 +501,8 @@ server <- function(input, output, session) {
                  #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
                  popup = ~paste("<center><h5>Einzelteil-Werk</h5></center>",
                                 "Werksnummer: ", Werksnummer_Einzelteil, "<br/>",
-                                "defekte Einzelteile hergestellt: ", Einzelteile_hergestellt, "<br/>")
+                                "Einzelteile geliefert: ", Einzelteile_hergestellt, "<br/>",
+                                "davon fehlerhaft laut Einzelteil-Werk: ", Einzelteile_fehlerhaft, "<br/>")
       )  %>% 
       
       # Display tier2 facilities with custom icon
@@ -487,8 +511,13 @@ server <- function(input, output, session) {
                  #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
                  popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
                                 "Werksnummer: ", Werksnummer_Komponente, "<br/>",
-                                "defekte Einzelteile erhalten: ", defekte_Einzelteile_erhalten, "<br/>",
-                                "defekte Komponenten (Sitze) hergestellt: ", Sitze_hergestellt, "<br/>")
+                                "betroffene Komponenten: ", Komponenten, "<br/>",
+                                "Einzelteile erhalten: ", Einzelteile_hergestellt, "<br/>",
+                                "davon fehlerhaft laut Einzelteile-Werk: ", Einzelteile_fehlerhaft, "<br/>",
+                                "defekte Sitze hergestellt: ", Sitze_hergestellt, "<br/>",
+                                "davon fehlerhaft laut Komponenten-Werk: ", Sitze_fehlerhaft, "<br/>")
+                                
+                 
       )  %>%
       
       # Add marker for car location
@@ -598,18 +627,22 @@ server <- function(input, output, session) {
       setView(lng = 10.46, lat = 51.15, zoom = 6.25)
   })
   
+  # show defective parts bools as factors: Ja / Nein 
+  final_joined$Fehlerhaft_Einzelteil = factor(final_joined$Fehlerhaft_Einzelteil, c(0, 1), c('Ja', 'Nein'))
+  final_joined$Fehlerhaft_Komponente = factor(final_joined$Fehlerhaft_Komponente, c(0, 1), c('Ja', 'Nein'))
+  
   # Render full database
   output$datatable_final_joined <- renderDataTable({
     input$reset_filters
-    datatable(final_joined[final_joined$Fehlerhaft_Einzelteil == 1 | final_joined$Fehlerhaft_Komponente == 1,
+    datatable(final_joined[,
                            c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil',
                              'ID_Komponente', 'Werksnummer_Komponente', 'Fehlerhaft_Komponente',
                              'ID_Fahrzeug', 'Werksnummer_Fahrzeug', 'Produktionsdatum_Fahrzeug', 'Zulassungsdatum', 'Gemeinde', 'PLZ') ],
-              filter = 'top',
+              filter = list(position = 'top', clear = TRUE),
               options = list(
                 lengthMenu = list(c(3, 10, 20, 100, 1000, 10000), c('3', '10', '20', '100', '1000', '10000')),
                 pageLength = 10,
-                
+                search = list(regex = TRUE, caseInsensitive = FALSE, search = ""), # 'ä=ae, ö=oe, ü=ue'
                 # Define German translaton of data table UI
                 language = list(
                   info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
@@ -628,10 +661,13 @@ server <- function(input, output, session) {
                            'ID_Werk' =  'Werksnummer_Fahrzeug',
                            'Fehlerhaft' = 'Fehlerhaft_Einzelteil',
                            'Fehlerhaft' = 'Fehlerhaft_Komponente'),
+                           
               rownames = FALSE) %>% 
+      #formatDate(1, method = 'toLocaleString') %>% 
       # Add column grid to visually divide Einzelteil, Komponente and Fahrzeug
       formatStyle(
         c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = 'solid 1px'
+          
       )
   })
   
