@@ -736,7 +736,6 @@ Die Fahrzeug-Datensätze wurden ebenfalls per left_join() mit den Zulassungs- un
 
 Bei der Suche nach fehlenden Werten wurden in den gejointen Fahrzeug-Zulassung-Gemeindedaten traten fehlende Gemeindedaten zu dem Zulassungsort "Seeg" auf, welche nachträglich im Gemeinden-Datensatz hinzugefügt wurden.
 
-
 ```{r join geodata, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
 ## Join datasets with Geodaten and Zulassungen
 
@@ -770,7 +769,11 @@ if(any(is.na(fahrzeuge_geo))==TRUE) {
 
 ### Finaler Datensatz
 
-DADADDD
+Im letzten Abschnitt zum finalen Datensatz wurden die Einzelteile-Geodaten, Komponenten-Geodaten und Fahrzeuge-Geodaten nacheinander mittels full_join() über die Schlüsselvariable "ID_Komponente" verbunden, um alle Daten um die relevanten Komponenten herum zu erhalten. Da die drei Datensätze teilweise dieselben Spaltennamen hatten, mussten sie mittels suffix = c("_Einzelteil", "_Komponente") unterschieden werden. Entsprechende Spaltennamen für die Fahrzeugdaten wurden nachträglich mittels der Funktion rename() kenntlich gemacht.
+
+Da wir nur Komponenten des Herstellers "111" auswerten, wurde der zusammengeführte Datensatz auf entsprechende Herstellernummer gefiltert. Laut Aufgabenstellung konnten entweder Komponenten oder Einzelteile als fehlerhaft markiert sein. Dabei galten Komponenten, die fehlerhafte Einzelteile enthalten, als ausgefallen, auch wie die Komponenten selbst nicht als fehlerhaft markiert sind. Deshalb wurde der Datensatz ebenfalls auf fehlerhafte Einzelteile und / oder fehlerhafte Komponenten mittels inklusivem OR-Operator gefiltert. Die Herstellernummer wurde hinterher nicht weiter benötigt und konnte entfernt werden.
+
+Zwecks Übersichtlichkeit wurden die Spalten im finalen Datensatz neu sortiert.
 
 ```{r final join, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
 ## Final join, filter and cleaning
