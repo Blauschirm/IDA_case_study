@@ -783,6 +783,7 @@ defective_components_excl <- final_joined %>%
   ungroup() %>%
   summarise(defective_components_excl = n())
 
+
 defective_parts_excl <- final_joined %>%
   filter(Fehlerhaft_Einzelteil == 1 & Fehlerhaft_Komponente == 0) %>%
   summarise(defective_parts_excl = n())
