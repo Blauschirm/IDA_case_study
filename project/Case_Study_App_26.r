@@ -143,20 +143,27 @@ server <- function(input, output, session) {
   # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
   fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
   
+  # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
   zulassungen <- reactive({
+    # first check wether any rows in the table are selected right now. 
+    # Selected rows can be checked by appending __rows__selected to the name of a data table and using that as an input
+    # This returns the indices of the selected rows in the table, which then need to be mapped to the actual data used in the table
     if(length(input$datatable_gemeinden_rows_selected)){
       zulassungen_out <- filter(fahrzeuge, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
     } else {
+      # If no rows are selected we use all data
       zulassungen_out <- fahrzeuge
     }
     
-    
+    # before returning the filtered Zulassungen we are preparing them for use in the bar plot, by bundeling the data by Month, by setting all
+    # dates to the first of their month and then grouping them by month, Gemeinde and Fahrzeug ID
     zulassungen_out <- zulassungen_out %>%
       mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
       group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
       summarise(Anzahl = n()) %>%
       ungroup()
     
+    # returning the filtered data
     zulassungen_out
   })
   
