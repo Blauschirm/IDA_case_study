@@ -11,6 +11,12 @@ output:
 
 <style>
 
+
+  /* Text */
+  
+  font-family: "Latin Modern"
+  
+
   /* Header */
 
   #header {
@@ -21,23 +27,21 @@ output:
     text-align: center;
   }
   
+  
   /* Tabellen */
   
   table thead {
     border-bottom-style: solid;
     border-bottom-width: 1px;
   }
-  
   table th {
     padding-left: 8px;
     padding-right: 8px;
   }
-  
   table td {
     padding-left: 8px;
     padding-right: 8px;
   }
-  
   
 </style>
 
@@ -266,7 +270,7 @@ Alle Einzelteil-Datensätze hatten jeweils zwei überflüssige Spalten mit den V
 
 Die Einzelteil-Datensätze lagen außerdem in zwei unterschiedlichen Strukturen vor. In den Tabellen "T11", T14", "T19" und "T20" waren die Werte für das jeweilige Produktionsdatum über zwei Spalten verteilt: In der Spalte "Produktionsdatum_01011970_origin" als Anzahl von Tagen im integer-Format basierend auf dem Wert "01-01-1970" in der "origin"-Spalte im Date-Format. Die integer-Werte mussten deshalb entsprechend mit der mutate() Funktion auf das origin-Datum addiert, in einer neuen Variable "Produktionsdatum" gespeichert und die übrigen Spalten gelöscht werden. 
 
-```{r tidy data einzteile, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
+```{r tidy data einzteile, results = 'hide', message = FALSE, warning = FALSE, cache = TRUE}
 ## Clean and tidy Einzelteile datasets
 
 # Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
