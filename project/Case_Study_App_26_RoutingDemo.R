@@ -1,7 +1,7 @@
 library(shiny)
 library(ggplot2)
 library(DT)
-
+library(stringr)
 # scales to be able to use dates as ggplot limits
 if (!require(scales)){
   install.packages("scales")
@@ -18,6 +18,11 @@ if( !require(leaflet)){
 }
 library(leaflet)
 library(leaflet.extras)
+
+if( !require(leafpop)){
+  install.packages("leafpop")
+}
+library(leafpop)
 
 if( !require(dplyr)){
   install.packages("dplyr")
@@ -45,7 +50,7 @@ max <- 322075 # Number of observations
 n <-   3220
 radius_factor <- 15000 # 700
 
-beispiel <- floor(runif(8, min=1, max = n))
+beispiel <- floor(runif(6, min=1, max = n))
 #beispiel <- c(1:8)
 print("Beispiel Set: "); str(beispiel)
 
@@ -56,7 +61,7 @@ print("Beispiel Set: "); str(beispiel)
 # Subset the data
 #final_joined <- final_joined[beispiel, ]
 #final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
-final_joined <- final_joined[sample(nrow(final_joined), 10000),]
+final_joined <- final_joined[c(sample(nrow(final_joined), 10000), beispiel),]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
@@ -311,30 +316,32 @@ server <- function(input, output, session) {
     arrange(Gemeinde) %>%
     ungroup()
   
+  # Statistics for tier1 facility
   tier1_werke <- final_joined[beispiel, ] %>% 
-    select(ID_Fahrzeug, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
+    select(ID_Fahrzeug, ID_Einzelteil, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
     group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
-    summarise(Einzelteile_fehlerhaft = sum(Fehlerhaft_Einzelteil),
-              Einzelteile_hergestellt = n() ) %>%
+    summarise(
+      'Einzelteile geliefert' = n(), 
+      'fehlerhaft laut Einzelteil-Werk' = sum(Fehlerhaft_Einzelteil),
+      Einzelteile = substring(str_c(glue('<br>{ID_Einzelteil}'),collapse = ""),5),
+      Fehlerhaft = toString(factor(Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja')))
+    ) %>%
     ungroup() %>%
-    arrange(Einzelteile_fehlerhaft)
-  #summary(tier1_werke)
-  
-  
+    arrange(Fehlerhaft)
+
+  # Statistics for tier2 facility
   tier2_werke <- final_joined[beispiel, ] %>% 
     select(ID_Fahrzeug, ID_Fahrzeug, ID_Komponente, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
     group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
-    summarise(Einzelteile_fehlerhaft = sum(Fehlerhaft_Einzelteil),
-              Einzelteile_hergestellt = n(),
-              Sitze_fehlerhaft = sum(Fehlerhaft_Komponente),
-              Sitze_hergestellt = sum(!duplicated(ID_Fahrzeug)),
-              Komponenten = toString(c(ID_Komponente)) ) %>%
-    #arrange(Sitze_fehlerhaft) %>%
+    summarise(
+      'Einzelteile erhalten' = n(),
+      'fehlerhaft laut Einzelteil-Werk' = sum(Fehlerhaft_Einzelteil),
+      'Defekte Sitze hergestellt' = sum(!duplicated(ID_Fahrzeug)),
+      'fehlerhaft laut Komponenten-Werk' = sum(Fehlerhaft_Komponente),
+      Komponenten = substring(str_c(glue('<br>{ID_Komponente}'),collapse = ""),5),
+      Fehlerhaft = toString(factor(Fehlerhaft_Komponente, c(0, 1), c('Nein', 'Ja')))
+    ) %>%
     ungroup()
-  
-  summary(tier2_werke)
-  sum(tier2_werke$Sitze_hergestellt)
-  sum(tier2_werke$fehlerhafte_Einzelteile_erhalten)
 
   
   # Render data table: gemeinden
@@ -570,70 +577,76 @@ server <- function(input, output, session) {
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       addCircles(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
                  color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
-                 radius = tier1_werke$Einzelteile_hergestellt*radius_factor) %>%
+                 radius = tier1_werke$'Einzelteile hergestellt'*radius_factor) %>%
       
       # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
       addCircles(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
                  color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
-                 radius = tier1_werke$Einzelteile_fehlerhaft*radius_factor) %>%
+                 radius = tier1_werke$'fehlerhaft laut Einzelteile-Werk'*radius_factor) %>%
       
-      # # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
-      # addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
-      #            color = 'weiß', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-      #            radius = tier2_werke$Einzelteile_hergestellt*radius_factor/3) %>%
-      # 
-      # # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
-      # addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
-      #            color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-      #            radius = tier2_werke$Einzelteile_fehlerhaft*radius_factor/3) %>%
+      # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
+      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 color = 'weiß', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+                 radius = tier2_werke$'Einzelteile hergestellt'*radius_factor/3) %>%
+
+      # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
+      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+                 radius = tier2_werke$'fehlerhaft laut Einzelteile-Werk'*radius_factor/3) %>%
       
       # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
       addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
                  stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
-                 radius = tier2_werke$Sitze_hergestellt*radius_factor/3) %>%
+                 radius = tier2_werke$'Defekte Sitze hergestellt'*radius_factor/3) %>%
       
       # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
       addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
                  stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
-                 radius = tier2_werke$Sitze_fehlerhaft*radius_factor/3) %>%
+                 radius = tier2_werke$'fehlerhaft laut Komponenten-Werk'*radius_factor/3) %>%
 
       
-      
-      
-
-      
-      
-      
-      
-
-      
-      # Display tier1 facilities with custom icon
+      #Display tier1 facilities with custom icon
       addMarkers(data = tier1_werke, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = tier1Icon, # filtered_data_dots(), ~lat_via, ~lng_via,
                  #display large amounts of markers as clusters
                  #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
-                 popup = ~paste("<center><h5>Einzelteil-Werk</h5></center>",
-                                "Werksnummer: ", Werksnummer_Einzelteil, "<br/>",
-                                "Einzelteile geliefert: ", Einzelteile_hergestellt, "<br/>",
-                                "davon fehlerhaft laut Einzelteil-Werk: ", Einzelteile_fehlerhaft, "<br/>")
-      )  %>% 
+                 popup = ~paste(
+                                "<center><h5>Einzelteil-Werk</h5></center>",
+                                popupTable(tier1_werke, feature.id = FALSE, row.numbers = FALSE,
+                                  zcol = c(
+                                           'Werksnummer_Einzelteil',
+                                           'Einzelteile geliefert',
+                                           'fehlerhaft laut Einzelteil-Werk',
+                                           "Einzelteile",
+                                           "Fehlerhaft")
+                                )
+                 ),
+                 popupOptions = popupOptions(minWidth = 320)
+                 
+      )  %>%
       
       # Display tier2 facilities with custom icon
       addMarkers(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = tier1Icon,# filtered_data_dots(), ~lat_via, ~lng_via,
                  #display large amounts of markers as clusters
                  #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
                  popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
-                                "Werksnummer: ", Werksnummer_Komponente, "<br/>",
-                                "betroffene Komponenten: ", Komponenten, "<br/>",
-                                "Einzelteile erhalten: ", Einzelteile_hergestellt, "<br/>",
-                                "davon fehlerhaft laut Einzelteile-Werk: ", Einzelteile_fehlerhaft, "<br/>",
-                                "defekte Sitze hergestellt: ", Sitze_hergestellt, "<br/>",
-                                "davon fehlerhaft laut Komponenten-Werk: ", Sitze_fehlerhaft, "<br/>")
-                                
-                 
+                                #"Werksnummer: ", Werksnummer_Einzelteil, "<br/>",
+                                #"ja/nein: ", Einzelteile, "<br/>",
+                                popupTable(tier2_werke, feature.id = FALSE, row.numbers = FALSE,
+                                           zcol = c(
+                                             'Werksnummer_Komponente',
+                                             'Einzelteile erhalten',
+                                             'fehlerhaft laut Einzelteil-Werk',
+                                             'Defekte Sitze hergestellt',
+                                             'fehlerhaft laut Komponenten-Werk',
+                                             'Komponenten',
+                                             'Fehlerhaft')
+                               )
+                 ),
+                 popupOptions = popupOptions(minWidth = 360)
       )  %>%
       
       # Add marker for car location
-      addMarkers(data = filtered_vehicles()[selected_routes[1], ], ~Längengrad, ~Breitengrad, icon = carIcon,
+      addMarkers(data = final_joined[selected_routes[1], ], ~Längengrad, ~Breitengrad, icon = carIcon,
                #display large amounts of markers as clusters
                clusterOptions = markerClusterOptions(),
                popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
