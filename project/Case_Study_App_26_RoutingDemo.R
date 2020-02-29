@@ -80,7 +80,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
     # header panel
     wellPanel(
       
-      img(src="Case_Study_Group_26_files/figure-html/QW_logo.jpg", #filetype = "image/jpeg",
+      img(src="Zusaetzliche_Dateien/QW_logo.jpg", #filetype = "image/jpeg",
           align = "right"),
       img(src='Zusaetzliche_Dateien/TU_logo.gif', #filetype = "image/gif",
           align = "left"),
@@ -288,16 +288,27 @@ server <- function(input, output, session) {
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
     
+    # reactive function to get smaller breaks on x-axis when date range on sliderInput gets smaller
+    responsive_break_x <- reactive({
+      if(input$slider_zulassungsperiode[2] - input$slider_zulassungsperiode[1] < 500) {
+        responsive_break_x <- breaks_width("1 month")
+      } else {
+        responsive_break_x <- breaks_width("3 month")
+      }
+      responsive_break_x
+    })
+    
     ggplot(zulassungen(), aes(x = Monat, y = Anzahl, fill=factor(Werksnummer_Fahrzeug))) +
       geom_bar(stat = "identity", width = 20) +
-      scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
+      # add fixed colours to fills for each OEM
+      scale_fill_manual(values=c("11" = "#c50e1f", "12" = "#7CAE00", "21" = "#00BFC4", "22" = "#C77CFF")) +
       guides(fill = guide_legend(title="Werksnummer der OEM")) + 
-      scale_x_date(breaks = breaks_width("3 month"),
+      scale_x_date(breaks = responsive_break_x(),
                    labels = date_format(format = "%Y-%b", tz = "ECT"),
                    limits = c(input$slider_zulassungsperiode[1] - 40, input$slider_zulassungsperiode[2] + 40)
       ) + 
-      # inline function to force breaks to integer values (stackoverflow.com/questions/15622001/)
-      scale_y_continuous(breaks = function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0]
+      # inline function to force breaks to integer values (https://stackoverflow.com/questions/44182709/r-shiny-dashboardsidebar-breaks-graphs-and-tables-width-when-toggling)
+      scale_y_continuous(breaks = function(x) unique(floor(pretty(x)))
       ) +
       theme(axis.text.x = element_text(angle=45, hjust = 1, size = 10),
             axis.text.y = element_text(size = 10),
