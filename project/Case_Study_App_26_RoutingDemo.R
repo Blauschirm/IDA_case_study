@@ -61,6 +61,7 @@ final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
 
+# save start and date of all zulassungen in a vector
 start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
 
 
@@ -88,7 +89,6 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
         )
       )
     ),
-    
     
     # seperate user interface into two tabs for different user groups: owner and manufacturer
     tabsetPanel(type = "tabs",
@@ -185,14 +185,12 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                          checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
                                             inline = FALSE,
                                             choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
-                         
                   ),
                   # Reset map position
                   column(9, 
                          offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                          "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
                          actionButton(inputId = "reset", "Position zurücksetzen")
-                         
                   )
                 ),
                 
@@ -274,6 +272,12 @@ server <- function(input, output, session) {
     zulassungen_out
   })
   
+  # reset sliderInput for zulassungen period
+  observeEvent(input$reset_filters,
+    updateSliderInput(session, 'slider_zulassungsperiode',
+                      value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum)))
+  )
+  
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
     
@@ -285,7 +289,8 @@ server <- function(input, output, session) {
                    labels = date_format(format = "%Y-%b", tz = "ECT"),
                    limits = c(input$slider_zulassungsperiode[1] - 28, input$slider_zulassungsperiode[2] + 28)
       ) + 
-      scale_y_continuous(breaks = function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0] # inline function to force breaks to integer values (stackoverflow.com/questions/15622001/)
+      # inline function to force breaks to integer values (stackoverflow.com/questions/15622001/)
+      scale_y_continuous(breaks = function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0]
       ) +
       theme(axis.text.x = element_text(angle=45, hjust = 1, size = 10),
             axis.text.y = element_text(size = 10),
