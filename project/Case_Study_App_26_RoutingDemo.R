@@ -76,21 +76,25 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                  titlePanel("Ist mein Fahrzeug betroffen?"),
                  fluidRow(
                    column(
-                     8,
+                     4,
                      textInput(
                        'vehicle_id_input', "FahrzeugID eingeben um Details zu sehen", value = "", width = "100%",
                        placeholder = 'Fahrzeug ID')
                    ),
                    column(
-                     4,
-                     actionButton('vehicle_filter_submit', 'Suchen')
+                     8,
+                     actionButton('vehicle_filter_submit', 'Suchen'),
+                     style="margin-top: 25px"
                    ),
                  ),
                  fluidRow(
-                   verbatimTextOutput("result_text"),
-                   verbatimTextOutput("vehicle_info_text"),
-                   tableOutput('components_list'),
-                   tableOutput('parts_list')
+                   column(
+                     12,
+                     verbatimTextOutput("result_text"),
+                     verbatimTextOutput("vehicle_info_text"),
+                     tableOutput('components_list'),
+                     tableOutput('parts_list')
+                   )
                  )
                )
       ),
