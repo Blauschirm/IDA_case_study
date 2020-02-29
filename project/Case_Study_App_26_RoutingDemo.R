@@ -246,6 +246,11 @@ server <- function(input, output, session) {
     tmp
   })
   
+  # Only draw the polylines and overlays for the first n parts
+  filtered_parts_head <- reactive({
+    head(filtered_parts(), n = 100)
+  })
+  
   # Calculate the vehicles from the filteres parts
   filtered_vehicles <- reactive({
     filtered_parts()[!duplicated(filtered_parts()$ID_Fahrzeug), ]
@@ -329,7 +334,7 @@ server <- function(input, output, session) {
   
   # Statistics for tier1 facility
   tier1_werke <- reactive({
-    filtered_parts() %>% 
+    filtered_parts_head() %>% 
       select(ID_Fahrzeug, ID_Einzelteil, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
       group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
       summarise(
@@ -345,7 +350,7 @@ server <- function(input, output, session) {
   
   # Statistics for tier2 facility
   tier2_werke <- reactive({
-    filtered_parts() %>% 
+    filtered_parts_head() %>% 
       select(ID_Fahrzeug, ID_Fahrzeug, ID_Komponente, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
       group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
       summarise(
@@ -443,7 +448,7 @@ server <- function(input, output, session) {
   # supply_routes <- filtered_parts()
   
   data_dots <- reactive({
-    supply_routes <- filtered_parts()
+    supply_routes <- filtered_parts_head()
     
     df = data.frame(id = 1:nrow(supply_routes), # 1:length(beispiel)
                     lat_begin = supply_routes$Breitengrad_Einzelteil,
@@ -611,7 +616,7 @@ server <- function(input, output, session) {
       )
     
     # Add marker for car location
-    filtered_vehicles_tmp <- filtered_vehicles()
+    filtered_vehicles_tmp <- filtered_parts_head()
     for(i in 1:length(filtered_vehicles)){
       leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
                                 #display large amounts of markers as clusters
