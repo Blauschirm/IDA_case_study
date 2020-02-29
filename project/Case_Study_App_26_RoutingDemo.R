@@ -322,7 +322,7 @@ server <- function(input, output, session) {
     summarise(
       'Einzelteile geliefert' = n(), 
       'fehlerhaft laut Einzelteil-Werk' = sum(Fehlerhaft_Einzelteil),
-      Einzelteile = toString(str_c(glue('{ID_Einzelteil}<br>'),collapse = "")),
+      Einzelteile = substring(str_c(glue('<br>{ID_Einzelteil}'),collapse = ""),5),
       Fehlerhaft = toString(factor(Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja')))
     ) %>%
     ungroup() %>%
@@ -337,7 +337,7 @@ server <- function(input, output, session) {
       'fehlerhaft laut Einzelteil-Werk' = sum(Fehlerhaft_Einzelteil),
       'Defekte Sitze hergestellt' = sum(!duplicated(ID_Fahrzeug)),
       'fehlerhaft laut Komponenten-Werk' = sum(Fehlerhaft_Komponente),
-      Komponenten = toString(str_c(glue('{ID_Komponente}</br>'),collapse = "")),
+      Komponenten = substring(str_c(glue('<br>{ID_Komponente}'),collapse = ""),5),
       Fehlerhaft = toString(factor(Fehlerhaft_Komponente, c(0, 1), c('Nein', 'Ja')))
     ) %>%
     ungroup()
@@ -619,7 +619,7 @@ server <- function(input, output, session) {
                                            "Fehlerhaft")
                                 )
                  ),
-                 popupOptions = popupOptions(minWidth = 300)
+                 popupOptions = popupOptions(minWidth = 320)
                  
       )  %>%
       
@@ -641,7 +641,7 @@ server <- function(input, output, session) {
                                              'Fehlerhaft')
                                )
                  ),
-                 popupOptions = popupOptions(minWidth = 340)
+                 popupOptions = popupOptions(minWidth = 360)
       )  %>%
       
       # Add marker for car location
