@@ -764,8 +764,10 @@ server <- function(input, output, session) {
       
       # Fahrzeuginfos
       vehicle <- vehicle_parts[!duplicated(vehicle_parts$ID_Fahrzeug)]
-      vehicle_info_string <- glue("Ihr Fahrzeug ({vehicle$ID_Fahrzeug}), zugelassen am {vehicle$Zulassungsdatum} in {vehicle$PLZ}, {vehicle$Gemeinde}, wurde am {vehicle$Produktionsdatum_Fahrzeug} im Werk {vehicle$Werksnummer_Fahrzeug} gebaut und hat folgende Fehler:
-Unten finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den dafür verwendeten Einzelteilen, zusammen mit den Werksnummern bei denen ihre Servicewerkstatt Ersatzteile anfordern kann.")
+      vehicle_info_string <- glue("Ihr Fahrzeug ({vehicle$ID_Fahrzeug}), zugelassen am {vehicle$Zulassungsdatum} in {vehicle$PLZ} {vehicle$Gemeinde},
+wurde am {vehicle$Produktionsdatum_Fahrzeug} im Werk {vehicle$Werksnummer_Fahrzeug} gebaut.
+Folgend finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den dafür verwendeten Einzelteilen
+zusammen mit den Werksnummern bei denen Ihre Servicewerkstatt Ersatzteile anfordern kann.")
       output$vehicle_info_text <- renderText(vehicle_info_string)
     
       # components
@@ -774,12 +776,11 @@ Unten finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den dafür
       # parts
       output$parts_list <- renderTable(vehicle_parts[,c("ID_Einzelteil", "Fehlerhaft_Einzelteil", "Werksnummer_Einzelteil")])
       
-      } else {
+    } else {
       output$result_text <- renderText({"ID exisitiert nicht."})
       output$vehicle_info_text <- NULL
       output$components_list <- NULL
       output$parts_list <- NULL
-      
     }
   })
 } 
