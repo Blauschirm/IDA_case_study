@@ -53,11 +53,6 @@ print("Beispiel Set: "); str(beispiel)
 #final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
 final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 
-# Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
-fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
-
-start_end_dates <- c( min(fahrzeuge$Zulassungsdatum) - 28, max(fahrzeuge$Zulassungsdatum) + 28 )
-
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
   
   mainPanel(
@@ -169,13 +164,34 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
 # Shiny Server
 server <- function(input, output, session) {
   
-  
-  
-  start_zulassungen <- min(final_joined$Zulassungsdatum)
-  end_zulassungen <- max(final_joined$Zulassungsdatum)
-  
   # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
-  fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
+  all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
+
+  start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
+  
+  # Filter parts with the three datatables
+  filtered_parts <- reactive({
+    tmp <- final_joined
+    if(length(input$datatable_gemeinden_rows_selected)){
+      tmp <- filter(tmp, (PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ))
+    }
+    if(length(input$datatable_final_joined_rows_selected)){
+      tmp <- tmp[input$datatable_final_joined_rows_selected,]
+    }
+    if(length(input$datatable_bauteile_rows_selected)){
+      tmp <- tmp[input$datatable_bauteile_rows_selected,]
+    }
+    
+    print("                FILTERED PARTS:                     ")
+    print(str(tmp))
+    
+    tmp
+  })
+  
+  # Calculate the vehicles from the filteres parts
+  filtered_vehicles <- reactive({
+    filtered_parts()[!duplicated(filtered_parts()$ID_Fahrzeug), ]
+  })
   
   # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
   zulassungen <- reactive({
@@ -183,10 +199,10 @@ server <- function(input, output, session) {
     # Selected rows can be checked by appending __rows__selected to the name of a data table and using that as an input
     # This returns the indices of the selected rows in the table, which then need to be mapped to the actual data used in the table
     if(length(input$datatable_gemeinden_rows_selected)){
-      zulassungen_out <- filter(fahrzeuge, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
+      zulassungen_out <- filter(all_vehicles, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
     } else {
       # If no rows are selected we use all data
-      zulassungen_out <- fahrzeuge
+      zulassungen_out <- all_vehicles
     }
     
     # before returning the filtered Zulassungen we are preparing them for use in the bar plot, by bundeling the data by Month, by setting all
@@ -215,12 +231,11 @@ server <- function(input, output, session) {
       theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
   })
   
-  str(start_zulassungen)
   # Render data tables: gemeinden / bauteile
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
   
-  gemeinden <- fahrzeuge %>% 
+  gemeinden <- all_vehicles %>% 
     select(Gemeinde, PLZ, Werksnummer_Komponente) %>%
     group_by(Gemeinde, PLZ) %>%
     summarise(Zulassungen = length(PLZ)) %>%
@@ -309,18 +324,6 @@ server <- function(input, output, session) {
       )
   })
   
-  
-  filtered_vehicles <- reactive({
-    if(length(input$datatable_gemeinden_rows_selected)){
-      fahrzeuge %>%
-        filter(PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ)
-        # input$datatable_gemeinden_rows_selected,]$PLZ
-        # filtered_facilites_tier2() <- filtered_vehicles()[!duplicated(filtered_vehicles()$Werksnummer_Komponente),]
-    } else {
-      fahrzeuge
-    }
-  })
-  
   # filtered_data_dots <- reactive({
   #   if(length(input$datatable_gemeinden_rows_selected)){
   #     data_dots[beispiel, ] %>%
@@ -371,7 +374,7 @@ server <- function(input, output, session) {
   # Colors for the supply routes
   colors_polyline <- c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")
 
-  #output$value <- renderText({ input$fahrzeuge })
+  #output$value <- renderText({ input$all_vehicles })
   #output$value1 <- renderText({ input$lieferwege })
   
   # Conditionally adding markers to map
@@ -413,7 +416,6 @@ server <- function(input, output, session) {
       # )  %>%
       # END Layer 2
     
-     # fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
     #filtered_faclities_tier1() <- filtered_vehicles()[!duplicated(Werksnummer_Einzelteil),]
     #filtered_facilites_tier2() <- filtered_vehicles()[!duplicated(filtered_vehicles()$Werksnummer_Komponente),]
       
