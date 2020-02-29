@@ -50,14 +50,13 @@ print("Beispiel Set: "); str(beispiel)
 
 # Subset the data
 #final_joined <- final_joined[beispiel, ]
-final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
+#final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
+final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
 
-start_end_dates <- c( as.Date("2009-01-01", "Y-m-d"), as.Date("2017-01-01", "Y-m-d") )
-start_end_dates
-#
+start_end_dates <- c( min(fahrzeuge$Zulassungsdatum) - 28, max(fahrzeuge$Zulassungsdatum) + 28 )
 
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
   
@@ -178,33 +177,41 @@ server <- function(input, output, session) {
   # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
   fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
   
+  # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
   zulassungen <- reactive({
+    # first check wether any rows in the table are selected right now. 
+    # Selected rows can be checked by appending __rows__selected to the name of a data table and using that as an input
+    # This returns the indices of the selected rows in the table, which then need to be mapped to the actual data used in the table
     if(length(input$datatable_gemeinden_rows_selected)){
       zulassungen_out <- filter(fahrzeuge, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
     } else {
+      # If no rows are selected we use all data
       zulassungen_out <- fahrzeuge
     }
     
-    
-    zulassungen_out <- zulassungen_out %>%
-      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-d"), "%Y-%m-%d"), fehlerhaft= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
+    # before returning the filtered Zulassungen we are preparing them for use in the bar plot, by bundeling the data by Month, by setting all
+    # dates to the first of their month and then grouping them by month, Gemeinde and Fahrzeug ID
+  zulassungen_out <- zulassungen_out %>%
+      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
       group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
       summarise(Anzahl = n()) %>%
       ungroup()
     
+    # returning the filtered data
     zulassungen_out
   })
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
     ggplot(zulassungen(), aes(x = Monat, y = Anzahl, fill=factor(Werksnummer_Fahrzeug))) +
-      geom_bar(stat = "identity") +
+      geom_bar(stat = "identity", width = 20) +
       scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
       guides(fill = guide_legend(title="Werknummer der OEM")) + 
-      scale_x_date(breaks = scales::breaks_width("2 year"), 
-                   #labels = scales::label_date_short(format = c("%Y, %b")),
-                   limits = c(start_zulassungen, end_zulassungen)) +
-      scale_y_continuous(breaks= pretty_breaks()) +
+      scale_x_date(breaks = breaks_width("3 month"),
+                   labels = date_format(format = "%Y-%b", tz = "ECT"),
+                   limits = start_end_dates
+      ) + 
+      scale_y_continuous(breaks=pretty_breaks()) +
       theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
   })
   
@@ -307,9 +314,8 @@ server <- function(input, output, session) {
     if(length(input$datatable_gemeinden_rows_selected)){
       fahrzeuge %>%
         filter(PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ)
-      
-      # input$datatable_gemeinden_rows_selected,]$PLZ
-# filtered_facilites_tier2() <- filtered_vehicles()[!duplicated(filtered_vehicles()$Werksnummer_Komponente),]
+        # input$datatable_gemeinden_rows_selected,]$PLZ
+        # filtered_facilites_tier2() <- filtered_vehicles()[!duplicated(filtered_vehicles()$Werksnummer_Komponente),]
     } else {
       fahrzeuge
     }

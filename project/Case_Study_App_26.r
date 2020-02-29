@@ -143,6 +143,30 @@ server <- function(input, output, session) {
   # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
   fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
   
+  # Render data tables: gemeinden / bauteile
+  # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
+  # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
+  
+  gemeinden <- fahrzeuge %>% 
+    select(Gemeinde, PLZ) %>%
+    group_by(Gemeinde, PLZ) %>%
+    summarise(Zulassungen = length(PLZ)) %>%
+    arrange(Gemeinde) %>%
+    ungroup()
+  
+  # Render data table: gemeinden
+  output$datatable_gemeinden <- renderDataTable({
+    input$reset_filters
+    datatable(
+      gemeinden,
+      options = list(
+        lengthMenu = list(c(3, 6, 20, -1), c('3', '6', '20', 'All')),
+        pageLength = 3
+      ),
+      rownames = FALSE
+    )
+  })
+  
   # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
   zulassungen <- reactive({
     # first check wether any rows in the table are selected right now. 
@@ -179,31 +203,6 @@ server <- function(input, output, session) {
                   )+ 
       scale_y_continuous(breaks=pretty_breaks()) +
       theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
-  })
-  
-  
-  # Render data tables: gemeinden / bauteile
-  # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
-  # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
-  
-  gemeinden <- fahrzeuge %>% 
-    select(Gemeinde, PLZ) %>%
-    group_by(Gemeinde, PLZ) %>%
-    summarise(Zulassungen = length(PLZ)) %>%
-    arrange(Gemeinde) %>%
-    ungroup()
-  
-  # Render data table: gemeinden
-  output$datatable_gemeinden <- renderDataTable({
-    input$reset_filters
-    datatable(
-      gemeinden,
-      options = list(
-        lengthMenu = list(c(3, 6, 20, -1), c('3', '6', '20', 'All')),
-        pageLength = 3
-      ),
-      rownames = FALSE
-    )
   })
   
   # Render data table: bauteile
