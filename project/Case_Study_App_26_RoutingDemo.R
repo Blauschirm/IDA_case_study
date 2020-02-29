@@ -66,6 +66,24 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
     # Link CSS file to main panel
     #tags$link(rel = "stylesheet", type = "text/css", href = "bootstrap.min.css"),
     tabsetPanel(type = "tabs",
+      tabPanel("Extern",
+        wellPanel(
+          titlePanel("Ist mein Fahrzeug betroffen?"),
+          fluidRow(
+             column(
+               8,
+               textInput('vehicle_id_input', "FahrzeugID eingeben um Details zu sehen", 
+                         value = "", width = "100%", placeholder = 'Fahrzeug ID')
+             ),
+             column(
+               4,
+               actionButton('vehicle_filter_submit', 'Suchen')
+             ),
+          ),
+          verbatimTextOutput("result_text"),
+          tableOutput('vehicle_details')
+        )
+      ),
       tabPanel("Intern",
         wellPanel(
           
@@ -85,14 +103,52 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
         ),
         wellPanel(
           titlePanel("Zeitlicher Zulassungsverlauf der betroffenen Fahrzeuge aufgeteilt nach OEM-Werken"),
-          fluidRow(
-            column(12,
-                   plotOutput("plot_zulassungsverlauf")
-            )
-          ),
+          plotOutput("plot_zulassungsverlauf"),
+         
+
           sliderInput("slider_zulassungsperiode", "Wählen Sie die Zulassungsperiode",
                       min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum),
                       value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum))
+          ),
+          fluidRow(
+            column(3, 
+                   (h4("Betroffene Gemeinden")),
+                   
+                   # Display Betroffene Gemeinden as data table
+                   dataTableOutput('datatable_gemeinden')
+            ),
+            
+            # Heatmap with search bar section
+            column(9,
+                   (h4("Betroffene Bauteile")),
+                   
+                   # Display ID-search by ID_einzelteile & ID_Komponente
+                   dataTableOutput('datatable_bauteile'),
+                   
+                   # Select map type
+                   # selectizeInput(
+                   #   'e1', 'Wählen Sie den Kartentyp aus',
+                   #   choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
+                   # ),
+                   
+                   
+                   #verbatimTextOutput("value"),
+                   #checkboxInput("lieferwege", "Lieferwege anzeigen", FALSE),
+                   #verbatimTextOutput("value2"),
+                   
+                   # Reset search filter section
+                   column(6, offset = 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                          "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
+                          actionButton(inputId = "reset", "Position zurücksetzen")
+                          
+                   ),
+                   
+                   # Info text map
+                   column(6, offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                          "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
+                          actionButton("reset_filters", "Alle Filter zurücksetzen"),
+                   )
+            )
           )
         ),
         wellPanel(
@@ -103,54 +159,12 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                    checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
                                       inline = TRUE,
                                       choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
-                   fluidRow(
-                     column(12,
-                            fluidRow(
-                              column(3, 
-                                     (h4("Betroffene Gemeinden")),
-                                     
-                                     # Display Betroffene Gemeinden as data table
-                                     dataTableOutput('datatable_gemeinden')
-                              ),
-                              
-                              # Heatmap with search bar section
-                              column(9,
-                                     (h4("Betroffene Bauteile")),
-                                     
-                                     # Display ID-search by ID_einzelteile & ID_Komponente
-                                     dataTableOutput('datatable_bauteile'),
-                                     
-                                     # Select map type
-                                     # selectizeInput(
-                                     #   'e1', 'Wählen Sie den Kartentyp aus',
-                                     #   choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
-                                     # ),
-                                     
-                                     
-                                     #verbatimTextOutput("value"),
-                                     #checkboxInput("lieferwege", "Lieferwege anzeigen", FALSE),
-                                     #verbatimTextOutput("value2"),
-                                     
-                                     # Reset search filter section
-                                     column(6, offset = 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                            "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
-                                            actionButton(inputId = "reset", "Position zurücksetzen")
-                                            
-                                     ),
-                                     
-                                     # Info text map
-                                     column(6, offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                            "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
-                                            actionButton("reset_filters", "Alle Filter zurücksetzen"),
-                                     ),
-                                     # Display the heatmap  with car markers
-                                     leafletOutput(outputId = "map", width = '100%', height = 600),
-                                     "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"),
-                            )
-                     )
-                   )
+                   
             )
-          )
+          ),
+          # Display the heatmap  with car markers
+          leafletOutput(outputId = "map", width = '100%', height = 600),
+          "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"
         ),
         wellPanel(
           titlePanel("Datenbank"),
@@ -161,28 +175,8 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
             )
           )
         )
-      ),
-      tabPanel("Extern",
-        wellPanel(
-          titlePanel("Ist mein Fahrzeug betroffen?"),
-          fluidRow(
-           column(
-             8,
-             textInput(
-               'vehicle_id_input', "FahrzeugID eingeben um Details zu sehen", value = "", width = "100%",
-               placeholder = 'Fahrzeug ID')
-           ),
-           column(
-             4,
-             actionButton('vehicle_filter_submit', 'Suchen')
-           ),
-          ),
-          fluidRow(
-           verbatimTextOutput("result_text"),
-           tableOutput('vehicle_details')
-          )
-        )
       )
+      
     )
   )
 )
