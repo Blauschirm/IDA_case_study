@@ -48,7 +48,7 @@ load("Datensatz_tidy.RData")
 #n <- 15679 # Test size
 max <- 322075 # Number of observations
 n <-   3220
-radius_factor <- 15000 # 700
+radius_factor <- 20000 # 700
 
 beispiel <- floor(runif(6, min=1, max = n))
 #beispiel <- c(1:8)
