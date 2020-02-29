@@ -1,6 +1,8 @@
 ---
 title: "Lieferweg"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 Lieferweg visualisieren
@@ -65,9 +67,7 @@ library(dplyr)
 #load("/Users/jank/Documents/Privat/Uni/Uni Unterlagen/Engineering in R/Github Projects in R/IDA_case_study/project/Datensatz_tidy.RData")
 
 # for debugging: reducing the amount of data to be loaded
-lines <- final_joined[6:8, ]
-
-%>%
+lines <- final_joined[6:8, ] %>%
   addPolylines(lines, 
                lng = ~c(NA, Längengrad_Einzelteil, Längengrad_Komponente, Längengrad, NA),
                lat = ~c(NA, Breitengrad_Einzelteil, Breitengrad_Komponente, Breitengrad, NA),
