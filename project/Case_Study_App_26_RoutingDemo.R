@@ -51,7 +51,7 @@ print("Beispiel Set: "); str(beispiel)
 # Subset the data
 #final_joined <- final_joined[beispiel, ]
 #final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
-final_joined <- final_joined[sample(nrow(final_joined), 10000),]
+#final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
   
@@ -727,28 +727,35 @@ server <- function(input, output, session) {
         'border' = 'solid 2px'
       )
   })
-  
-  # vehicle details search for owners
-  selected_vehicle <- eventReactive(input$vehicle_filter_submit, {
-    out <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
-    if (dim(out)[1] >= 1){
-      out
-    } else {
-      NULL
-    }
-  })
 
   output$result_text <- renderText({"Geben Sie ihre Fahrzeug ID in die Suche ein um zu überprüfen ob ihr Fahrzeug betroffen ist."})
   
   observeEvent(input$vehicle_filter_submit, {
-    if (length(selected_vehicle())){
+    
+    # Welche Daten interessieren einen Fahrzeughalter?
+    
+    # Zulassungsdatum
+    # PLZ, Gemeinde
+    # Werksnummer_Fahrzeug
+    # Produktionsdatum_Fahrzeug
+    #
+    #
+    # ID_Einzelteil
+    # Werksnummer_Einzelteil
+    #
+    #
+    # ID_Komponente
+    # Werksnummer_Komponente
+    
+    out <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
+    
+    if (dim(out)[1] >= 1){
       output$result_text <- renderText({"Ihr Fahrzeug ist betroffen. Die defekten Einzelteile werden aufgelistet:"})
       
-      output$vehicle_details <- renderTable({
-        selected_vehicle()
-      })
+      output$vehicle_details <- renderTable({out})
     } else {
       output$result_text <- renderText({"ID exisitiert nicht."})
+      output$vehicle_details <- NULL
     }
   })
 } 
