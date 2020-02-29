@@ -75,10 +75,10 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
     # header panel
     wellPanel(
       
-      img(src='https://www.qw.tu-berlin.de/fileadmin/_processed_/8/8d/csm_QW_ohne_Text_print_a4670877cd.jpg',
+      img(src="Case_Study_Group_26_files/figure-html/QW_logo.jpg", #filetype = "image/jpeg",
           align = "right"),
-      #img(src='https://www.qw.tu-berlin.de/fileadmin/Aperto_design/img/logo_01.gif',
-      #align = "left"),
+      img(src='Zusaetzliche_Dateien/TU_logo.gif', #filetype = "image/gif",
+          align = "left"),
       titlePanel("Case_Study_App_26"),
       
       fluidRow(
@@ -249,6 +249,7 @@ server <- function(input, output, session) {
   # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
   zulassungen <- reactive({
     
+    # create subset based on slider input for zulassungen period
     zulassungen_out <- subset(all_vehicles, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
     
     # first check wether any rows in the table are selected right now. 
@@ -285,7 +286,7 @@ server <- function(input, output, session) {
     ggplot(zulassungen(), aes(x = Monat, y = Anzahl, fill=factor(Werksnummer_Fahrzeug))) +
       geom_bar(stat = "identity", width = 20) +
       scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
-      guides(fill = guide_legend(title="Werknummer der OEM")) + 
+      guides(fill = guide_legend(title="Werksnummer der OEM")) + 
       scale_x_date(breaks = breaks_width("3 month"),
                    labels = date_format(format = "%Y-%b", tz = "ECT"),
                    limits = c(input$slider_zulassungsperiode[1] - 40, input$slider_zulassungsperiode[2] + 40)
