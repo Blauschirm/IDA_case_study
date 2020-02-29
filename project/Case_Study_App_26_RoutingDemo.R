@@ -277,8 +277,12 @@ server <- function(input, output, session) {
                    labels = date_format(format = "%Y-%b", tz = "ECT"),
                    limits = start_end_dates
       ) + 
-      scale_y_continuous(breaks=pretty_breaks()) +
-      theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
+      scale_y_continuous(breaks = function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0] # inline function to force breaks to integer values (stackoverflow.com/questions/15622001/)
+      ) +
+      theme(axis.text.x = element_text(angle=45, hjust = 1, size = 10),
+            axis.text.y = element_text(size = 10),
+            axis.title = element_text(size = 14),
+            legend.position="bottom")
   })
   
   # Render data tables: gemeinden / bauteile
