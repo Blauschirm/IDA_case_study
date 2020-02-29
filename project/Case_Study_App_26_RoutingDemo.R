@@ -227,6 +227,7 @@ server <- function(input, output, session) {
     #
     tmp <- subset(tmp, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
     
+    
     if(length(input$datatable_gemeinden_rows_selected)){
       tmp <- filter(tmp, (PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ))
     }
@@ -400,12 +401,14 @@ server <- function(input, output, session) {
   
   # 1. Create datapoints for the heatmap
   treshold_fehleranzahl <- 1 # recommended values: 1, 10, 20, 40, ...
-  datapoints_heat <- final_joined %>%
+  datapoints_heat <- reactive({
+    subset(final_joined, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2]) %>%
     group_by(Längengrad, Breitengrad) %>%
     summarise(fehleranzahl = n())  %>%
     ungroup()  %>%
     #select(-Gemeinde)  %>%
     filter(fehleranzahl > treshold_fehleranzahl)
+  })
   
   # 2. 
   # Not finished: Filter supply_routes data linked to table selections
@@ -461,7 +464,7 @@ server <- function(input, output, session) {
       addTiles() %>%
       
       # Layer 1: Heatmap
-      addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
+      addHeatmap(data = datapoints_heat(), lng = ~Längengrad, lat = ~Breitengrad,
                  intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
       # END Layer 1
       
