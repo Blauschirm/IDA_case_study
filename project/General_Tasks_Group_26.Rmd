@@ -7,8 +7,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Import der benötigten Bibliotheken
-```{r}
+Es werden die benötigten Bibliotheken importiert. Die *select* Funktion aus dem *dplyr*-Paket und aus dem *fitdistrplus*-Paket stehen im Konflikt. Um sicher zu gehen, dass select vom *dplyr*-Paket verwendet wird, wird dies nochmal definiert.
+```{r, message=FALSE, warning=FALSE}
 if(!require(fitdistrplus)){
   install.packages("fitdistrplus")
 }
@@ -33,21 +33,22 @@ if(!require(ggplot2)){
   install.packages("ggplot2")
 }
 library(ggplot2)
+
+select <- dplyr::select
 ```
 
 # Daten einlesen:
+Es werden alle Datensätze, die für die Aufgaben benötigt werden, eingelesen.
 
-
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # Logistikverzug und Zulassungen einlesen
-komponente_k7 <- read_csv2("Data/Logistikverzug/Komponente_K7.csv" )%>%
+komponente_k7 <- read_csv2("Data/Logistikverzug/Komponente_K7.csv")%>%
   select(-X1)
 
 logistikverzug_k7 <- read_csv("Data/Logistikverzug/Logistikverzug_K7.csv") %>%
   select(-X1)
 
-zulassungen_aller_Fahrzeuge <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv") %>%
-  select(-X1)
+zulassungen_aller_Fahrzeuge <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
 
 #Bestandteile der Fahrzeuge einlesen
 bestandteile_oem1_typ11 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv") %>%
@@ -65,56 +66,87 @@ bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_
 ```
 
 # Aufgabe 1
+Zunächst werden die benötigten Daten zusammengefügt. Da uns nur der Logistikverzug interessiert, werden die notwendigen Spalten selektiert und es muss eine neue Spalte hinzugefügt werden, bei der der Logistikverzug in Tagen angegeben wird. Dies ergibt sich aus der Differenz zwischen Wareneingang und Produktionsdatum.
 
-```{r}
-Logistikverzug <- right_join(komponente_k7, logistikverzug_k7) %>%
+```{r, message=FALSE}
+Logistikverzug <- right_join(komponente_k7, logistikverzug_k7, by = "IDNummer") %>%
+  select(IDNummer, Produktionsdatum, Wareneingang) %>%
   mutate(Verzug = as.numeric(difftime(Wareneingang, Produktionsdatum, units = "days")))
 
-x <- c(na.exclude(Logistikverzug$Verzug))
-min_datum <- min(na.omit(Logistikverzug$Produktionsdatum))
-max_datum <- max(Logistikverzug$Wareneingang)
+x <- Logistikverzug$Verzug
 
 ```
-a
-```{r}
-h <- hist(x, breaks = 10)
+#### Teilaufgabe a:
 
+**Wie ist der Logistikverzug verteilt? Begründen Sie Ihre Auswahl und stellen Sie Ihre Vorgehensweise kurz dar.**
+
+Um einen Überblick über die Daten zu bekommen, wird zunächst ein Histogram geplottet. 
+```{r}
+h <- hist(x, breaks = 10, main = "Logistikverzug", xlab = "Logistikverzug in Tagen", ylab = "Häufigkeit")
+```
+
+Dem Histogram zufolge könnte es sich um eine Normalverteilung handeln. Um dies zu bestätigen wird ein QQ-Plot erstellt. Jedoch ergeben die Punkte im QQ-Plot keine Gerade, somit handelt es sich hier um keine Normalverteilung. 
+```{r}
 qqnorm(x)
 qqline(x)
+```
 
+Da es sich nicht um eine Normalverteilung handelt, muss nun herausgefunden werden welche Verteilung die Daten am besten repräsentiert. Dafür wird ein Cullen und Frey Graph geplottet, um herauszufinden welche Verteilungen gut passen.
+```{r}
 descdist(x, discrete=FALSE)
+```
 
+Dem Graphen zufolge passen die logarithmische Normalverteilung, die Gammaverteilung und die Weibullverteilung ganz gut zu den Daten. Nun werden die drei Verteilungen miteinander verglichen.
+
+```{r, warning=FALSE}
 p <- fitdist(x, "weibull")
 p2 <- fitdist(x, "lnorm")
 p3 <- fitdist(x, "gamma")
 
-plot.legend <- c("Weibull", "Lognormal", "Gamma")
-denscomp(list(p, p2, p3), legendtext = plot.legend)
-cdfcomp (list(p, p2, p3), legendtext = plot.legend)
-qqcomp  (list(p, p2, p3), legendtext = plot.legend)
-ppcomp  (list(p, p2, p3), legendtext = plot.legend)
+denscomp(list(p, p2, p3), legendtext = c("Weibull", "Lognormal", "Gamma"))
+cdfcomp(list(p, p2, p3), legendtext = c("Weibull", "Lognormal", "Gamma"))
+qqcomp(list(p, p2, p3), legendtext = c("Weibull", "Lognormal", "Gamma"))
+ppcomp(list(p, p2, p3), legendtext = c("Weibull", "Lognormal", "Gamma"))
 ```
-Um einen Überblick über die Daten zu bekommen, wird zunächst ein Histogram geplottet. Dem Histogram zufolge könnte es sich um eine Normalverteilung handeln. Um dies zu bestätigen wird ein QQ-Plot erstellt. Jedoch ergeben die Punkte im QQ Plot keine Gerade, somit handelt es sich hier um keine Normalverteilung. 
-Um die Verteilung nun herauszufinden, wird die Funktion *descdist* verwendet. Dem Diagramm zu Folge könnte es sich um eine Lognormale, eine gamma oder einer Weibull Verteilung handeln. Nun werden die drei Verteilungen miteinander verglichen. Beim Vergleich stellt sich heraus, dass die Lognormale Verteilung am besten passt.
 
-b
+Anhand der Graphen kann man ablesen, dass die Weibullverteilung nicht passt, denn die Punkte des QQ-Plots ergeben keine Gerade. Die anderen beiden Verteilungen repräsentieren die Datetn aber ganz gut. Dies sieht man ganz gut am QQ-Plot, denn die Punkte beider Verteilungen ergeben eine Gerade. Beim Vergleich stellt sich heraus, dass die logarithmische Normalverteilung am besten passt, denn beim QQ-Plot sind die Punkte der logarithmische Normalverteilung näher an der Geraden.
+
+#### Teilaufgabe b:
+
+**Wie viel Zeit vergeht mindestens/höchstens zwischen Warenausgang und Wareneingang?**
+
+Das Maximum und Minimum des Logistikverzuges wird berechnet.
 ```{r}
 max <- max(x)
 min <- min(x)
 ```
 Es vergehen zwischen Warenausgang und Wareneingang mindestens `r min` und höchstens `r max` Tage.
 
-c
+#### Teilaufgabe c:
+
+**Bestimmen Sie den Mittelwert des Logistikverzugs.**
+
+Der Durchschnitt des Logistikverzuges wird berechnet.
 ```{r}
 mean <- mean(x)
 ```
+Der Durchschnitt des Logistikverzuges beträgt `r mean` Tage.
 
-d
+#### Teilaufgabe d:
+
+**Stellen Sie die Verteilung in geeigneter Weise dar.**
+
+Wir stellen den Graphen als Histogram mittels *ggplot* dar. Dabei wird ein Untertitel verwendet, der angibt in welchen Zeitraum sich die Daten befinden. Dafür muss das älteste Datum und das jüngste Datum extrahiert werden und umformatiert werden. Der Mittelwert wird mithilfe einer roten gestrichelten Linie angezeigt. Für das Histogramm wird noch die Häufigkeit des Logistikverzuges angezeigt, denn bei sehr kleinen Daten kann man das nicht auf dem Histogramm ablesen. Die x-Achse wird nur auf die relevante Spanne eingeschränkt, also dem Minimum und Maximum der Daten.
+
 ```{r}
-time <- paste("Zeitraum zwischen", min_datum, "und", max_datum, sep = " ")
+#String für den Untertitel
+min_datum <- format(min(Logistikverzug$Produktionsdatum), "%B %Y")
+max_datum <- format(max(Logistikverzug$Wareneingang), "%B %Y")
+time <- paste("Zeitraum zwischen", min_datum, "bis", max_datum, sep = " ")
 
 ggplot(Logistikverzug, aes(x = Verzug)) +
-  geom_histogram(binwidth = 1, fill = "blue") +
+  geom_histogram(binwidth = 1, fill = "blue", na.rm = TRUE) +
+  geom_vline(aes(xintercept=mean(Verzug)), color="red", linetype="dashed", size=1) +
   stat_bin(aes(y=..count.., label=..count..), geom="text", vjust=-.5, binwidth = 1) +
   xlim(4, 15)+
   labs(title = "Logistikverzug", subtitle = time, x = "Verzug in Tagen", y = "Häufigkeit")
@@ -122,22 +154,27 @@ ggplot(Logistikverzug, aes(x = Verzug)) +
 
 # Aufgabe 2
 
-Warum ist es sinnvoll, die Ihnen bereitgestellten Daten in separaten Dateien abzulegen und nicht alles in einer riesigen Tabelle abzuspeichern? Wie nennt sich das zugrunde liegende Datenbankkonzept? Wie nennt sich das zugrunde liegende Datenbankkonzept?
+**Warum ist es sinnvoll, die Ihnen bereitgestellten Daten in separaten Dateien abzulegen und nicht alles in einer riesigen Tabelle abzuspeichern?** 
 
-Damit dies zum einen redundanz verhindert, denn wenn man alles in einer langen Tabelle abspeichert, dann werden viele Werte mehrfach in der Tabelle auftauchen. Und zum anderen ist die Laufzeit beim Suchen von Werten in einer großen langen Tabelle sehr schlecht, denn angenommen man sucht einen Wert der als aller letzes in der Tabelle gespeichert ist, dann müsste man die komplette Tabelle durchgehen nur um den einen Wert zu extrahieren.
+Damit dies zum einen Redundanz verhindert, denn wenn man alles in einer großen Tabelle abspeichert, dann werden viele Werte mehrfach in der Tabelle auftauchen. Und zum anderen ist die Laufzeit beim Suchen von Werten in einer großen, langen Tabelle sehr schlecht, denn angenommen man sucht einen Wert der als aller letztes in der Tabelle gespeichert ist, dann hätte man eine Laufzeit von n, wobei n die Anzahl der Einträge in der Tabelle sind. Dies könnte zu einem Problem bei großen n werden, denn dann hat man eine schlechte Laufzeit, nur um einen Wert zu etrahieren.
+
+**Wie nennt sich das zugrunde liegende Datenbankkonzept?**
+
 Dieses Konzept nennt sich Relationale Datenbank.
 
 
 # Aufgabe 3
 
-Wie viele der Komponenten K7 landeten in Fahrzeugen, die in Köln zugelassen wurden?
+**Wie viele der Komponenten K7 landeten in Fahrzeugen, die in Köln zugelassen wurden?**
+
+Da uns nur die Fahrzeuge interessieren, die in Köln zugelassen wurden, werden die Zulassungen nach der Gemeinde Köln gefiltert. Da nicht alle Komponenten in Fahrzeuge eingebaut wurden, müssen diese auch gefiltert werden. Dazu werden erstmal alle Bestandteile, die in Fahrzeugen verbaut wurden, in eine Tabelle zusammengefügt. Danach werden die Fahrzeuge gefiltert, indem nur Fahrzeuge, die eine K7 Komponente verbaut haben, bestehen bleiben. Zum Schluss müssen noch die Fahrzeugen und die Zulassungen in der Gemeinde Köln verknüpft werden. Dabei sollen nur die Fahrzeuge bleiben, die sowohl eine K7 Komponente verbaut haben als auch in Köln zugelassen wurden. Die Anzhal der Fahrzeuge, die die Bedingungen erfüllen, ergibt sich aus der Anzahl der Zeilen in der Tabelle.
 ```{r}
 #Zulassungen nach Koeln filtern
 zulassungen_koeln <- zulassungen_aller_Fahrzeuge %>%
   filter(Gemeinden == "KOELN") %>%
   select(-Zulassung)
 
-#join bestandteile in eine Tabelle
+#join Bestandteile in eine Tabelle
 bestandteile <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
   bind_rows(bestandteile_oem2_typ21) %>%
   bind_rows(bestandteile_oem2_typ22) %>%
@@ -145,47 +182,52 @@ bestandteile <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
 
 #join K7 und Bestandteile, und dies dann nochmal mit zulassungen joinen
 zugelassene_k7_fahrzeuge <- inner_join(komponente_k7, bestandteile, by = c("IDNummer" = "ID_Karosserie")) %>%
-  inner_join(zulassungen_koeln, by = c("ID_Fahrzeug" = "IDNummer")) %>%
-  mutate(n = 1)
-
-anzahl <- sum(zugelassene_k7_fahrzeuge$n)
+  inner_join(zulassungen_koeln, by = c("ID_Fahrzeug" = "IDNummer"))
 ```
-Es wurden `r anzahl` der Komponenten K7 in Fahrzeugen verbaut, die in Köln zugelassen wurden.
+Es wurden `r nrow(zugelassene_k7_fahrzeuge)` der Komponenten K7 in Fahrzeugen verbaut, die in Köln zugelassen wurden.
 
 
 # Aufgabe 4
 
-Welche Datentypen haben die Attribute der Zulassungstabelle „Zulassungen_aller_Fahrzeuge“?
+**Welche Datentypen haben die Attribute der Zulassungstabelle „Zulassungen_aller_Fahrzeuge“?**
+
+Es wird ein Überblick über die Struktur der Daten gemacht.
 ```{r}
 str(zulassungen_aller_Fahrzeuge)
 ```
-Das Attribut von *X1* hat den Datentypen *col_double*.
-Das Attribut von *IDNummer* hat den Datentypen *col_character*.
-Das Attribut von *Gemeinden* hat den Datentypen *col_character*.
+Das Attribut von *X1* hat den Datentypen *col_double*. \
+Das Attribut von *IDNummer* hat den Datentypen *col_character*. \
+Das Attribut von *Gemeinden* hat den Datentypen *col_character*. \
 Das Attribut von *Zulassung* hat den Datentypen *col_date*.
 
 
 # Aufgabe 5
 
-Sie wollen Ihre Applikation veröffentlichen. Warum ist es gerade dann sinnvoll die Datensätze auf der Datenbank eines Servers abzulegen? Warum können Sie die Datensätze nicht auf Ihrem persönlichen Computer ablegen? Nennen Sie eine einfache Möglichkeit Ihre Applikation ihrem Kundenkreis zugänglich zu machen?
+**Sie wollen Ihre Applikation veröffentlichen. Warum ist es gerade dann sinnvoll die Datensätze auf der Datenbank eines Servers abzulegen? Warum können Sie die Datensätze nicht auf Ihrem persönlichen Computer ablegen?**
 
-Angenommen die Applikation würde auf diese Datensätze zugreifen müssen. Wenn diese Datensätze dann nur lokal auf meinem persönlichen Cmputer gespeichert sind, dann sind diese Datensätze nicht immer zugreifbar für die veröffentlichte Applikation, denn mein Computer ist nicht 24h lang aktiv.
-Meine Applikation kann auf einer Webseite oder in einem App-Store dem Kundenkreis zugänglich gemacht werden.
+Angenommen die Applikation würde auf diese Datensätze zugreifen müssen. Wenn diese Datensätze dann nur lokal auf meinem persönlichen Computer gespeichert sind, dann sind diese Datensätze nicht immer zugreifbar für die veröffentlichte Applikation, denn mein Computer ist nicht 24h lang aktiv.
+
+**Nennen Sie eine einfache Möglichkeit Ihre Applikation ihrem Kundenkreis zugänglich zu machen?**
+
+Die Applikation kann auf einer Webseite oder in einem App-Store dem Kundenkreis zugänglich gemacht werden.
 
 
 # Aufgabe 6
 
-Am 11.08.2010 hat es einen Unfall mit Fahrerflucht gegeben. Von dem Kennzeichen des Unfallwagens fehlt jede Spur. Die Polizei bittet Sie um Hilfe, da Sie für das Kraftfahrtbundesamt arbeiten und fragt, wo das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ zugelassen wurde.
+**Am 11.08.2010 hat es einen Unfall mit Fahrerflucht gegeben. Von dem Kennzeichen des Unfallwagens fehlt jede Spur. Die Polizei bittet Sie um Hilfe, da Sie für das Kraftfahrtbundesamt arbeiten und fragt, wo das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ zugelassen wurde.**
+
+Um das Bauteil zu finden, werden erstmal alle Bestandteile der Fahrzeuge in einer Tabelle zusammengefügt, damit diese nach dem gesuchten Bauteil gefiltert werden kann. Nun muss noch herausgefunden werden, wo das Fahrzeug mit dem gesuchten Bauteil zugelassen wurde. Da ein Bauteil nur in einem Fahrzeug verbaut sein kann, reicht es wenn man die Zulassungen aller Fahrzeuge mit dem zuvor gefilterten Daten zusammenfügt. Der Ort, an dem dieses Fahrzeug zugelassen wurden, steht in der Spalte *Gemeinden*. Jedoch sind die Characterstrings alle in Großbuchstaben geschrieben. Dies muss in die richtige Rechtschreibung konvertiert werden.
 
 ```{r}
 bestandteil_k4_112_1121_23 <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
   bind_rows(bestandteile_oem2_typ21) %>%
   bind_rows(bestandteile_oem2_typ22) %>%
   filter(ID_Karosserie == "K4-112-1121-23") %>%
-  inner_join(zulassungen_aller_Fahrzeuge, by = c("ID_Fahrzeug" = "IDNummer"))
+  left_join(zulassungen_aller_Fahrzeuge, by = c("ID_Fahrzeug" = "IDNummer"))
 
 ort <- bestandteil_k4_112_1121_23$Gemeinden
+ort <- paste(substring(ort, 1, 1), tolower(substring(ort, 2, str_length(ort))), sep = "")
 
 ```
 
-Das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ wurde in `r paste(substring(ort, 1, 1), tolower(substring(ort, 2, str_length(ort))), sep = "")` zugelassen.
+Das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ wurde in `r ort` zugelassen.
