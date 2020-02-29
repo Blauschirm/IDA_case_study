@@ -133,8 +133,8 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
               wellPanel(  
                 # Reset all filters
                 fluidRow(
-                  column(6, 
-                         offset= 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                  column(12, 
+                         offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                          "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
                          actionButton("reset_filters", "Alle Filter zurücksetzen"),
                   )
@@ -148,17 +148,18 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                 
                 # fluidrow for gemeinden und bauteil datatables incl. search boxes
                 fluidRow(
-                  column(2, 
+                  column(4, 
                          (h4("Betroffene Gemeinden")),
                          
                          # Display Betroffene Gemeinden as data table
                          dataTableOutput('datatable_gemeinden')
                   ),
-                  column(10,
+                  column(8,
                          (h4("Betroffene Bauteile")),
                          
                          # Display ID-search by ID_einzelteile & ID_Komponente
                          dataTableOutput('datatable_bauteile'),
+                         style="#DataTables_Table_1_paginate{margin-top: 25px}"
                          
                          # Select map type
                          # selectizeInput(
@@ -180,22 +181,22 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                 
                 fluidRow(
                   # check boxes for different visualisations on the map
-                  column(12,
+                  column(3,
                          checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
-                                            inline = TRUE,
+                                            inline = FALSE,
                                             choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
                          
                   ),
                   # Reset map position
-                  column(6, 
-                         offset = 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                  column(9, 
+                         offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                          "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
                          actionButton(inputId = "reset", "Position zurücksetzen")
                          
                   )
                 ),
                 
-                # Display the heatmap  with car markers
+                # Display the heatmap with car markers
                 leafletOutput(outputId = "map", width = '100%', height = 600),
                 "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"
               ),
