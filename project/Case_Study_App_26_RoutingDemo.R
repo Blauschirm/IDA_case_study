@@ -51,7 +51,7 @@ print("Beispiel Set: "); str(beispiel)
 # Subset the data
 #final_joined <- final_joined[beispiel, ]
 #final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
-final_joined <- final_joined[sample(nrow(final_joined), 10000),]
+#final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
@@ -305,8 +305,8 @@ server <- function(input, output, session) {
   
   
   # show defective parts bools as factors: Ja / Nein 
-  final_joined$Fehlerhaft_Einzelteil = factor(final_joined$Fehlerhaft_Einzelteil, c(0, 1), c('Ja', 'Nein'))
-  final_joined$Fehlerhaft_Komponente = factor(final_joined$Fehlerhaft_Komponente, c(0, 1), c('Ja', 'Nein'))
+  final_joined$Fehlerhaft_Einzelteil = factor(final_joined$Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja'))
+  final_joined$Fehlerhaft_Komponente = factor(final_joined$Fehlerhaft_Komponente, c(0, 1), c('Nein', 'Ja'))
   
   # Render data table: bauteile
   output$datatable_bauteile <- renderDataTable({
@@ -426,16 +426,16 @@ server <- function(input, output, session) {
       # END Layer 1
       
       # Layer 2: fehlerhafte Fahrzeuge
-      # addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
-      #            #display large amounts of markers as clusters
-      #            clusterOptions = markerClusterOptions(),
-      #            popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
-      #                           "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
-      #                           "ID_Sitz: ", ID_Komponente, "<br/>",
-      #                           "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
-      #                           "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
-      #                           "Zugelassen in: ", PLZ, " ", Gemeinde)
-      # )  %>%
+      addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
+                 #display large amounts of markers as clusters
+                 clusterOptions = markerClusterOptions(),
+                 popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                "ID_Sitz: ", ID_Komponente, "<br/>",
+                                "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                "Zugelassen in: ", PLZ, " ", Gemeinde)
+      )  %>%
       # END Layer 2
     
     #filtered_faclities_tier1() <- filtered_vehicles()[!duplicated(Werksnummer_Einzelteil),]
@@ -730,31 +730,37 @@ server <- function(input, output, session) {
       ) %>% 
       formatStyle(
         c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = 'solid 1px',
-        'border' = 'solid 2px'
       )
-  })
-  
-  # vehicle details search for owners
-  selected_vehicle <- eventReactive(input$vehicle_filter_submit, {
-    out <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
-    if (dim(out)[1] >= 1){
-      out
-    } else {
-      NULL
-    }
   })
 
   output$result_text <- renderText({"Geben Sie ihre Fahrzeug ID in die Suche ein um zu überprüfen ob ihr Fahrzeug betroffen ist."})
   
   observeEvent(input$vehicle_filter_submit, {
-    if (length(selected_vehicle())){
+    
+    # Welche Daten interessieren einen Fahrzeughalter?
+    
+    # Zulassungsdatum
+    # PLZ, Gemeinde
+    # Werksnummer_Fahrzeug
+    # Produktionsdatum_Fahrzeug
+    #
+    #
+    # ID_Einzelteil
+    # Werksnummer_Einzelteil
+    #
+    #
+    # ID_Komponente
+    # Werksnummer_Komponente
+    
+    out <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
+    
+    if (dim(out)[1] >= 1){
       output$result_text <- renderText({"Ihr Fahrzeug ist betroffen. Die defekten Einzelteile werden aufgelistet:"})
       
-      output$vehicle_details <- renderTable({
-        selected_vehicle()
-      })
+      output$vehicle_details <- renderTable({out})
     } else {
       output$result_text <- renderText({"ID exisitiert nicht."})
+      output$vehicle_details <- NULL
     }
   })
 } 
