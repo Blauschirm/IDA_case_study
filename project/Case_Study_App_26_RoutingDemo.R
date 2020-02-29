@@ -1,7 +1,7 @@
 library(shiny)
 library(ggplot2)
 library(DT)
-
+library(stringr)
 # scales to be able to use dates as ggplot limits
 if (!require(scales)){
   install.packages("scales")
@@ -18,6 +18,11 @@ if( !require(leaflet)){
 }
 library(leaflet)
 library(leaflet.extras)
+
+if( !require(leafpop)){
+  install.packages("leafpop")
+}
+library(leafpop)
 
 if( !require(dplyr)){
   install.packages("dplyr")
@@ -45,7 +50,7 @@ max <- 322075 # Number of observations
 n <-   3220
 radius_factor <- 15000 # 700
 
-beispiel <- floor(runif(8, min=1, max = n))
+beispiel <- floor(runif(6, min=1, max = n))
 #beispiel <- c(1:8)
 print("Beispiel Set: "); str(beispiel)
 
@@ -56,11 +61,12 @@ print("Beispiel Set: "); str(beispiel)
 # Subset the data
 #final_joined <- final_joined[beispiel, ]
 #final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
-final_joined <- final_joined[sample(nrow(final_joined), 10000),]
+final_joined <- final_joined[c(sample(nrow(final_joined), 10000), beispiel),]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
 
+# save start and date of all zulassungen in a vector
 start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
 
 
@@ -88,7 +94,6 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
         )
       )
     ),
-    
     
     # seperate user interface into two tabs for different user groups: owner and manufacturer
     tabsetPanel(type = "tabs",
@@ -185,14 +190,12 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                          checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
                                             inline = FALSE,
                                             choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
-                         
                   ),
                   # Reset map position
                   column(9, 
                          offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                          "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
                          actionButton(inputId = "reset", "Position zurücksetzen")
-                         
                   )
                 ),
                 
@@ -224,9 +227,8 @@ server <- function(input, output, session) {
   filtered_parts <- reactive({
     tmp <- final_joined
     
-    #
+    # subset on dataset based on chosen period in sliderInput for Zulassungensdatum
     tmp <- subset(tmp, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
-    
     
     if(length(input$datatable_gemeinden_rows_selected)){
       tmp <- filter(tmp, (PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ))
@@ -251,6 +253,9 @@ server <- function(input, output, session) {
   
   # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
   zulassungen <- reactive({
+    
+    zulassungen_out <- subset(all_vehicles, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
+    
     # first check wether any rows in the table are selected right now. 
     # Selected rows can be checked by appending __rows__selected to the name of a data table and using that as an input
     # This returns the indices of the selected rows in the table, which then need to be mapped to the actual data used in the table
@@ -269,11 +274,15 @@ server <- function(input, output, session) {
       summarise(Anzahl = n()) %>%
       ungroup()
     
-    zulassungen_out <- subset(zulassungen_out, Monat >= input$slider_zulassungsperiode[1] & Monat <= input$slider_zulassungsperiode[2])
-    
     # returning the filtered data
     zulassungen_out
   })
+  
+  # reset sliderInput for zulassungen period
+  observeEvent(input$reset_filters,
+    updateSliderInput(session, 'slider_zulassungsperiode',
+                      value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum)))
+  )
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
@@ -284,9 +293,10 @@ server <- function(input, output, session) {
       guides(fill = guide_legend(title="Werknummer der OEM")) + 
       scale_x_date(breaks = breaks_width("3 month"),
                    labels = date_format(format = "%Y-%b", tz = "ECT"),
-                   limits = c(input$slider_zulassungsperiode[1] - 28, input$slider_zulassungsperiode[2] + 28)
+                   limits = c(input$slider_zulassungsperiode[1] - 40, input$slider_zulassungsperiode[2] + 40)
       ) + 
-      scale_y_continuous(breaks = function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0] # inline function to force breaks to integer values (stackoverflow.com/questions/15622001/)
+      # inline function to force breaks to integer values (stackoverflow.com/questions/15622001/)
+      scale_y_continuous(breaks = function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0]
       ) +
       theme(axis.text.x = element_text(angle=45, hjust = 1, size = 10),
             axis.text.y = element_text(size = 10),
@@ -305,33 +315,37 @@ server <- function(input, output, session) {
     arrange(Gemeinde) %>%
     ungroup()
   
+  # Statistics for tier1 facility
   tier1_werke <- reactive({
-    final_joined[beispiel, ] %>% 
-    select(ID_Fahrzeug, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
+    filtered_parts() %>% 
+    select(ID_Fahrzeug, ID_Einzelteil, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
     group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
-    summarise(Einzelteile_fehlerhaft = 5,
-              Einzelteile_hergestellt = n() ) %>%
+    summarise(
+      'Einzelteile geliefert' = n(), 
+      
+      'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
+      Einzelteile = substring(str_c(glue('<br>{ID_Einzelteil}'),collapse = ""),5),
+      Fehlerhaft = toString(factor(Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja')))
+    ) %>%
     ungroup() %>%
-    arrange(Einzelteile_fehlerhaft)
+    arrange(Fehlerhaft)
   })
-  #summary(tier1_werke)
-  
-  
-  tier2_werke <- final_joined[beispiel, ] %>% 
+
+  # Statistics for tier2 facility
+  tier2_werke <- reactive({
+    filtered_parts() %>% 
     select(ID_Fahrzeug, ID_Fahrzeug, ID_Komponente, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
     group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
-    summarise(Einzelteile_fehlerhaft = sum(Fehlerhaft_Einzelteil),
-              Einzelteile_hergestellt = n(),
-              Sitze_fehlerhaft = sum(Fehlerhaft_Komponente),
-              Sitze_hergestellt = sum(!duplicated(ID_Fahrzeug)),
-              Komponenten = toString(c(ID_Komponente)) ) %>%
-    #arrange(Sitze_fehlerhaft) %>%
+    summarise(
+      'Einzelteile erhalten' = n(),
+      'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
+      'Defekte Sitze hergestellt' = sum(!duplicated(ID_Fahrzeug)),
+      'fehlerhaft laut Komponenten-Werk' = length(Fehlerhaft_Komponente[Fehlerhaft_Komponente == TRUE]),
+      Komponenten = substring(str_c(glue('<br>{ID_Komponente}'),collapse = ""),5),
+      Fehlerhaft = toString(factor(Fehlerhaft_Komponente, c(0, 1), c('Nein', 'Ja')))
+    ) %>%
     ungroup()
-  
-  summary(tier2_werke)
-  sum(tier2_werke$Sitze_hergestellt)
-  sum(tier2_werke$fehlerhafte_Einzelteile_erhalten)
-
+  })
   
   # Render data table: gemeinden
   output$datatable_gemeinden <- renderDataTable({
@@ -361,7 +375,7 @@ server <- function(input, output, session) {
       
       options = list(
         pageLength = 3,
-        lengthMenu = list(c(3, 6, 10, 20, 100, 1000, 10000), c('3', '6', '10', '20', '100', '1000', '10000')),
+        lengthMenu = list(c(3, 6, 10, 20, 100, 1000), c('3', '6', '10', '20', '100', '1000')),
         
         # Search wit regex Ja/Nein
         search = list(regex = TRUE, caseInsensitive = FALSE, search = ""), # 'ä=ae, ö=oe, ü=ue'
@@ -517,48 +531,71 @@ server <- function(input, output, session) {
     leaflet_map <- leaflet_map %>%
       addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
                  color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
-                 radius = tier1_werke()$Einzelteile_hergestellt*radius_factor
-      ) %>%
-      
+                 radius = tier1_werke()$'Einzelteile geliefert'*radius_factor) %>%
+
       # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
       addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
                  color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
-                 radius = tier1_werke()$Einzelteile_fehlerhaft*radius_factor
-      ) %>%
 
-      # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
-      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                 stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
-                 radius = tier2_werke$Sitze_hergestellt*radius_factor/3
-      ) %>%
+                 radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor) %>%
       
-      # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
-      addCircles(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                 stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
-                 radius = tier2_werke$Sitze_fehlerhaft*radius_factor/3
-      ) %>%
+      # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
+      addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 color = 'weiß', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+                 radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3) %>%
 
-      # Display tier1 facilities with custom icon
+      # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
+      addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+                 radius = tier2_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor/3) %>%
+      
+      # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
+      addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
+                 radius = tier2_werke()$'Defekte Sitze hergestellt'*radius_factor/3) %>%
+
+      # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
+      addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+                 stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
+                 radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3) %>%
+
+      #Display tier1 facilities with custom icon
       addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = tier1Icon, # filtered_data_dots(), ~lat_via, ~lng_via,
+
                  #display large amounts of markers as clusters
                  #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
-                 popup = ~paste("<center><h5>Einzelteil-Werk</h5></center>",
-                                "Werksnummer: ", Werksnummer_Einzelteil, "<br/>",
-                                "Einzelteile geliefert: ", Einzelteile_hergestellt, "<br/>",
-                                "davon fehlerhaft laut Einzelteil-Werk: ", Einzelteile_fehlerhaft, "<br/>")
-      )  %>% 
+                 popup = ~paste(
+                                "<center><h5>Einzelteil-Werk</h5></center>",
+                                popupTable(tier1_werke(), feature.id = FALSE, row.numbers = FALSE,
+                                  zcol = c(
+                                           'Werksnummer_Einzelteil',
+                                           'Einzelteile geliefert',
+                                           'fehlerhaft laut Einzelteil-Werk',
+                                           "Einzelteile",
+                                           "Fehlerhaft")
+                                )
+                 ),
+                 popupOptions = popupOptions(minWidth = 320)
+                 
+      )  %>%
       
       # Display tier2 facilities with custom icon
-      addMarkers(data = tier2_werke, ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = tier1Icon,# filtered_data_dots(), ~lat_via, ~lng_via,
+      addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = tier1Icon,# filtered_data_dots(), ~lat_via, ~lng_via,
                  #display large amounts of markers as clusters
                  #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
                  popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
-                                "Werksnummer: ", Werksnummer_Komponente, "<br/>",
-                                "betroffene Komponenten: ", Komponenten, "<br/>",
-                                "Einzelteile erhalten: ", Einzelteile_hergestellt, "<br/>",
-                                "davon fehlerhaft laut Einzelteile-Werk: ", Einzelteile_fehlerhaft, "<br/>",
-                                "defekte Sitze hergestellt: ", Sitze_hergestellt, "<br/>",
-                                "davon fehlerhaft laut Komponenten-Werk: ", Sitze_fehlerhaft, "<br/>")
+                                popupTable(tier2_werke(), feature.id = FALSE, row.numbers = FALSE,
+                                           zcol = c(
+                                             'Werksnummer_Komponente',
+                                             'Einzelteile erhalten',
+                                             'fehlerhaft laut Einzelteil-Werk',
+                                             'Defekte Sitze hergestellt',
+                                             'fehlerhaft laut Komponenten-Werk',
+                                             'Komponenten',
+                                             'Fehlerhaft')
+                                )
+                 ),
+                 popupOptions = popupOptions(minWidth = 360)
       )
     
     # Add marker for car location
