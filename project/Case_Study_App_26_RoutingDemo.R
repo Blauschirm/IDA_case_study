@@ -222,9 +222,8 @@ server <- function(input, output, session) {
   filtered_parts <- reactive({
     tmp <- final_joined
     
-    #
+    # subset on dataset based on chosen period in sliderInput for Zulassungensdatum
     tmp <- subset(tmp, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
-    
     
     if(length(input$datatable_gemeinden_rows_selected)){
       tmp <- filter(tmp, (PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ))
@@ -249,6 +248,9 @@ server <- function(input, output, session) {
   
   # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
   zulassungen <- reactive({
+    
+    zulassungen_out <- subset(all_vehicles, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
+    
     # first check wether any rows in the table are selected right now. 
     # Selected rows can be checked by appending __rows__selected to the name of a data table and using that as an input
     # This returns the indices of the selected rows in the table, which then need to be mapped to the actual data used in the table
@@ -266,8 +268,6 @@ server <- function(input, output, session) {
       group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
       summarise(Anzahl = n()) %>%
       ungroup()
-    
-    zulassungen_out <- subset(zulassungen_out, Monat >= input$slider_zulassungsperiode[1] & Monat <= input$slider_zulassungsperiode[2])
     
     # returning the filtered data
     zulassungen_out
@@ -288,7 +288,7 @@ server <- function(input, output, session) {
       guides(fill = guide_legend(title="Werknummer der OEM")) + 
       scale_x_date(breaks = breaks_width("3 month"),
                    labels = date_format(format = "%Y-%b", tz = "ECT"),
-                   limits = c(input$slider_zulassungsperiode[1] - 28, input$slider_zulassungsperiode[2] + 28)
+                   limits = c(input$slider_zulassungsperiode[1] - 40, input$slider_zulassungsperiode[2] + 40)
       ) + 
       # inline function to force breaks to integer values (stackoverflow.com/questions/15622001/)
       scale_y_continuous(breaks = function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0]
