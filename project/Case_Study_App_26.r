@@ -32,11 +32,17 @@ load("Datensatz_tidy.RData")
 # Data preperation
 #
 # for debugging: reducing the amount of data to be loaded
-final_joined <- head(final_joined, n = 1000)
+#final_joined <- head(final_joined, n = 100000)
+final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
-start_end_dates <- c( min(fahrzeuge$Zulassungsdatum), max(fahrzeuge$Zulassungsdatum) )
+str(fahrzeuge$Zulassungsdatum)
+
+str(min(fahrzeuge$Zulassungsdatum))
+
+start_end_dates <- c( min(fahrzeuge$Zulassungsdatum) - 28, max(fahrzeuge$Zulassungsdatum) + 28 )
+#start_end_dates <- c( "2012-05-02", "2012-05-24" )
 #start_end_dates <- c( as.Date("2009-1-1", "Y-m-d"),as.Date("2017-1-1", "Y-m-d") )
 print(start_end_dates)
 #
@@ -137,37 +143,6 @@ server <- function(input, output, session) {
   # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
   fahrzeuge <- final_joined[!duplicated(final_joined$ID_Fahrzeug),]
   
-  zulassungen <- reactive({
-    if(length(input$datatable_gemeinden_rows_selected)){
-      zulassungen_out <- filter(fahrzeuge, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
-    } else {
-      zulassungen_out <- fahrzeuge
-    }
-    
-    
-    zulassungen_out <- zulassungen_out %>%
-      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
-      group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
-      summarise(anzahl = n()) %>%
-      ungroup()
-    
-    zulassungen_out
-  })
-  
-  # Plot für zeitlichen Zulassungsverlauf vorbereiten
-  output$plot_zulassungsverlauf <- renderPlot({
-    ggplot(zulassungen(), aes(x = Monat, y = anzahl, fill=factor(Werksnummer_Fahrzeug))) +
-      geom_bar(stat = "identity") +
-      scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
-      guides(fill = guide_legend(title="Werknummer der OEM")) + 
-      scale_x_date(breaks = scales::breaks_width("1 month"), 
-                   labels = scales::label_date_short(format = c("%Y, %b")),
-                   limits = start_end_dates) +
-      scale_y_continuous(breaks= pretty_breaks()) +
-      theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
-  })
-  
-  
   # Render data tables: gemeinden / bauteile
   # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
   # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
@@ -190,6 +165,44 @@ server <- function(input, output, session) {
       ),
       rownames = FALSE
     )
+  })
+  
+  # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
+  zulassungen <- reactive({
+    # first check wether any rows in the table are selected right now. 
+    # Selected rows can be checked by appending __rows__selected to the name of a data table and using that as an input
+    # This returns the indices of the selected rows in the table, which then need to be mapped to the actual data used in the table
+    if(length(input$datatable_gemeinden_rows_selected)){
+      zulassungen_out <- filter(fahrzeuge, Gemeinde %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Gemeinde)
+    } else {
+      # If no rows are selected we use all data
+      zulassungen_out <- fahrzeuge
+    }
+    
+    # before returning the filtered Zulassungen we are preparing them for use in the bar plot, by bundeling the data by Month, by setting all
+    # dates to the first of their month and then grouping them by month, Gemeinde and Fahrzeug ID
+    zulassungen_out <- zulassungen_out %>%
+      mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
+      group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
+      summarise(Anzahl = n()) %>%
+      ungroup()
+    
+    # returning the filtered data
+    zulassungen_out
+  })
+  
+  # Plot für zeitlichen Zulassungsverlauf vorbereiten
+  output$plot_zulassungsverlauf <- renderPlot({
+    ggplot(zulassungen(), aes(x = Monat, y = Anzahl, fill=factor(Werksnummer_Fahrzeug))) +
+      geom_bar(stat = "identity", width = 20) +
+      scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
+      guides(fill = guide_legend(title="Werknummer der OEM")) + 
+      scale_x_date(breaks = breaks_width("3 month"),
+                   labels = date_format(format = "%Y-%b", tz = "ECT"),
+                   limits = start_end_dates
+                  )+ 
+      scale_y_continuous(breaks=pretty_breaks()) +
+      theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
   })
   
   # Render data table: bauteile
