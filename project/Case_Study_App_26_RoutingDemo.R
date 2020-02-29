@@ -29,6 +29,11 @@ if( !require(dplyr)){
 }
 library(dplyr)
 
+if( !require(glue)){
+  install.packages("glue")
+}
+library(glue)
+
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
@@ -58,125 +63,157 @@ print("Beispiel Set: "); str(beispiel)
 #final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
 final_joined <- final_joined[c(sample(nrow(final_joined), 10000), beispiel),]
 
+# Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
+all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
+
+# save start and date of all zulassungen in a vector
+start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
+
+
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
   
   mainPanel(
     width="100%",
     # Link CSS file to main panel
     #tags$link(rel = "stylesheet", type = "text/css", href = "bootstrap.min.css"),
+    
+    # header panel
+    wellPanel(
+      
+      img(src='https://www.qw.tu-berlin.de/fileadmin/_processed_/8/8d/csm_QW_ohne_Text_print_a4670877cd.jpg',
+          align = "right"),
+      #img(src='https://www.qw.tu-berlin.de/fileadmin/Aperto_design/img/logo_01.gif',
+      #align = "left"),
+      titlePanel("Case_Study_App_26"),
+      
+      fluidRow(
+        column(12,
+               "Schadensschwerpunkte und Lieferwege von betroffenen Bauteilen",
+               style='font-size: 32px; color: #c50e1f;'
+               # CSS no linebrake in data table column
+        )
+      )
+    ),
+    
+    # seperate user interface into two tabs for different user groups: owner and manufacturer
     tabsetPanel(type = "tabs",
-      tabPanel("Intern",
-        wellPanel(
-          
-          img(src='https://www.qw.tu-berlin.de/fileadmin/_processed_/8/8d/csm_QW_ohne_Text_print_a4670877cd.jpg',
-              align = "right"),
-          #img(src='https://www.qw.tu-berlin.de/fileadmin/Aperto_design/img/logo_01.gif',
-          #align = "left"),
-          titlePanel("Case_Study_App_26"),
-          
-          fluidRow(
-            column(12,
-                   "Schadensschwerpunkte und Lieferwege von betroffenen Bauteilen",
-                   style='font-size: 32px; color: #c50e1f;'
-                   # CSS no linebrake in data table column
-            )
-          )
-        ),
-        wellPanel(
-          titlePanel("Zeitlicher Zulassungsverlauf der betroffenen Fahrzeuge aufgeteilt nach OEM-Werken"),
-          fluidRow(
-            column(12,
-                   plotOutput("plot_zulassungsverlauf")
-            )
-          )
-        ),
-        wellPanel(
-          titlePanel("Interaktive Karte mit Gemeinde-Suche und Bauteilsuche"),
-          
-          fluidRow(
-            column(12,
-                   checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
-                                      inline = TRUE,
-                                      choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
-                   fluidRow(
-                     column(12,
-                            fluidRow(
-                              column(3, 
-                                     (h4("Betroffene Gemeinden")),
-                                     
-                                     # Display Betroffene Gemeinden as data table
-                                     dataTableOutput('datatable_gemeinden')
-                              ),
-                              
-                              # Heatmap with search bar section
-                              column(9,
-                                     (h4("Betroffene Bauteile")),
-                                     
-                                     # Display ID-search by ID_einzelteile & ID_Komponente
-                                     dataTableOutput('datatable_bauteile'),
-                                     
-                                     # Select map type
-                                     # selectizeInput(
-                                     #   'e1', 'Wählen Sie den Kartentyp aus',
-                                     #   choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
-                                     # ),
-                                     
-                                     
-                                     #verbatimTextOutput("value"),
-                                     #checkboxInput("lieferwege", "Lieferwege anzeigen", FALSE),
-                                     #verbatimTextOutput("value2"),
-                                     
-                                     # Reset search filter section
-                                     column(6, offset = 0, align = 'left', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                            "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
-                                            actionButton(inputId = "reset", "Position zurücksetzen")
-                                            
-                                     ),
-                                     
-                                     # Info text map
-                                     column(6, offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                            "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
-                                            actionButton("reset_filters", "Alle Filter zurücksetzen"),
-                                     ),
-                                     # Display the heatmap  with car markers
-                                     leafletOutput(outputId = "map", width = '100%', height = 600),
-                                     "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"),
-                            )
-                     )
+      # tab with ui for owners
+      tabPanel("Für Fahrzeughalter",
+               wellPanel(
+                 titlePanel("Ist mein Fahrzeug betroffen?"),
+                 fluidRow(
+                   column(
+                     4,
+                     textInput(
+                       'vehicle_id_input', "FahrzeugID eingeben um Details zu sehen", value = "", width = "100%",
+                       placeholder = 'Fahrzeug ID')
+                   ),
+                   column(
+                     8,
+                     actionButton('vehicle_filter_submit', 'Suchen'),
+                     style="margin-top: 25px"
+                   ),
+                 ),
+                 fluidRow(
+                   column(
+                     12,
+                     verbatimTextOutput("result_text"),
+                     verbatimTextOutput("vehicle_info_text"),
+                     tableOutput('components_list'),
+                     tableOutput('parts_list')
                    )
-            )
-          )
-        ),
-        wellPanel(
-          titlePanel("Datenbank"),
-          fluidRow(
-            column(12,
-                   dataTableOutput('datatable_final_joined'),
-                   style='white-space: nowrap;' # CSS no linebrake in data table column
-            )
-          )
-        )
+                 )
+               )
       ),
-      tabPanel("Extern",
-        wellPanel(
-          titlePanel("Ist mein Fahrzeug betroffen?"),
-          fluidRow(
-           column(
-             8,
-             textInput(
-               'vehicle_id_input', "FahrzeugID eingeben um Details zu sehen", value = "", width = "100%",
-               placeholder = 'Fahrzeug ID')
-           ),
-           column(
-             4,
-             actionButton('vehicle_filter_submit', 'Suchen')
-           ),
-          ),
-          fluidRow(
-           verbatimTextOutput("result_text"),
-           tableOutput('vehicle_details')
-          )
-        )
+      # tab with ui for manufacturer
+      tabPanel("Für Fahrzeughersteller",
+              
+              # bar plot for Zulassungsverlauf
+              wellPanel(
+                titlePanel("Zeitlicher Zulassungsverlauf der betroffenen Fahrzeuge aufgeteilt nach OEM-Werken"),
+                plotOutput("plot_zulassungsverlauf"),
+              ),
+              
+              # filter section for bar plot and heat map
+              wellPanel(  
+                # Reset all filters
+                fluidRow(
+                  column(12, 
+                         offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                         "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
+                         actionButton("reset_filters", "Alle Filter zurücksetzen"),
+                  )
+                ),
+                
+                # sliderinput filtering the time period for bar plot
+                sliderInput("slider_zulassungsperiode", "Wählen Sie die Zulassungsperiode",
+                            min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum),
+                            value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum))
+                ),
+                
+                # fluidrow for gemeinden und bauteil datatables incl. search boxes
+                fluidRow(
+                  column(4, 
+                         (h4("Betroffene Gemeinden")),
+                         
+                         # Display Betroffene Gemeinden as data table
+                         dataTableOutput('datatable_gemeinden')
+                  ),
+                  column(8,
+                         (h4("Betroffene Bauteile")),
+                         
+                         # Display ID-search by ID_einzelteile & ID_Komponente
+                         dataTableOutput('datatable_bauteile'),
+                         style="#DataTables_Table_1_paginate{margin-top: 25px}" 
+                         
+                         # Select map type
+                         # selectizeInput(
+                         #   'e1', 'Wählen Sie den Kartentyp aus',
+                         #   choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
+                         # ),
+                         
+                         
+                         #verbatimTextOutput("value"),
+                         #checkboxInput("lieferwege", "Lieferwege anzeigen", FALSE),
+                         #verbatimTextOutput("value2")
+                  )
+                )
+              ),
+              
+              # heat map with check boxes and cluster markers and Lieferwege on map
+              wellPanel(
+                titlePanel("Interaktive Karte mit Gemeinde-Suche und Bauteilsuche"),
+                
+                fluidRow(
+                  # check boxes for different visualisations on the map
+                  column(3,
+                         checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
+                                            inline = FALSE,
+                                            choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
+                  ),
+                  # Reset map position
+                  column(9, 
+                         offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                         "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
+                         actionButton(inputId = "reset", "Position zurücksetzen")
+                  )
+                ),
+                
+                # Display the heatmap with car markers
+                leafletOutput(outputId = "map", width = '100%', height = 600),
+                "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"
+              ),
+              
+              # full dataset in a datatable
+              wellPanel(
+                titlePanel("Datenbank"),
+                fluidRow(
+                  column(12,
+                         dataTableOutput('datatable_final_joined'),
+                         style='white-space: nowrap;' # CSS no linebrake in data table column
+                  )
+                )
+              )
       )
     )
   )
@@ -185,14 +222,14 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
 # Shiny Server
 server <- function(input, output, session) {
   
-  # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
-  all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
-
-  start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
   
   # Filter parts with the three datatables
   filtered_parts <- reactive({
     tmp <- final_joined
+    
+    # subset on dataset based on chosen period in sliderInput for Zulassungensdatum
+    tmp <- subset(tmp, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
+    
     if(length(input$datatable_gemeinden_rows_selected)){
       tmp <- filter(tmp, (PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ))
     }
@@ -203,7 +240,7 @@ server <- function(input, output, session) {
       tmp <- tmp[input$datatable_bauteile_rows_selected,]
     }
     
-    print("                FILTERED PARTS:                     ")
+    print("                FILTERED PARTS:                      ")
     print(str(tmp))
     
     tmp
@@ -216,6 +253,9 @@ server <- function(input, output, session) {
   
   # Filter the Zulassungen so only the ones corresponding to selected Gemeinden in the Gemeinden Datatable are displayed
   zulassungen <- reactive({
+    
+    zulassungen_out <- subset(all_vehicles, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
+    
     # first check wether any rows in the table are selected right now. 
     # Selected rows can be checked by appending __rows__selected to the name of a data table and using that as an input
     # This returns the indices of the selected rows in the table, which then need to be mapped to the actual data used in the table
@@ -228,7 +268,7 @@ server <- function(input, output, session) {
     
     # before returning the filtered Zulassungen we are preparing them for use in the bar plot, by bundeling the data by Month, by setting all
     # dates to the first of their month and then grouping them by month, Gemeinde and Fahrzeug ID
-  zulassungen_out <- zulassungen_out %>%
+    zulassungen_out <- zulassungen_out %>%
       mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
       group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
       summarise(Anzahl = n()) %>%
@@ -238,18 +278,30 @@ server <- function(input, output, session) {
     zulassungen_out
   })
   
+  # reset sliderInput for zulassungen period
+  observeEvent(input$reset_filters,
+    updateSliderInput(session, 'slider_zulassungsperiode',
+                      value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum)))
+  )
+  
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
+    
     ggplot(zulassungen(), aes(x = Monat, y = Anzahl, fill=factor(Werksnummer_Fahrzeug))) +
       geom_bar(stat = "identity", width = 20) +
       scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
       guides(fill = guide_legend(title="Werknummer der OEM")) + 
       scale_x_date(breaks = breaks_width("3 month"),
                    labels = date_format(format = "%Y-%b", tz = "ECT"),
-                   limits = start_end_dates
+                   limits = c(input$slider_zulassungsperiode[1] - 40, input$slider_zulassungsperiode[2] + 40)
       ) + 
-      scale_y_continuous(breaks=pretty_breaks()) +
-      theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
+      # inline function to force breaks to integer values (stackoverflow.com/questions/15622001/)
+      scale_y_continuous(breaks = function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0]
+      ) +
+      theme(axis.text.x = element_text(angle=45, hjust = 1, size = 10),
+            axis.text.y = element_text(size = 10),
+            axis.title = element_text(size = 14),
+            legend.position="bottom")
   })
   
   # Render data tables: gemeinden / bauteile
@@ -361,12 +413,14 @@ server <- function(input, output, session) {
   
   # 1. Create datapoints for the heatmap
   treshold_fehleranzahl <- 1 # recommended values: 1, 10, 20, 40, ...
-  datapoints_heat <- final_joined %>%
+  datapoints_heat <- reactive({
+    subset(final_joined, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2]) %>%
     group_by(Längengrad, Breitengrad) %>%
     summarise(fehleranzahl = n())  %>%
     ungroup()  %>%
     #select(-Gemeinde)  %>%
     filter(fehleranzahl > treshold_fehleranzahl)
+  })
   
   # 2. 
   # Not finished: Filter supply_routes data linked to table selections
@@ -422,7 +476,7 @@ server <- function(input, output, session) {
       addTiles() %>%
       
       # Layer 1: Heatmap
-      addHeatmap(data = datapoints_heat, lng = ~Längengrad, lat = ~Breitengrad,
+      addHeatmap(data = datapoints_heat(), lng = ~Längengrad, lat = ~Breitengrad,
                  intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
       # END Layer 1
       
@@ -739,28 +793,48 @@ server <- function(input, output, session) {
         c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = 'solid 1px',
       )
   })
-  
-  # vehicle details search for owners
-  selected_vehicle <- eventReactive(input$vehicle_filter_submit, {
-    out <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
-    if (dim(out)[1] >= 1){
-      out
-    } else {
-      NULL
-    }
-  })
 
   output$result_text <- renderText({"Geben Sie ihre Fahrzeug ID in die Suche ein um zu überprüfen ob ihr Fahrzeug betroffen ist."})
   
   observeEvent(input$vehicle_filter_submit, {
-    if (length(selected_vehicle())){
-      output$result_text <- renderText({"Ihr Fahrzeug ist betroffen. Die defekten Einzelteile werden aufgelistet:"})
+    
+    vehicle_parts <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
+    if (dim(vehicle_parts)[1] >= 1){
+      output$result_text <- renderText({"Ihr Fahrzeug ist betroffen"})
+      # Welche Daten interessieren einen Fahrzeughalter?
       
-      output$vehicle_details <- renderTable({
-        selected_vehicle()
-      })
+      # Zulassungsdatum
+      # PLZ, Gemeinde
+      # Werksnummer_Fahrzeug
+      # Produktionsdatum_Fahrzeug
+      #
+      #
+      # ID_Einzelteil
+      # Werksnummer_Einzelteil
+      #
+      #
+      # ID_Komponente
+      # Werksnummer_Komponente
+      
+      # Fahrzeuginfos
+      vehicle <- vehicle_parts[!duplicated(vehicle_parts$ID_Fahrzeug)]
+      vehicle_info_string <- glue("Ihr Fahrzeug ({vehicle$ID_Fahrzeug}), zugelassen am {vehicle$Zulassungsdatum} in {vehicle$PLZ} {vehicle$Gemeinde},
+wurde am {vehicle$Produktionsdatum_Fahrzeug} im Werk {vehicle$Werksnummer_Fahrzeug} gebaut.
+Folgend finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den dafür verwendeten Einzelteilen
+zusammen mit den Werksnummern bei denen Ihre Servicewerkstatt Ersatzteile anfordern kann.")
+      output$vehicle_info_text <- renderText(vehicle_info_string)
+    
+      # components
+      output$components_list <- renderTable(vehicle_parts[,c("ID_Komponente","Fehlerhaft_Komponente", "Werksnummer_Komponente")])
+      
+      # parts
+      output$parts_list <- renderTable(vehicle_parts[,c("ID_Einzelteil", "Fehlerhaft_Einzelteil", "Werksnummer_Einzelteil")])
+      
     } else {
       output$result_text <- renderText({"ID exisitiert nicht."})
+      output$vehicle_info_text <- NULL
+      output$components_list <- NULL
+      output$parts_list <- NULL
     }
   })
 } 
