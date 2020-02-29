@@ -159,7 +159,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                          
                          # Display ID-search by ID_einzelteile & ID_Komponente
                          dataTableOutput('datatable_bauteile'),
-                         style="#DataTables_Table_1_paginate{margin-top: 25px}"
+                         style="#DataTables_Table_1_paginate{margin-top: 25px}" 
                          
                          # Select map type
                          # selectizeInput(
@@ -223,6 +223,10 @@ server <- function(input, output, session) {
   # Filter parts with the three datatables
   filtered_parts <- reactive({
     tmp <- final_joined
+    
+    #
+    tmp <- subset(tmp, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
+    
     if(length(input$datatable_gemeinden_rows_selected)){
       tmp <- filter(tmp, (PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ))
     }
@@ -264,19 +268,22 @@ server <- function(input, output, session) {
       summarise(Anzahl = n()) %>%
       ungroup()
     
+    zulassungen_out <- subset(zulassungen_out, Monat >= input$slider_zulassungsperiode[1] & Monat <= input$slider_zulassungsperiode[2])
+    
     # returning the filtered data
     zulassungen_out
   })
   
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
+    
     ggplot(zulassungen(), aes(x = Monat, y = Anzahl, fill=factor(Werksnummer_Fahrzeug))) +
       geom_bar(stat = "identity", width = 20) +
       scale_fill_manual(values=c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")) +
       guides(fill = guide_legend(title="Werknummer der OEM")) + 
       scale_x_date(breaks = breaks_width("3 month"),
                    labels = date_format(format = "%Y-%b", tz = "ECT"),
-                   limits = start_end_dates
+                   limits = c(input$slider_zulassungsperiode[1] - 28, input$slider_zulassungsperiode[2] + 28)
       ) + 
       scale_y_continuous(breaks=pretty_breaks()) +
       theme(axis.text.x = element_text(angle=45, hjust = 1), legend.position="bottom")
