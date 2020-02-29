@@ -159,6 +159,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                          
                          # Display ID-search by ID_einzelteile & ID_Komponente
                          dataTableOutput('datatable_bauteile'),
+                         style="#DataTables_Table_1_paginate{margin-top: 25px}"
                          
                          # Select map type
                          # selectizeInput(
@@ -182,7 +183,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                   # check boxes for different visualisations on the map
                   column(3,
                          checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
-                                            inline = TRUE,
+                                            inline = FALSE,
                                             choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
                          
                   ),
@@ -195,7 +196,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                   )
                 ),
                 
-                # Display the heatmap  with car markers
+                # Display the heatmap with car markers
                 leafletOutput(outputId = "map", width = '100%', height = 600),
                 "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"
               ),
