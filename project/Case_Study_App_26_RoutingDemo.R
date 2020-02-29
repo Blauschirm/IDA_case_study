@@ -24,6 +24,11 @@ if( !require(dplyr)){
 }
 library(dplyr)
 
+if( !require(glue)){
+  install.packages("glue")
+}
+library(glue)
+
 # Load manufacturing info with geo data
 # Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
@@ -51,7 +56,7 @@ print("Beispiel Set: "); str(beispiel)
 # Subset the data
 #final_joined <- final_joined[beispiel, ]
 #final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
-#final_joined <- final_joined[sample(nrow(final_joined), 10000),]
+final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
   
@@ -169,7 +174,9 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
           ),
           fluidRow(
            verbatimTextOutput("result_text"),
-           tableOutput('vehicle_details')
+           verbatimTextOutput("vehicle_info_text"),
+           tableOutput('components_list'),
+           tableOutput('parts_list')
           )
         )
       )
@@ -731,30 +738,42 @@ server <- function(input, output, session) {
   
   observeEvent(input$vehicle_filter_submit, {
     
-    # Welche Daten interessieren einen Fahrzeughalter?
-    
-    # Zulassungsdatum
-    # PLZ, Gemeinde
-    # Werksnummer_Fahrzeug
-    # Produktionsdatum_Fahrzeug
-    #
-    #
-    # ID_Einzelteil
-    # Werksnummer_Einzelteil
-    #
-    #
-    # ID_Komponente
-    # Werksnummer_Komponente
-    
-    out <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
-    
-    if (dim(out)[1] >= 1){
-      output$result_text <- renderText({"Ihr Fahrzeug ist betroffen. Die defekten Einzelteile werden aufgelistet:"})
+    vehicle_parts <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
+    if (dim(vehicle_parts)[1] >= 1){
+      output$result_text <- renderText({"Ihr Fahrzeug ist betroffen"})
+      # Welche Daten interessieren einen Fahrzeughalter?
       
-      output$vehicle_details <- renderTable({out})
-    } else {
+      # Zulassungsdatum
+      # PLZ, Gemeinde
+      # Werksnummer_Fahrzeug
+      # Produktionsdatum_Fahrzeug
+      #
+      #
+      # ID_Einzelteil
+      # Werksnummer_Einzelteil
+      #
+      #
+      # ID_Komponente
+      # Werksnummer_Komponente
+      
+      # Fahrzeuginfos
+      vehicle <- vehicle_parts[!duplicated(vehicle_parts$ID_Fahrzeug)]
+      vehicle_info_string <- glue("Ihr Fahrzeug ({vehicle$ID_Fahrzeug}), zugelassen am {vehicle$Zulassungsdatum} in {vehicle$PLZ}, {vehicle$Gemeinde}, wurde am {vehicle$Produktionsdatum_Fahrzeug} im Werk {vehicle$Werksnummer_Fahrzeug} gebaut und hat folgende Fehler:
+Unten finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den dafür verwendeten Einzelteilen, zusammen mit den Werksnummern bei denen ihre Servicewerkstatt Ersatzteile anfordern kann.")
+      output$vehicle_info_text <- renderText(vehicle_info_string)
+    
+      # components
+      output$components_list <- renderTable(vehicle_parts[,c("ID_Komponente","Fehlerhaft_Komponente", "Werksnummer_Komponente")])
+      
+      # parts
+      output$parts_list <- renderTable(vehicle_parts[,c("ID_Einzelteil", "Fehlerhaft_Einzelteil", "Werksnummer_Einzelteil")])
+      
+      } else {
       output$result_text <- renderText({"ID exisitiert nicht."})
-      output$vehicle_details <- NULL
+      output$vehicle_info_text <- NULL
+      output$components_list <- NULL
+      output$parts_list <- NULL
+      
     }
   })
 } 
