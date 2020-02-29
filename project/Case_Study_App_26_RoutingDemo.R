@@ -135,10 +135,6 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                  # Display the heatmap  with car markers
                                  leafletOutput(outputId = "map", width = '100%', height = 600),
                                  "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"),
-                          
-                          column(12,
-                                 "Bottombox: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
-                          ),
                         )
                  )
                )
@@ -151,8 +147,26 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
         column(12,
                dataTableOutput('datatable_final_joined'),
                style='white-space: nowrap;' # CSS no linebrake in data table column
-               
         )
+      )
+    ),
+    wellPanel(
+      titlePanel("Ist mein Fahrzeug betroffen?"),
+      fluidRow(
+        column(
+          8,
+          textInput(
+            'vehicle_id_input', "FahrzeugID eingeben um Details zu sehen", value = "", width = "100%",
+            placeholder = 'Fahrzeug ID')
+        ),
+        column(
+          4,
+          actionButton('vehicle_filter_submit', 'Suchen')
+        ),
+      ),
+      fluidRow(
+        verbatimTextOutput("result_text"),
+        tableOutput('vehicle_details')
       )
     )
   )
@@ -274,7 +288,7 @@ server <- function(input, output, session) {
     datatable(
       gemeinden,
       options = list(
-        lengthMenu = list(c(3, 6, 20, 100), c('3', '6', '20', '100')),
+        lengthMenu = list(c(3, 6, 20, 50), c('3', '6', '20', '50')), # layout breaks with three digit numbers in the list
         pageLength = 3
       ),
       rownames = FALSE
@@ -712,6 +726,29 @@ server <- function(input, output, session) {
       )
   })
   
+  # vehicle details search for owners
+  selected_vehicle <- eventReactive(input$vehicle_filter_submit, {
+    out <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
+    if (dim(out)[1] >= 1){
+      out
+    } else {
+      print("ID existiert nicht")
+      NULL
+    }
+  })
+
+  output$result_text <- renderText({"Geben Sie ihre Fahrzeug ID in die Suche ein um zu überprüfen ob ihr Fahrzeug betroffen ist."})
+  
+  observeEvent(input$vehicle_filter_submit, {
+    if (length(selected_vehicle())){
+      output$vehicle_details <- renderTable({
+        selected_vehicle()
+      })
+      output$result_text <- renderText({"Ihr Fahrzeug ist betroffen. Die defekten E"})
+    } else {
+      output$result_text <- renderText({"ID exisitiert nicht."})
+    }
+  })
 } 
 
 # Shiny App starten
