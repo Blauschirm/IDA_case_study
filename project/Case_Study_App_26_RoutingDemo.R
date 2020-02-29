@@ -58,6 +58,12 @@ print("Beispiel Set: "); str(beispiel)
 #final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
 final_joined <- final_joined[sample(nrow(final_joined), 10000),]
 
+# Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
+all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
+
+start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
+
+
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
   
   mainPanel(
@@ -88,6 +94,10 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
             column(12,
                    plotOutput("plot_zulassungsverlauf")
             )
+          ),
+          sliderInput("slider_zulassungsperiode", "Wählen Sie die Zulassungsperiode",
+                      min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum),
+                      value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum))
           )
         ),
         wellPanel(
@@ -187,10 +197,6 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
 # Shiny Server
 server <- function(input, output, session) {
   
-  # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
-  all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
-
-  start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
   
   # Filter parts with the three datatables
   filtered_parts <- reactive({
@@ -205,7 +211,7 @@ server <- function(input, output, session) {
       tmp <- tmp[input$datatable_bauteile_rows_selected,]
     }
     
-    print("                FILTERED PARTS:                     ")
+    print("                FILTERED PARTS:                      ")
     print(str(tmp))
     
     tmp
@@ -230,7 +236,7 @@ server <- function(input, output, session) {
     
     # before returning the filtered Zulassungen we are preparing them for use in the bar plot, by bundeling the data by Month, by setting all
     # dates to the first of their month and then grouping them by month, Gemeinde and Fahrzeug ID
-  zulassungen_out <- zulassungen_out %>%
+    zulassungen_out <- zulassungen_out %>%
       mutate(Monat = as.Date(format.Date(zulassungen_out$Zulassungsdatum, "%Y-%m-1"), "%Y-%m-%d"), defekt= (Fehlerhaft_Komponente > 0 | Fehlerhaft_Einzelteil > 0)) %>%
       group_by(Monat, Gemeinde, Werksnummer_Fahrzeug) %>%
       summarise(Anzahl = n()) %>%
