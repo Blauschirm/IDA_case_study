@@ -299,8 +299,8 @@ server <- function(input, output, session) {
   
   
   # show defective parts bools as factors: Ja / Nein 
-  final_joined$Fehlerhaft_Einzelteil = factor(final_joined$Fehlerhaft_Einzelteil, c(0, 1), c('Ja', 'Nein'))
-  final_joined$Fehlerhaft_Komponente = factor(final_joined$Fehlerhaft_Komponente, c(0, 1), c('Ja', 'Nein'))
+  final_joined$Fehlerhaft_Einzelteil = factor(final_joined$Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja'))
+  final_joined$Fehlerhaft_Komponente = factor(final_joined$Fehlerhaft_Komponente, c(0, 1), c('Nein', 'Ja'))
   
   # Render data table: bauteile
   output$datatable_bauteile <- renderDataTable({
@@ -420,16 +420,16 @@ server <- function(input, output, session) {
       # END Layer 1
       
       # Layer 2: fehlerhafte Fahrzeuge
-      # addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
-      #            #display large amounts of markers as clusters
-      #            clusterOptions = markerClusterOptions(),
-      #            popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
-      #                           "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
-      #                           "ID_Sitz: ", ID_Komponente, "<br/>",
-      #                           "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
-      #                           "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
-      #                           "Zugelassen in: ", PLZ, " ", Gemeinde)
-      # )  %>%
+      addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
+                 #display large amounts of markers as clusters
+                 clusterOptions = markerClusterOptions(),
+                 popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                "ID_Sitz: ", ID_Komponente, "<br/>",
+                                "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                "Zugelassen in: ", PLZ, " ", Gemeinde)
+      )  %>%
       # END Layer 2
     
     #filtered_faclities_tier1() <- filtered_vehicles()[!duplicated(Werksnummer_Einzelteil),]
@@ -724,7 +724,6 @@ server <- function(input, output, session) {
       ) %>% 
       formatStyle(
         c('ID_Komponente', 'ID_Fahrzeug'), `border-left` = 'solid 1px',
-        'border' = 'solid 2px'
       )
   })
 
