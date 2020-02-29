@@ -304,7 +304,8 @@ server <- function(input, output, session) {
     
     # reactive function to get smaller breaks on x-axis when date range on sliderInput gets smaller
     responsive_break_x <- reactive({
-      if(input$slider_zulassungsperiode[2] - input$slider_zulassungsperiode[1] < 500) {
+      # difference between sliderInputs is date range in number of days
+      if(input$slider_zulassungsperiode[2] - input$slider_zulassungsperiode[1] < 700) {
         responsive_break_x <- breaks_width("1 month")
       } else {
         responsive_break_x <- breaks_width("3 month")

@@ -1,13 +1,40 @@
 ---
-title: "General Tasks Group 26"
-output: html_document
+title: "Allgemeine Aufgaben"
+author: 'Gruppe 26, Kurs: Introduction to Data Analytics with R, TU Berlin'
+date: "WS 19/20, 29.2.2020"
+output:
+  html_document:
+    theme: paper
+    toc: yes
+  pdf_document:
+    toc: yes
 ---
+
+<style>
+
+
+  /* Text */
+  
+  font-family: "Latin Modern"
+  
+
+  /* Header */
+
+  #header {
+    margin-top: 64px;
+    margin-bottom: 128px;
+    border-radius: 10px;
+    border: solid;
+    text-align: center;
+  }
+  
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-Es werden die benötigten Bibliotheken importiert. Die *select* Funktion aus dem *dplyr*-Paket und aus dem *fitdistrplus*-Paket stehen im Konflikt. Um sicher zu gehen, dass select vom *dplyr*-Paket verwendet wird, wird dies nochmal definiert.
+# Bibliotheken einbinden
+Es werden die benötigten Bibliotheken importiert. Die *select* Funktion aus dem *dplyr*-Paket und aus dem *fitdistrplus*-Paket stehen im Konflikt. Um sicher zu gehen, dass die *select* Funktion vom *dplyr*-Paket verwendet wird, wird dies nochmal definiert.
 ```{r, message=FALSE, warning=FALSE}
 if(!require(fitdistrplus)){
   install.packages("fitdistrplus")
@@ -37,7 +64,7 @@ library(ggplot2)
 select <- dplyr::select
 ```
 
-# Daten einlesen:
+# Daten einlesen
 Es werden alle Datensätze, die für die Aufgaben benötigt werden, eingelesen.
 
 ```{r, message=FALSE, warning=FALSE}
@@ -76,7 +103,7 @@ Logistikverzug <- right_join(komponente_k7, logistikverzug_k7, by = "IDNummer") 
 x <- Logistikverzug$Verzug
 
 ```
-#### Teilaufgabe a:
+### Teilaufgabe a
 
 **Wie ist der Logistikverzug verteilt? Begründen Sie Ihre Auswahl und stellen Sie Ihre Vorgehensweise kurz dar.**
 
@@ -96,7 +123,7 @@ Da es sich nicht um eine Normalverteilung handelt, muss nun herausgefunden werde
 descdist(x, discrete=FALSE)
 ```
 
-Dem Graphen zufolge passen die logarithmische Normalverteilung, die Gammaverteilung und die Weibullverteilung ganz gut zu den Daten. Nun werden die drei Verteilungen miteinander verglichen.
+Dem Graphen zufolge passen die logarithmische Normalverteilung, die Gammaverteilung und die Weibullverteilung ganz gut zu den Daten. Nun werden die drei Verteilungen daraufhin geprüft, wie gut sie zu den Daten passen und miteinander verglichen.
 
 ```{r, warning=FALSE}
 p <- fitdist(x, "weibull")
@@ -109,9 +136,9 @@ qqcomp(list(p, p2, p3), legendtext = c("Weibull", "Lognormal", "Gamma"))
 ppcomp(list(p, p2, p3), legendtext = c("Weibull", "Lognormal", "Gamma"))
 ```
 
-Anhand der Graphen kann man ablesen, dass die Weibullverteilung nicht passt, denn die Punkte des QQ-Plots ergeben keine Gerade. Die anderen beiden Verteilungen repräsentieren die Datetn aber ganz gut. Dies sieht man ganz gut am QQ-Plot, denn die Punkte beider Verteilungen ergeben eine Gerade. Beim Vergleich stellt sich heraus, dass die logarithmische Normalverteilung am besten passt, denn beim QQ-Plot sind die Punkte der logarithmische Normalverteilung näher an der Geraden.
+Anhand der Graphen kann man ablesen, dass die Weibullverteilung nicht passt, denn die Punkte des QQ-Plots ergeben keine Gerade. Die anderen beiden Verteilungen repräsentieren die Daten aber ganz gut. Dies sieht man ganz gut am QQ-Plot, denn die Punkte beider Verteilungen ergeben eine Gerade. Beim Vergleich stellt sich heraus, dass die logarithmische Normalverteilung am besten passt, denn beim QQ-Plot sind die Punkte der logarithmischen Normalverteilung näher an der Geraden.
 
-#### Teilaufgabe b:
+### Teilaufgabe b
 
 **Wie viel Zeit vergeht mindestens/höchstens zwischen Warenausgang und Wareneingang?**
 
@@ -122,7 +149,7 @@ min <- min(x)
 ```
 Es vergehen zwischen Warenausgang und Wareneingang mindestens `r min` und höchstens `r max` Tage.
 
-#### Teilaufgabe c:
+### Teilaufgabe c
 
 **Bestimmen Sie den Mittelwert des Logistikverzugs.**
 
@@ -132,11 +159,11 @@ mean <- mean(x)
 ```
 Der Durchschnitt des Logistikverzuges beträgt `r mean` Tage.
 
-#### Teilaufgabe d:
+### Teilaufgabe d
 
 **Stellen Sie die Verteilung in geeigneter Weise dar.**
 
-Wir stellen den Graphen als Histogram mittels *ggplot* dar. Dabei wird ein Untertitel verwendet, der angibt in welchen Zeitraum sich die Daten befinden. Dafür muss das älteste Datum und das jüngste Datum extrahiert werden und umformatiert werden. Der Mittelwert wird mithilfe einer roten gestrichelten Linie angezeigt. Für das Histogramm wird noch die Häufigkeit des Logistikverzuges angezeigt, denn bei sehr kleinen Daten kann man das nicht auf dem Histogramm ablesen. Die x-Achse wird nur auf die relevante Spanne eingeschränkt, also dem Minimum und Maximum der Daten.
+Wir stellen die Verteilung als Histogram mittels *ggplot* dar. Dabei wird ein Untertitel verwendet, der angibt in welchen Zeitraum der Logistikverzug betrachtet wird. Dafür muss das älteste Datum und das jüngste Datum extrahiert und umformatiert werden. Für das Histogramm wird noch die Häufigkeit des Logistikverzuges angezeigt, denn bei sehr kleinen Daten kann man das nicht auf dem Histogramm ablesen. Die x-Achse wird nur auf die relevante Spanne eingeschränkt, also dem Minimum und Maximum des Logistikverzuges.
 
 ```{r}
 #String für den Untertitel
@@ -145,18 +172,18 @@ max_datum <- format(max(Logistikverzug$Wareneingang), "%B %Y")
 time <- paste("Zeitraum zwischen", min_datum, "bis", max_datum, sep = " ")
 
 ggplot(Logistikverzug, aes(x = Verzug)) +
-  geom_histogram(binwidth = 1, fill = "blue", na.rm = TRUE) +
-  geom_vline(aes(xintercept=mean(Verzug)), color="red", linetype="dashed", size=1) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black", na.rm = TRUE,  position="identity") +
   stat_bin(aes(y=..count.., label=..count..), geom="text", vjust=-.5, binwidth = 1) +
   xlim(4, 15)+
   labs(title = "Logistikverzug", subtitle = time, x = "Verzug in Tagen", y = "Häufigkeit")
+  
 ```
 
 # Aufgabe 2
 
 **Warum ist es sinnvoll, die Ihnen bereitgestellten Daten in separaten Dateien abzulegen und nicht alles in einer riesigen Tabelle abzuspeichern?** 
 
-Damit dies zum einen Redundanz verhindert, denn wenn man alles in einer großen Tabelle abspeichert, dann werden viele Werte mehrfach in der Tabelle auftauchen. Und zum anderen ist die Laufzeit beim Suchen von Werten in einer großen, langen Tabelle sehr schlecht, denn angenommen man sucht einen Wert der als aller letztes in der Tabelle gespeichert ist, dann hätte man eine Laufzeit von n, wobei n die Anzahl der Einträge in der Tabelle sind. Dies könnte zu einem Problem bei großen n werden, denn dann hat man eine schlechte Laufzeit, nur um einen Wert zu etrahieren.
+Damit dies zum einen Redundanz verhindert, denn wenn man alles in einer großen Tabelle abspeichert, dann werden viele Werte mehrfach in der Tabelle auftauchen. Und zum anderen ist die Laufzeit beim Suchen von Werten in einer großen, langen Tabelle sehr schlecht, denn angenommen man sucht einen Wert der als aller letztes in der Tabelle gespeichert ist, dann hätte man eine Laufzeit von n, wobei n die Anzahl der Einträge in der Tabelle sind. Dies könnte zu einem Problem bei großen n werden, denn dann hat man eine schlechte Laufzeit, nur um einen Wert zu extrahieren.
 
 **Wie nennt sich das zugrunde liegende Datenbankkonzept?**
 
