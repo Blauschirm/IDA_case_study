@@ -54,7 +54,7 @@ library(glue)
 load("Datensatz_tidy.RData")
 
 # Subset the data for debugging: reducing the amount of data to be loaded
-final_joined <- final_joined[c(sample(nrow(final_joined), 1000)),]
+final_joined <- final_joined[c(sample(nrow(final_joined), 1001)),] # must not be lower than filter limit ( nrow(filtered_parts()) <= 1000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge (used in both UI and Server)
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
@@ -95,7 +95,7 @@ ui <- fluidPage(
                style='font-size: 36px; color: #c50e1f;'
         ),
         column(1,
-               imageOutput("Logo")    
+               imageOutput("Logo", height = 1)    
         )
       )
     ),
@@ -527,42 +527,6 @@ server <- function(input, output, session) {
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       leaflet_map <- leaflet_map %>%
         
-        ###radius_factor <- 40000 # 700###
-        # addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
-        #            color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
-        #            radius = tier1_werke()$'Einzelteile geliefert'*radius_factor,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
-        # addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
-        #            color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
-        #            radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
-        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-        #            color = 'white', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-        #            radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
-        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-        #            color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-        #            radius = tier2_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor/3,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
-        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-        #            stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
-        #            radius = tier2_werke()$'Defekte Sitze hergestellt'*radius_factor/3,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
-        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-        #            stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
-        #            radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3,
-        #            group = facitily_group_name) %>%
-        
         #Display tier1 facilities with custom icon
         addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, group = facitily_group_name,
                    icon = ~ icons(
@@ -582,7 +546,7 @@ server <- function(input, output, session) {
                                   "Fehlerhaft")
                      )
                    ),
-                   popupOptions = popupOptions(minWidth = 320, maxHeight = 1000)
+                   popupOptions = popupOptions(minWidth = 320, maxHeight = 500)
                    
         )  %>%
         
@@ -604,7 +568,7 @@ server <- function(input, output, session) {
                                                'Fehlerhaft')
                                   )
                    ),
-                   popupOptions = popupOptions(minWidth = 360, maxHeight = 1000)
+                   popupOptions = popupOptions(minWidth = 360, maxHeight = 500)
         )
       
       # Add marker for car location
