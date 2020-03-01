@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Gruppe 26, Kurs: Introduction to Data Analytics with R, TU Berlin" />
+<meta name="author" content="Gruppe 26 | Maximilian Botschen, Dejan Zinonjic, Jan Kursawe, Julia Scharz, Lin Cheung" />
 
 
 <title>Case Study zur Analyse der Lieferkette defekter Fahrzeugkomponenten</title>
@@ -387,7 +387,8 @@ summary {
 
 
 <h1 class="title toc-ignore">Case Study zur Analyse der Lieferkette defekter Fahrzeugkomponenten</h1>
-<h4 class="author">Gruppe 26, Kurs: Introduction to Data Analytics with R, TU Berlin</h4>
+<h3 class="subtitle">Kurs: Introduction to Data Analytics with R, TU Berlin</h3>
+<h4 class="author">Gruppe 26 | Maximilian Botschen, Dejan Zinonjic, Jan Kursawe, Julia Scharz, Lin Cheung</h4>
 <h4 class="date">WS 19/20, 28.2.2020</h4>
 
 </div>
@@ -431,7 +432,6 @@ summary {
 <li><a href="#reaktive-funktionen">Reaktive Funktionen</a></li>
 <li><a href="#visualisierung">Visualisierung</a></li>
 <li><a href="#leaflet">Leaflet</a></li>
-<li><a href="#section"></a></li>
 </ul></li>
 <li><a href="#aufgetretene-schwierigkeiten">Aufgetretene Schwierigkeiten</a></li>
 </ul></li>
@@ -451,6 +451,10 @@ summary {
   
   p {
     font-size: 16px;
+  }
+  
+  .caption {
+    font-style: italic;
   }
 
   /* Header */
@@ -1747,7 +1751,7 @@ Exklusiv als defekt markierte Einzelteile
 <div id="vollständiger-datensatz-mit-filterfunktion" class="section level3">
 <h3>Vollständiger Datensatz mit Filterfunktion</h3>
 <p>Zur Überprüfung der Balkendiagramm- und Kartendarstellung wird der vollständige Datensatz mit allen relevanten Attributen in einer separaten Datentabelle abgebildet.</p>
-<p>Zur Nutzerfreundlichkeit generiert diese Datentabelle ebenfalls die Lieferwege in der Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Bauteilsuche. Eine Auswahl hebt bereits getätigte Auswahlen aus der Bauteil-Datentabelle auf.</p>
+<p>Zur Nutzerfreundlichkeit generiert diese Datentabelle ebenfalls die Lieferwege in der Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Bauteilsuche.</p>
 </div>
 <div id="reset-buttons" class="section level3">
 <h3>Reset-Buttons</h3>
@@ -1773,7 +1777,7 @@ server &lt;- function(input, output, session) {
 shinyApp(ui, server)</code></pre>
 <p>Die UI wird als geschachtelte Kombination verschiedener bootstrap Elemente kombiniert. Interaktive Inhalte werden über die zwischen Server und Ui geteilten Listen <em>output</em> und <em>input</em> ausgetauscht. So lassen sich UI Elemente über <em>output</em> füllen und durch den User am Interface vorgenommene Auswahlen über <em>input</em> auslesen.</p>
 <p>Diese Funktionalität wird in der vorliegenden App für die Auswahl von Daten über die Tabellen und die Datumsauswahlt verwendet.</p>
-<p>Der in der Server Funktion platzierte Code wird im Falle von nicht lokal gehosteten webservern, auf dem Server statt bei dem Klienten im Browser ausgeführt. Daher bietet es sich beispielsweise auch an Datenintensive Aufgaben wie das durchsuchen des gesamten Datensatzes auf dem Server auszuführen, statt erst die gesamten Daten an den Klienten zu übertragen. Bei unserer App wurde darauf Wert gelegt, möglichst alle Kalkulationen auf Serverseite durchzuführen.</p>
+<p>Der in der Server Funktion platzierte Code wird im Falle von nicht lokal gehosteten webservern auf dem Server statt bei dem Klienten im Browser ausgeführt. Daher bietet es sich beispielsweise auch an Datenintensive Aufgaben wie das durchsuchen des gesamten Datensatzes auf dem Server auszuführen, statt erst die gesamten Daten an den Klienten zu übertragen. Bei unserer App wurde darauf Wert gelegt, möglichst alle Kalkulationen auf Serverseite durchzuführen.</p>
 <div id="reaktive-funktionen" class="section level3">
 <h3>Reaktive Funktionen</h3>
 <p>Ein weiterer wichtiger Punkt für Interaktivität sind reaktive Funktionen. Diese reagieren auf vom User ausgelöste Events. Der untenstehende Codeblock zeigt unseren Code zum Zurücksetzen des Datumsfilters über einen Button mit der ID “reset_filters”.</p>
@@ -1797,9 +1801,6 @@ shinyApp(ui, server)</code></pre>
 <p>Die Cluster-Markierungen geben Auskunft über die Ballungsräume mit häufigen Schadensfällen. Durch Zoomen oder Klicken auf die Cluster-Elemente können Fahrzeugdetails über eine Popup-Darstellung aufgerufen werden.</p>
 <p>Die Anzeige der Lieferwege ist auf 1000 Verbindungen begrenzt, um einen Absturz der Anwendung zu verhindern. Die Lieferwege lassen sich mithilfe der Tabelle ‘betroffene Bauteile’ oder der Tabelle ‘Datenbank’ an- und abwählen. Es wird pro ausgewähltem Einzelteil genau ein Lieferweg angezeigt. Dieser besteht aus drei Markern für die beiden Werke (Symbol einer Fabrik) und für das betroffenes Fahrzeug (Marker in rot) und einer Verbindungslinie jenen Markern. Für jede Lieferroute wird eine Verbindungslinie zwischen einem der Einzelteilwerke, dem Komponenten-Werk und dem Standort des Fahrzeugs (bzw. der Koordinaten der jeweiligen Gemeinde) gezogen. Durch Anklicken der Marker können Werks- und Fahrzeugsdetails abgerufen werden.</p>
 </div>
-<div id="section" class="section level3">
-<h3></h3>
-</div>
 </div>
 <div id="aufgetretene-schwierigkeiten" class="section level2">
 <h2>Aufgetretene Schwierigkeiten</h2>
@@ -1813,12 +1814,6 @@ shinyApp(ui, server)</code></pre>
 A caption
 </p>
 </div>
-<pre class="r"><code># a) Plot data &#39;zeitlichen Zulassungsverlauf&#39;
-ggplot()</code></pre>
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAAABlBMVEXr6+v///+HIERrAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAMUklEQVR4nO3UsQnAMBDAwM/+S7s3OBg1IXA3gSrNA0AyXwcA/JWBAkQGChAZKEBkoACRgQJEBgoQGShAZKAAkYECRAYKEBkoQGSgANE20AHgxEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYjeBwrALQMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIFoPiQHHEsDzcAAAAABJRU5ErkJggg==" width="672" /></p>
-<pre class="r"><code># b) Plot data &#39;Lieferweg (als Luftlinie) für ein betroffenes Bauteil&#39;
-# c) ID tracker
-# d) Print table</code></pre>
 </div>
 </div>
 <div id="ergebnis" class="section level1">

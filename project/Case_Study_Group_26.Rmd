@@ -23,6 +23,10 @@ output:
   p {
     font-size: 16px;
   }
+  
+  .caption {
+    font-style: italic;
+  }
 
   /* Header */
 
@@ -1001,7 +1005,7 @@ Die UI wird als geschachtelte Kombination verschiedener bootstrap Elemente kombi
 
 Diese Funktionalität wird in der vorliegenden App für die Auswahl von Daten über die Tabellen und die Datumsauswahlt verwendet.
 
-Der in der Server Funktion platzierte Code wird im Falle von nicht lokal gehosteten webservern, auf dem Server statt bei dem Klienten im Browser ausgeführt. Daher bietet es sich beispielsweise auch an Datenintensive Aufgaben wie das durchsuchen des gesamten Datensatzes auf dem Server auszuführen, statt erst die gesamten Daten an den Klienten zu übertragen. Bei unserer App wurde darauf Wert gelegt, möglichst alle Kalkulationen auf Serverseite durchzuführen.
+Der in der Server Funktion platzierte Code wird im Falle von nicht lokal gehosteten webservern auf dem Server statt bei dem Klienten im Browser ausgeführt. Daher bietet es sich beispielsweise auch an Datenintensive Aufgaben wie das durchsuchen des gesamten Datensatzes auf dem Server auszuführen, statt erst die gesamten Daten an den Klienten zu übertragen. Bei unserer App wurde darauf Wert gelegt, möglichst alle Kalkulationen auf Serverseite durchzuführen.
 
 
 ### Reaktive Funktionen
@@ -1059,3 +1063,6 @@ Zur Ausführung der Shiny-Applikation werden folgende Dateien benötigt:
 
 - Final_Data_Group_26.RData
 - Case_study_App_26.r
+```{r, eval = FALSE}
+
+```
