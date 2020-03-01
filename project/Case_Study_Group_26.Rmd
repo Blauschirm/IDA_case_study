@@ -71,7 +71,6 @@ library(rmdformats)
 
 ```
 
-
 # Einleitung
 
 Das Ziel dieser Case Study ist die Verdeutlichung und Aufklärung von und über Produktionsproblemen eines Komponentenherstellers "111", das Ledersitze für Fahrzeughersteller aus eingekauften Einzelteilen zusammenbaut. Nach Hinweis durch den Fahrzeughersteller auf Kundenreklamationen sollen von allen beteiligten Schritten der Kette vom Einzelteilhersteller bis zum Kunden Daten zu defekten Fahrzeugen zusammengetragen, aufbereitet und ausgewertet werden.
@@ -452,7 +451,7 @@ komponente_k2le2 <- komponente_k2le2 %>%
 
 ## Relationstabelle: Bestandteile_Fahrzeuge
 
-In den "Bestandteile_Fahrzeug"-Datensätzen mussten lediglich die Variablen der Spalten für den späteren Join umbenannten werden.
+In den "Bestandteile_Fahrzeug"-Datensätzen mussten lediglich die Variablen der Spalten für den späteren Join umbenannt werden.
 
 ## Fahrzeuge
 
@@ -855,7 +854,7 @@ Shiny-Applikationen setzen sich grundsätzlich aus vier Teilen zusammen:
 
 - den Aufruf der Bibliothek mittels library(shiny)
 - die Erstellung des HTML-User-Interfaces (UI) über ui <- fluidPage()
-- dem server zur Definition der Funktionen der im UI dargestellten Objekte
+- dem Server zur Definition der Funktionen der im UI dargestellten Objekte
 - der shinyApp, welche ui und server zur funktionsfähigen App kombiniert
 
 Im Kern nimmt das UI Inputs des Nutzers auf und gibt diese an den Server, welcher daraus reaktive Outputs erzeugt, weiter. Die Ergebnisse werden dann wiederum dem Nutzer im UI dargestellt.
@@ -976,7 +975,7 @@ Der Button "Position zurücksetzen" setzt die Ausrichtung und den Zoom der Karte
 
 ## Server-Funktionen
 
-Für die übersichtliche und Interaktive Darstellung und Auswertung wird Shiny verwendet. Shiny ist ein Paket für R, dass mit R vorbereitete Daten leicht präsentierbar macht. Mit einer Schnittstelle zu HTML über [Bootstraps](https://getbootstrap.com/docs/3.4/css/) Fluid-System bietet es eine gute Möglichkeit schnell eine responsive Website zu generieren. Diese lässt sich, mit Zuhilfename eines geeigneten Webservers nutzen der Zielgruppe die Daten ansprechend und einfach zu präsentieren.
+Für die übersichtliche und interaktive Darstellung und Auswertung wird Shiny verwendet. Shiny ist ein Paket für R, dass mit R vorbereitete Daten leicht präsentierbar macht. Mit einer Schnittstelle zu HTML über [Bootstraps](https://getbootstrap.com/docs/3.4/css/) Fluid-System bietet es eine gute Möglichkeit schnell eine responsive Website zu generieren. Diese lässt sich, mit Zuhilfename eines geeigneten Webservers nutzen der Zielgruppe die Daten ansprechend und einfach zu präsentieren.
 Gerade bei Datenauswertungen, wie der hier vorliegenden, die zur Aufklärung eines Problems verwendet werden sollen, spielt die Interaktivtät, Daten direkt in der Visuellen Ansicht filtern und vergleichen zu können eine große Rolle.
 Shiny bietet sogar seinen eigenen kleinen Webserver, falls kein anderer zur verfügung steht.
 
@@ -1042,16 +1041,9 @@ Es wird pro ausgewähltem Einzelteil genau ein Lieferweg angezeigt. Dieser beste
 
 Aufgrund der Größe des Datensatzes entstanden Skalierungsprobleme mit der Verwendung selectizeInput(multiple = TRUE) als Datenfilter. Ab über 50.000 Dateneinträgen traten massive Performance-Probleme, die sich auch durch ein Serverside-Rendering nicht beheben lassen konnten, auf. Bei einem Wechsel zu dataTableInput() konnten wesentliche Funktionen beibehalten werden, wobei sich die App mit dem vollständigen Datensatz problemlos öffnen ließ. Aus diesem Grund wurden bis auf den sliderInput() für die Zulassungsdaten sämtliche Filterfunktionen mittels dataTableInput() umgesetzt.
 
-- Lieferwege
-
-```{r pressure, echo=FALSE, fig.cap="A caption", out.width = '100%'}
-knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/bargraph.png")
-```
-
 # Ergebnis
 
 Beschreiben Sie Ihren Datenanalyseprozess schrittweise und diskutieren Sie das Ergebnis anhand aussagekräftiger Graphiken aus Ihrer entwickelten App
-
 
 # Anhang
 
