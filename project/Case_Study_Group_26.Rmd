@@ -947,7 +947,7 @@ knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Fahrzeugsuche.pn
 
 ### Graph für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge
 
-Der Graph stellt dem Fahrzeughersteller den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in Form eines Barplots dar. Der Barplot repräsentiert die Häufigkeitsverteilung fehlerhafter Fahrzeuge über den ausgewählten Zulassungszeitraum. Die Höhe der Balken stellt dabei die absolute Anzahl betroffener Anzahl je Zulassungsmonat dar. Die einzelnen Balken sind nach den vier Fahrzeugherstellern (OEM) aufgegliedert, wobei jeder OEM durch eine feste Balkenfarbe repräsentiert wird.
+Der Graph stellt dem Fahrzeughersteller den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in Form eines Barplots dar. Der Barplot repräsentiert die Häufigkeitsverteilung fehlerhafter Fahrzeuge über den ausgewählten Zulassungszeitraum. Die Höhe der Balken stellt dabei die absolute Anzahl betroffener Anzahl je Zulassungsmonat dar. Die einzelnen Balken sind nach den vier Werken der Fahrzeughersteller (OEM) aufgegliedert, wobei jedes OEM-Werk durch eine feste Balkenfarbe repräsentiert wird.
 
 ```{r , echo=FALSE, fig.cap="Balkendiagramm Standardansicht", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/BarplotFULL.png")
@@ -1136,10 +1136,13 @@ Aufgrund der Größe des Datensatzes entstanden Skalierungsprobleme mit der Verw
 
 # Ergebnis
 
-Die Zulassungshistorie zeigt, dass die Zahl der betroffenen Fahrzeuge zunimmt, insbesondere ab dem Zeitpunkt, an dem ein Wechsel der Produktionsstandorte erfolgte. 
- Die Fehler sind in den OEM-Werken 1 und 2 relativ konstant. Die Werke 3, 4 unterstützen die Produktion ab xx und übernehmen ab xx die gesamte Produktion vollständig. Es entstanden mehr mit als bei OEM 1 und 2 und es gab extremen Spitzen von fehlerhaften Fahrzeugen in einigen Monaten. 
+Die Zulassungshistorie zeigt, dass die Zahl der betroffenen Fahrzeuge zunimmt, insbesondere ab dem Zeitpunkt, an dem ein Wechsel der Produktionsstandorte erfolgte.
+
+Die Fehler sind in den OEM-Werken 1 und 2 relativ konstant. Die Werke 3, 4 unterstützen die Produktion ab xx und übernehmen ab xx die gesamte Produktion vollständig. Es entstanden mehr mit als bei OEM 1 und 2 und es gab extremen Spitzen von fehlerhaften Fahrzeugen in einigen Monaten. 
 In der Heatmap-Darstellung ist sehr deutlich zu erkennen, dass es vor allem drei große Ballungsräume mit Schadensschwerpunkten gibt: das Ruhrgebiet, der Großraum München und das Land Sachsen.
+
 Die Darstellung der Lieferwege zeigt, dass es nur ein Komponentenwerk gibt, das relativ in der Mitte Deutschlands liegt. Dieses Werk bezieht Einzelteile aus 11 Werken für die Montage der Ledersitze.
+
 Um die Logistik besser abzuwickeln, helfen die Lieferrouten, geeignete Transportwege zu identifizieren und Mehrteillieferungen und ggf. Lagerbestände zu organisieren.
 
 # Anhang
