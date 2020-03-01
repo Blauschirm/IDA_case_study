@@ -993,10 +993,6 @@ Importieren der Daten Datenaufbereitung
 Erstellen des finalen Datensatzes Auswertung
 Ergebnis
 
-```{r TOC}
-# Table of Contents
-```
-
 # Aufgabe 6
 
 Im Abgabeordner sollen folgende Dateien zu finden sein, XX ist mit der Gruppennummer zu ersetzen:

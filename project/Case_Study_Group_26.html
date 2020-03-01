@@ -419,11 +419,12 @@ summary {
 <li><a href="#anforderungen-an-die-fallbezogene-shiny-app">Anforderungen an die fallbezogene Shiny-App</a></li>
 <li><a href="#user-interface">User Interface</a><ul>
 <li><a href="#suche-nach-betroffenen-fahrzeugen-für-fahrzeughalter">Suche nach betroffenen Fahrzeugen für Fahrzeughalter</a></li>
-<li><a href="#barplot">Barplot</a></li>
-<li><a href="#auswahl-der-zulassungsdaten">Auswahl der Zulassungsdaten</a></li>
-<li><a href="#suchfilter-für-gemeinden-bauteile-und-den-vollständigen-datensatz">Suchfilter für Gemeinden, Bauteile und den vollständigen Datensatz</a></li>
-<li><a href="#reset-buttons">Reset-Buttons</a></li>
+<li><a href="#graph-für-den-zeitlichen-zulassungsverlauf-der-betroffenen-fahrzeuge">Graph für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge</a></li>
+<li><a href="#auswahl-des-zulassungszeitraums">Auswahl des Zulassungszeitraums</a></li>
+<li><a href="#suchfilter-für-gemeinden-und-bauteile">Suchfilter für Gemeinden und Bauteile</a></li>
 <li><a href="#kartendarstellung">Kartendarstellung</a></li>
+<li><a href="#vollständiger-datensatz-mit-filterfunktion">Vollständiger Datensatz mit Filterfunktion</a></li>
+<li><a href="#reset-buttons">Reset-Buttons</a></li>
 </ul></li>
 <li><a href="#server-funktionen">Server-Funktionen</a><ul>
 <li><a href="#reaktive-funktionen">Reaktive Funktionen</a></li>
@@ -1646,33 +1647,32 @@ Exklusiv als defekt markierte Einzelteile
 #runApp(&quot;Case_Study_App_26.r&quot;)</code></pre>
 <pre class="r"><code># profiler stats</code></pre>
 <p>Die Visualisierung der Datenauswertung in der Shiny-App soll folgende Bestandteile haben: - einen Graphen, der den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in den Gemeinden darstellt - eine Heatmapdarstellung zur Visualisierung von Schadensschwerpunkten - Popups in der Kartendarstellung, die Informationen zu den zugelassenen Fahrzeugen enthalten - der Lieferweg (als Luftlinie) für ein betroffenes Bauteil, welches vom Benutzer ausgewählt werden kann - ein Suchfeld, das Fahrzeughaltern ermöglicht, anhand der Fahrzeug-ID zu überprüfen, ob ihr Auto betroffen ist - den vollständigen zugrundeliegenden Datensatz als Tabelle mit den notwendigen Attributen</p>
-<p>Zusätzl ich soll die Auswahl und Ausgabe eines betroffenen Fahrzeugs für den Fahrzeughalter von den restlichen Informationen, die dem Fahrzeughersteller zur Verfügung stehen, aus Datenschutzgründen isoliert werden.</p>
+<p>Zusätzlich soll die Auswahl und Ausgabe eines betroffenen Fahrzeugs für den Fahrzeughalter von den restlichen Informationen, die dem Fahrzeughersteller zur Verfügung stehen, aus Datenschutzgründen isoliert werden.</p>
 </div>
 <div id="user-interface" class="section level2">
 <h2>User Interface</h2>
 <p>Grundsätzlich gliedert sich das User-Interface in zwei Bestandteile, welche über Tabs voneinander getrennt sind: - ein Interface für Fahrzeughalter - ein Interface für Fahrzeughersteller</p>
 <p>Die Tabs dienen der anwenderspezifischen Isolierung der Datenauswertung.</p>
 <p>Das UI für Fahrzeughalter beinhaltet lediglich die Suche nach einzelnen, von defekten Ledersitzes des Herstellers “111” betroffenen Fahrzeugen.</p>
-<p>Das UI für Fahrzeughalter ist umfangreicher und stellt sämtliche Daten zu allen Fahrzeugen, die von defekten Ledersitzen des Herstellers “111” betroffen sind, und deren Analyse dar. Es beinhaltet die folgenden Teilbereiche: - den Graphen - Auswahlfilter</p>
-<p>Layout und Aufbau (Header, Tabs, Plot, Filter, Kartendarstellung, Daten) Header, Logo und Schriftart</p>
+<p>Das UI für Fahrzeughersteller ist hingegen umfangreicher und stellt sämtliche Daten zu allen Fahrzeugen, die von defekten Ledersitzen des Herstellers “111” betroffen sind, und deren Analyse dar. Es beinhaltet die folgenden vier Teilbereiche: - den Graphen für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge - Auswahlfilter für den Zulassungszeitraum, die Gemeinden und Bauteile - die Kartendarstellung mit Schadenschwerpunkten als Heatmap, geclusterten Markierungspunkten für die zugelassenen Fahrzeugen sowie Lieferketten von den Herstellern zum Zulassungsort - den vollständigen zugrundeliegenden Datensatz mit Filterfunktion</p>
+<p>Die einzelnen Bestandteile des UI werden in folgenden Abschnitten näher beschrieben.</p>
 <div id="suche-nach-betroffenen-fahrzeugen-für-fahrzeughalter" class="section level3">
 <h3>Suche nach betroffenen Fahrzeugen für Fahrzeughalter</h3>
-<p>Eingabe der Fahrzeug ID über Suchfeld Output-Darstellung: - Fahrzeug betroffen - betroffen Teile - Werksnummer</p>
+<p>Mittels Eingabe der Fahrzeug-ID über das Suchfeld kann der Fahrzeughalter ermitteln, ob das Fahrzeug von defekten Ledersitzen der Herstellers “111” betroffen ist oder nicht.</p>
+<p>Als Output wird dargestellt: - ob das Fahrzeug betroffen ist, - welche Bauteile betroffen sind, - in welchem Werk die Bauteile hergestellt wurden.</p>
 </div>
-<div id="barplot" class="section level3">
-<h3>Barplot</h3>
-<p>stellt den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge dar. Barplot zur Darstellung der Häufigkeitsverteilung über die Monate in Anzahl der betroffenen Fahrzeugen</p>
-<p>kann zeitlich und nach Gemeinden gefiltert werden</p>
+<div id="graph-für-den-zeitlichen-zulassungsverlauf-der-betroffenen-fahrzeuge" class="section level3">
+<h3>Graph für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge</h3>
+<p>Der Graph stellt dem Fahrzeughersteller den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in Form eines Barplots dar. Der Barplot repräsentiert die Häufigkeitsverteilung fehlerhafter Fahrzeuge über den ausgewählten Zulassungszeitraum. Die Höhe der Balken stellt dabei die absolute Anzahl betroffener Anzahl je Zulassungsmonat dar. Die einzelnen Balken sind nach den vier Fahrzeugherstellern (OEM) aufgegliedert, wobei jeder OEM durch eine feste Balkenfarbe repräsentiert wird.</p>
 </div>
-<div id="auswahl-der-zulassungsdaten" class="section level3">
-<h3>Auswahl der Zulassungsdaten</h3>
-<p>sliderInput() start = minimum, end = maximum Zulassungszeitspanne kann ausgewählt werden filtert Barplot und Kartendarstellung</p>
+<div id="auswahl-des-zulassungszeitraums" class="section level3">
+<h3>Auswahl des Zulassungszeitraums</h3>
+<p>Der Zulassungszeitraum kann durch Festlegen von Start- und Enddaten über den Slider nach Bedarf bestimmt werden. Damit werden sowohl das Balkendiagramm für den Zulassungsverlauf als auch die Kartendarstellung, so gefiltert dass nur relevante Daten im ausgewählten Zeitraum ausgewertet und dargestellt werden.</p>
+<p>Standardmäßig ist der gesamte Zulassungszeitraum aller Daten festgelegt.</p>
 </div>
-<div id="suchfilter-für-gemeinden-bauteile-und-den-vollständigen-datensatz" class="section level3">
-<h3>Suchfilter für Gemeinden, Bauteile und den vollständigen Datensatz</h3>
-<p>dataTableInput()</p>
-<p>Gemeinden- und Bauteilfilter sowie vollständiger Datensatz</p>
-<p>Genereller Suchfilter mit Texteingabe ermöglicht Suche nach PLZ oder Ort bzw. ID der Bauteile usw.</p>
+<div id="suchfilter-für-gemeinden-und-bauteile" class="section level3">
+<h3>Suchfilter für Gemeinden und Bauteile</h3>
+<p>In Form von DataTables wird separat nach Gemeinden und in betroffenen Fahrzeugen enthaltenten Bauteilen gesucht. Ein allgemeiner Suchfilter mit Texteingabe ermöglicht die Suche nach Postleitzahlen oder Ort bzw. ID der Bauteile usw.</p>
 <p>Auswahl der Zeilen filtert die Daten, die im Output dargestellt werden</p>
 <p>Markierung der Auswahl als Highlights</p>
 <p>Mehrfachauswahl möglich</p>
@@ -1680,11 +1680,6 @@ Exklusiv als defekt markierte Einzelteile
 <p>Gemeinden-Suche filter Barplot und Kartendarstellung und zeigt zusätzlich die Anzahl der zugelassenen betroffenen Fahrzeuge je Gemeinde an</p>
 <p>Bauteil-Suche filtern nur die Kartendarstellung, da sich der Barplot zur besseren Übersicht ausschließlich auf die zugelassenen Fahrzeuge nach OEM und Gemeinden beziehen soll</p>
 <p>Zur Nutzerfreundlichkeit filtert die DataTable, welche den vollständigen Datensatz enthält, ebenfalls die Kartendarstellung</p>
-</div>
-<div id="reset-buttons" class="section level3">
-<h3>Reset-Buttons</h3>
-<p>Über den “Filter zurücksetzen” Button werden die Filter für die Zulassungsdaten sowie den DataTables für die Gemeinden- und Bauteilauswahl und den vollständigen Datensatz auf ihren Anfangswert zurückgesetzt.</p>
-<p>Der Button “Position zurücksetzen” setzt die Ausrichtung und den Zoom der Kartendarstellung auf den Startwert zurück.</p>
 </div>
 <div id="kartendarstellung" class="section level3">
 <h3>Kartendarstellung</h3>
@@ -1694,6 +1689,14 @@ Exklusiv als defekt markierte Einzelteile
 <p>Popups auf den Cluster-Markern stellen folgende Infos zu den Fahrzeugen dar: - Fahrzeug-ID - …</p>
 <p>Lieferwege als Luftlinie abhängig von der Auswahl der Fahrzeuge bzw. Bauteile aus den Datentabellen - Lieferkette von defekten Bauteilen zum Komponentenhersteller und vom Komponentenhersteller zum Fahrzeughalter - Gebäude-Icons stellen Einzeilteil- und Komponentenwerk dar, roter Geo-Icon stellt den Zielort, d.h. den Zulassungsort des Fahrzeugs dar - Kreise um Werke repräsentieren durch ihre jeweilige Größe die Anzahl der fehlerhaften Einzelteile und Komponenten, die aus dem jeweiligen Werk geliefert wurden - Popups beim Klicken auf den Werksstandort geben wesentliche Statistiken zu fehlerhaften Bauteilen aus - Mehrfachauswahl möglich, farbliche Unterscheidung zwischen den Lieferkette (eine Farbe pro Kette), beim Überfahren des Lieferweges mit der Maus wird die Linie farblich hervorgehoben und die Fahrzeug-ID angezeigt.</p>
 <p>Die Heatmap, Cluster-Marker sowie Lieferwege sind einzeln oder mehrfach aus- oder abwählbar.</p>
+</div>
+<div id="vollständiger-datensatz-mit-filterfunktion" class="section level3">
+<h3>Vollständiger Datensatz mit Filterfunktion</h3>
+</div>
+<div id="reset-buttons" class="section level3">
+<h3>Reset-Buttons</h3>
+<p>Über den “Filter zurücksetzen” Button werden die Filter für die Zulassungsdaten sowie den DataTables für die Gemeinden- und Bauteilauswahl und den vollständigen Datensatz auf ihren Anfangswert zurückgesetzt.</p>
+<p>Der Button “Position zurücksetzen” setzt die Ausrichtung und den Zoom der Kartendarstellung auf den Startwert zurück.</p>
 </div>
 </div>
 <div id="server-funktionen" class="section level2">
@@ -1726,7 +1729,6 @@ ggplot()</code></pre>
 <div id="aufgabe-5" class="section level1">
 <h1>Aufgabe 5</h1>
 <p>Dokumentieren Sie die Ergebnisse Ihrer Analyse in einer R Markdown Datei. Beschreiben Sie Ihren Datenanalyseprozess schrittweise und diskutieren Sie das Ergebnis anhand aussagekräftiger Graphiken aus Ihrer entwickelten App. Das Beschreiben Ihres Vorgehens dient der Nachvollziehbarkeit Ihrer Lösungsschritte. Falls es Probleme mit Ihrem R-Code gibt, kann durch die Dokumentation ein grundsätzlich richtiges Vorgehen anerkannt werden. Kommentieren Sie deshalb Ihren Code sorgfältig und beachten Sie den tidyverse Style-Guide. Erstellen Sie ein Inhaltsverzeichnis, welches im html-File eingeblendet wird und anklickbar ist. Folgende Gliederungspunkte sollen im Inhaltsverzeichnis mindestens aufgeführt werden: Importieren der Daten Datenaufbereitung Erstellen des finalen Datensatzes Auswertung Ergebnis</p>
-<pre class="r"><code># Table of Contents</code></pre>
 </div>
 <div id="aufgabe-6" class="section level1">
 <h1>Aufgabe 6</h1>

@@ -1,4 +1,12 @@
+
+if (!require(shiny)){
+  install.packages("shiny")
+}
 library(shiny)
+
+if (!require(ggplot2)){
+  install.packages("ggplot2")
+}
 library(ggplot2)
 
 if (!require(stringr)){
@@ -51,18 +59,11 @@ load("Datensatz_tidy.RData")
 #
 # for debugging: reducing the amount of data to be loaded
 
-# Error: n <- 15680
-#n <- 15680
-#n <- 15679 # Test size
-max <- 322075 # Number of observations
-n <-   3220
-radius_factor <- 40000 # 700
-
-
-#final_joined_error <- final_joined[c(n-1, n, n+1), ]
 
 # Subset the data
 final_joined <- final_joined[c(sample(nrow(final_joined), 10000)),]
+
+radius_factor <- 40000 # 700
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
@@ -71,7 +72,6 @@ all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
 start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
 
 ui <- fluidPage(
-
 
   mainPanel(width="100%",
    
