@@ -565,6 +565,8 @@ server <- function(input, output, session) {
       # Add circles of facility
       facitily_group_name <- "Lieferwege"
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
+      print(str(tier1_werke()))
+      print(str(tier2_werke()))
       leaflet_map <- leaflet_map %>%
         addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
                    color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
@@ -599,10 +601,12 @@ server <- function(input, output, session) {
         addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
                    stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
                    radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3,
-                   group = facitily_group_name) %>%
-        
+                   group = facitily_group_name)
+      
+        print("circles")  
+      
         #Display tier1 facilities with custom icon
-        addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
+        leaflet_map <- addMarkers(leaflet_map, data = as.data.frame(tier1_werke()), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
                    group = facitily_group_name,
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
@@ -618,10 +622,9 @@ server <- function(input, output, session) {
                      )
                    ),
                    popupOptions = popupOptions(minWidth = 320)
-                   
+
         )
-        class(tier1_werke())
-        print(is.atomic((tier1_werke())))
+        print("makers")
         # Display tier2 facilities with custom icon
         leaflet_map <- addMarkers(leaflet_map, data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = 'Icon',# filtered_data_dots(), ~lat_via, ~lng_via,
                    group = facitily_group_name,
@@ -643,6 +646,8 @@ server <- function(input, output, session) {
         )
       # Add marker for car location
       filtered_vehicles_tmp <- filtered_parts_limited()
+      print("filtered vehicles")
+      print(str(filtered_vehicles_tmp[1, ]))
       if(!is.null(filtered_vehicles_tmp)){
         for(i in 1:nrow(filtered_vehicles_tmp)){
           leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
