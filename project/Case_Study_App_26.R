@@ -202,11 +202,15 @@ ui <- fluidPage(
                            titlePanel("Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile"),
                            
                            fluidRow(
-
+                             style = "margin-bottom: 16px;",
                              # Reset map position
-                             column(12, 
-                                    offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                             column(6,
+                                    align = 'right',
                                     "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
+                                    style = "text-align: left"
+                                    ),
+                             column(6, 
+                                    offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                                     actionButton(inputId = "reset", "Position zurücksetzen")
                              )
                            ),
@@ -459,7 +463,7 @@ server <- function(input, output, session) {
                       lng_via = supply_routes$Längengrad_Komponente,
                       lng_end = supply_routes$Längengrad,
                       ID_Fahrzeug = supply_routes$ID_Fahrzeug)
-      df
+      #df
     }
   })
   
@@ -490,22 +494,13 @@ server <- function(input, output, session) {
         'Defekte Sitze hergestellt' = sum(!duplicated(ID_Fahrzeug)),
         'fehlerhaft laut Komponenten-Werk' = length(Fehlerhaft_Komponente[Fehlerhaft_Komponente == TRUE]),
         Komponenten = substring(str_c(glue('<br>{ID_Komponente}'),collapse = ""),5),
-        Fehlerhaft = toString(factor(Fehlerhaft_Komponente, c(0, 1), c('Nein', 'Ja')))
+        Fehlerhaft = 'ja'
       ) %>%
       ungroup()
   })
   
-  # Custom icons for markers of facilities
-  tier1Icon <- makeIcon(
-    iconUrl = "https://pngimage.net/wp-content/uploads/2018/05/facility-png-2.png",
-    iconWidth = 40, iconHeight = 25)
-  carIcon <- makeIcon(
-    iconUrl = "https://gkv.com/wp-content/uploads/leaflet-maps-marker-icons/map_marker-red1.png",
-    iconAnchorX = 18, iconAnchorY = 40,
-    iconWidth = 35, iconHeight = 40)
-  
-  # Colors for the supply routes
-  colors_polyline <- c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")
+  # Colors for the supply routes (n = 10)
+  colors_polyline <- c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF", "#D5BF86", "#541C52", "#CA6000", "#CAAC00", "#000000", "#FFFFFF")
   
   # Render map
   output$map <- renderLeaflet({
@@ -542,7 +537,7 @@ server <- function(input, output, session) {
                                       group = "Lieferwege",
                                       lng= ~ c(lng_begin, lng_via, lng_end),
                                       lat= ~ c(lat_begin, lat_via, lat_end),
-                                      color = colors_polyline[1],
+                                      color = colors_polyline[ifelse(i>10, i-10, i)], # 
                                       weight = 4,
                                       opacity = 0.5,
                                       fillColor = "#c50e1",
