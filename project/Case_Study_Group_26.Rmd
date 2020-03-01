@@ -1011,7 +1011,16 @@ Die Visualisierung der Daten wird über ggplot2 und leaftlet realisiert.
 
 ### Leaflet
 
-äää???
+Die Kartendarstellung wurde in drei Kartenebenen unterteilt: Heatmap, Cluster Marker und Lieferwege. 
+Die Ebenen können in der rechten oberen Ecke der Karte an- und abgewählt werden.
+
+Die Heatmap verwendet untere (mindestens 10 fehlerhafte Fahrzeuge) und obere Grenzen (max. 500 fehlerhafte Fahrzeuge) für die Darstellung des Farbbereichs. Dies dient der besseren Visualisierung und Lesbarkeit, da sonst die Karte zu stark rot eingefärbt wäre und fast keine Bereiche ohne Einfärbung dargestellt würden.
+Die Heatmap kann mit dem Schieberegler auf einen Zeitbereich gefiltert werden.
+
+Die Cluster-Markierungen geben Auskunft über die Ballungsräume mit häufigen Schadensfällen. Durch Zoomen oder Klicken auf die Cluster-Elemente können Fahrzeugdetails über eine Popup-Darstellung aufgerufen werden.
+
+Die Anzeige der Lieferwege ist auf 1000 Verbindungen begrenzt, um einen Absturz der Anwendung zu verhindern. Die Lieferwege lassen sich mithilfe der Tabelle 'betroffene Bauteile' oder der Tabelle 'Datenbank' an- und abwählen.
+Es wird pro ausgewähltem Einzelteil genau ein Lieferweg angezeigt. Dieser besteht aus drei Markern für die beiden Werke (Symbol einer Fabrik) und für das betroffenes Fahrzeug (Marker in rot) und einer Verbindungslinie jenen Markern. Für jede Lieferroute wird eine Verbindungslinie zwischen einem der Einzelteilwerke, dem Komponenten-Werk und dem Standort des Fahrzeugs (bzw. der Koordinaten der jeweiligen Gemeinde) gezogen. Durch Anklicken der Marker können Werks- und Fahrzeugsdetails abgerufen werden.
 
 ### 
 
