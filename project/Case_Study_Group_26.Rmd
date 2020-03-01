@@ -963,7 +963,7 @@ Die oberste Schicht stellt nach Auswahl von Bauteilen bzw. betroffenen Fahrzeuge
 
 Zur Überprüfung der Balkendiagramm- und Kartendarstellung wird der vollständige Datensatz mit allen relevanten Attributen in einer separaten Datentabelle abgebildet. 
 
-Zur Nutzerfreundlichkeit generiert diese Datentabelle ebenfalls die Lieferwege in der Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Bauteilsuche. Eine Auswahl hebt bereits getätigte Auswahlen aus der Bauteil-Datentabelle auf.
+Zur Nutzerfreundlichkeit generiert diese Datentabelle ebenfalls die Lieferwege in der Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Bauteilsuche.
 
 ### Reset-Buttons
 
@@ -1036,8 +1036,6 @@ Die Cluster-Markierungen geben Auskunft über die Ballungsräume mit häufigen S
 Die Anzeige der Lieferwege ist auf 1000 Verbindungen begrenzt, um einen Absturz der Anwendung zu verhindern. Die Lieferwege lassen sich mithilfe der Tabelle 'betroffene Bauteile' oder der Tabelle 'Datenbank' an- und abwählen.
 Es wird pro ausgewähltem Einzelteil genau ein Lieferweg angezeigt. Dieser besteht aus drei Markern für die beiden Werke (Symbol einer Fabrik) und für das betroffenes Fahrzeug (Marker in rot) und einer Verbindungslinie jenen Markern. Für jede Lieferroute wird eine Verbindungslinie zwischen einem der Einzelteilwerke, dem Komponenten-Werk und dem Standort des Fahrzeugs (bzw. der Koordinaten der jeweiligen Gemeinde) gezogen. Durch Anklicken der Marker können Werks- und Fahrzeugsdetails abgerufen werden.
 
-### 
-
 
 ## Aufgetretene Schwierigkeiten
 
@@ -1047,14 +1045,6 @@ Aufgrund der Größe des Datensatzes entstanden Skalierungsprobleme mit der Verw
 
 ```{r pressure, echo=FALSE, fig.cap="A caption", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/bargraph.png")
-```
-
-```{r plot data}
-# a) Plot data 'zeitlichen Zulassungsverlauf'
-ggplot()
-# b) Plot data 'Lieferweg (als Luftlinie) für ein betroffenes Bauteil'
-# c) ID tracker
-# d) Print table
 ```
 
 # Ergebnis
