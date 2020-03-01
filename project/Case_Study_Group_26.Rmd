@@ -884,7 +884,7 @@ Das UI für Fahrzeughalter beinhaltet lediglich die Suche nach einzelnen, von de
 Das UI für Fahrzeughersteller ist hingegen umfangreicher und stellt sämtliche Daten zu allen Fahrzeugen, die von defekten Ledersitzen des Herstellers "111" betroffen sind, und deren Analyse dar. Es beinhaltet die folgenden vier Teilbereiche:
 - den Graphen für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge
 - Auswahlfilter für den Zulassungszeitraum, die Gemeinden und Bauteile
-- die Kartendarstellung mit Schadenschwerpunkten als Heatmap, geclusterten Markierungspunkten für die zugelassenen Fahrzeugen sowie Lieferketten von den Herstellern zum Zulassungsort
+- die interaktive Kartendarstellung mit Schadenschwerpunkten als Heatmap, geclusterten Markierungspunkten für die zugelassenen Fahrzeugen sowie Lieferketten von den Herstellern zum Zulassungsort
 - den vollständigen zugrundeliegenden Datensatz mit Filterfunktion
 
 Die einzelnen Bestandteile des UI werden in folgenden Abschnitten näher beschrieben.
@@ -906,27 +906,23 @@ Der Graph stellt dem Fahrzeughersteller den zeitlichen Zulassungsverlauf der bet
 
 Der Zulassungszeitraum kann durch Festlegen von Start- und Enddaten über den Slider nach Bedarf bestimmt werden. Damit werden sowohl das Balkendiagramm für den Zulassungsverlauf als auch die Kartendarstellung, so gefiltert dass nur relevante Daten im ausgewählten Zeitraum ausgewertet und dargestellt werden. 
 
-Standardmäßig ist der gesamte Zulassungszeitraum aller Daten festgelegt.
+In der Kartendarstellung werden durch die Auswahl des Zulassungszeitraums lediglich die Darstellung der Heatmap und Standortmarkierungen ("Cluster-Marker") beeinflusst.
+
+Standardmäßig ist der gesamte Zulassungszeitraum aller Fahrzeugdaten festgelegt.
 
 ### Suchfilter für Gemeinden und Bauteile
 
-In Form von DataTables wird separat nach Gemeinden und in betroffenen Fahrzeugen enthaltenten Bauteilen gesucht. Ein allgemeiner Suchfilter mit Texteingabe ermöglicht die Suche nach Postleitzahlen oder Ort bzw. ID der Bauteile usw. 
+In Form von DataTables wird separat nach Gemeinden und in betroffenen Fahrzeugen enthaltenten Bauteilen gesucht. Ein allgemeiner Suchfilter mit Texteingabe ermöglicht die Suche nach Postleitzahlen oder Gemeinden bzw. in der Bauteilsuche nach Einzelteil-, Komponenten- oder Fahrzeug-IDs. Eine Auswahl der Tabellenzeilen filtert die Daten, die ausgewertet und dargestellt werden. Hierbei ist eine Mehrfachauswahl möglich und die ausgewählten Zeilen werden farblich hervorgehoben. Die Abwahl der markierten Zeilen durch erneutes Anklicken löst die Filter einzeln wieder auf.
 
-Auswahl der Zeilen filtert die Daten, die im Output dargestellt werden
+Eine Auswahl einzelner Gemeinden filtert die ausgewerteten Daten sowohl für das Balkendiagramm als auch die Kartendarstellung. In der Kartendarstellung In der Tabelle wird für die jeweiligen Gemeinden zusätzlich die Anzahl der zugelassenen betroffenen Fahrzeuge angezeigt.
 
-Markierung der Auswahl als Highlights
+Die Auswahl der Bauteile filtert lediglich die für die Kartendarstellung ausgewerteten Daten, da eine grafische Darstellung der Fahrzeugzulassungen nach einzelnen Bauteilen keine gewinnbringende Information liefert und Bauteile je Fahrzeug über die Datentabellen ermittelt werden können.
 
-Mehrfachauswahl möglich
+In der Kartendarstellung wird durch die Auswahl von Gemeinden bzw. Bauteilen lediglich die Darstellung der Lieferwege generiert.
 
-einfache Abwahl durch erneutes Anklicken
+### Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile
 
-Gemeinden-Suche filter Barplot und Kartendarstellung und zeigt zusätzlich die Anzahl der zugelassenen betroffenen Fahrzeuge je Gemeinde an
 
-Bauteil-Suche filtern nur die Kartendarstellung, da sich der Barplot zur besseren Übersicht ausschließlich auf die zugelassenen Fahrzeuge nach OEM und Gemeinden beziehen soll
-
-Zur Nutzerfreundlichkeit filtert die DataTable, welche den vollständigen Datensatz enthält, ebenfalls die Kartendarstellung 
-
-### Kartendarstellung
 
 Open Street Map mit Darstellung der Deutschlandkarte
 
@@ -949,7 +945,9 @@ Die Heatmap, Cluster-Marker sowie Lieferwege sind einzeln oder mehrfach aus- ode
 
 ### Vollständiger Datensatz mit Filterfunktion
 
+Zur Überprüfung der Balkendiagramm- und Kartendarstellung wird der vollständige Datensatz mit allen relevanten Attributen in einer separaten Datentabelle abgebildet. 
 
+Zur Nutzerfreundlichkeit filtert die Datentabelle ebenfalls die Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Datentabellen.
 
 ### Reset-Buttons
 
