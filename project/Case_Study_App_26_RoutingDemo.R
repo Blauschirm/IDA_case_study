@@ -1,8 +1,16 @@
 library(shiny)
 library(ggplot2)
-library(DT)
+
+if (!require(stringr)){
+  install.packages("stringr")
+}
 library(stringr)
-# scales to be able to use dates as ggplot limits
+
+if (!require(DT)){
+  install.packages("DT")
+}
+library(DT)
+
 if (!require(scales)){
   install.packages("scales")
 }
@@ -49,10 +57,6 @@ load("Datensatz_tidy.RData")
 max <- 322075 # Number of observations
 n <-   3220
 radius_factor <- 20000 # 700
-
-beispiel <- floor(runif(6, min=1, max = n))
-#beispiel <- c(1:8)
-print("Beispiel Set: "); str(beispiel)
 
 #auswahl <- seq(x, n, by=x) # subset data
 
@@ -143,17 +147,19 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                          
                          # filter section for bar plot and heat map
                          wellPanel(  
+                           
+                           titlePanel("Suchfilter zum Anpassen des Balkendiagramms und der Karte"),
                            # Reset all filters
                            fluidRow(
                              column(12, 
                                     offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                    "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
+                                    "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen",
                                     actionButton("reset_filters", "Alle Filter zurücksetzen"),
                              )
                            ),
                            
                            # sliderinput filtering the time period for bar plot
-                           sliderInput("slider_zulassungsperiode", "Wählen Sie die Zulassungsperiode",
+                           sliderInput("slider_zulassungsperiode", "Wählen Sie den Zeitraum der Zulassungen aus",
                                        min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum),
                                        value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum))
                            ),
@@ -189,7 +195,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                          
                          # heat map with check boxes and cluster markers and Lieferwege on map
                          wellPanel(
-                           titlePanel("Interaktive Karte mit Gemeinde-Suche und Bauteilsuche"),
+                           titlePanel("Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile"),
                            
                            fluidRow(
                              # check boxes for different visualisations on the map
@@ -199,9 +205,9 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                                        choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
                              ),
                              # Reset map position
-                             column(9, 
+                             column(3, 
                                     offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                    "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
+                                    "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
                                     actionButton(inputId = "reset", "Position zurücksetzen")
                              )
                            ),
@@ -267,24 +273,22 @@ server <- function(input, output, session) {
       tmp <- tmp[input$datatable_bauteile_rows_selected,]
     }
     
-    print("                FILTERED PARTS:                      ")
-    print(str(tmp))
+    # print("                FILTERED PARTS:                      ")
+    # print(str(tmp))
     
     tmp
   })
   
   # Only draw the polylines and overlays for the first n parts
   filtered_parts_head <- reactive({
-    if(dim(filtered_parts())[1] < 50){
-      print("hello")
+    if(nrow(filtered_parts()) < 50){
       out <- filtered_parts()
     } else {
       out <- NULL
     }
+    # print("         FILTERED PARTS FOR OVERLAYS:                      ")
+    # print(str(out))
     out
-    print("         FILTERED PARTS FOR OVERLAYS:                      ")
-    print(dim(filtered_parts()))
-    print(str(out))
   })
   
   # Calculate the vehicles from the filteres parts
@@ -407,7 +411,7 @@ server <- function(input, output, session) {
     datatable(
       gemeinden,
       options = list(
-        lengthMenu = list(c(3, 6, 20, 50), c('3', '6', '20', '50')), # layout breaks with three digit numbers in the list
+        lengthMenu = list(c(3, 6, 10, 20, 100, 1000), c('3', '6', '10', '20', '100', '1000')), # layout breaks with three digit numbers in the list
         pageLength = 3
       ),
       rownames = FALSE
@@ -483,9 +487,10 @@ server <- function(input, output, session) {
   # 2. 
   # Not finished: Filter supply_routes data linked to table selections
   # supply_routes <- filtered_parts()
-  
   data_dots <- reactive({
-    if(length(filtered_parts_head())){
+    df = data.frame()
+    
+    if(!is.null(filtered_parts_head())){
       supply_routes <- filtered_parts_head()
       
       df = data.frame(id = 1:nrow(supply_routes), # 1:length(beispiel)
@@ -560,8 +565,8 @@ server <- function(input, output, session) {
     
     # Layer 3: Lieferwege
     # Render the polyroutes supply route
-    if(length(filtered_parts_head) > 0){
-      for (i in 1:length(filtered_data_dots)){
+    if(!is.null(filtered_data_dots)){
+      for (i in 1:nrow(filtered_data_dots)){
         leaflet_map <- addPolylines(leaflet_map, data = filtered_data_dots[i,],
                                     lng= ~ c(lng_begin, lng_via, lng_end),
                                     lat= ~ c(lat_begin, lat_via, lat_end),
@@ -653,20 +658,23 @@ server <- function(input, output, session) {
                    ),
                    popupOptions = popupOptions(minWidth = 360)
         )
-      
       # Add marker for car location
       filtered_vehicles_tmp <- filtered_parts_head()
-      for(i in 1:length(filtered_vehicles)){
-        leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = Marker,
-                                  #display large amounts of markers as clusters
-                                  clusterOptions = markerClusterOptions(),
-                                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
-                                                 "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
-                                                 "ID_Sitz: ", ID_Komponente, "<br/>",
-                                                 "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
-                                                 "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
-                                                 "Zugelassen in: ", PLZ, " ", Gemeinde)
-        )
+
+      if(!is.null(filtered_parts_head)){
+        for(i in 1:nrow(filtered_vehicles_tmp)){
+          leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
+                                    #display large amounts of markers as clusters
+                                    clusterOptions = markerClusterOptions(),
+                                    popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                                   "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                                   "ID_Sitz: ", ID_Komponente, "<br/>",
+                                                   "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                                   "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                                   "Zugelassen in: ", PLZ, " ", Gemeinde)
+          )
+        }
+
       }
     }
     # return leaflet_map with all layers to render_leaflet
