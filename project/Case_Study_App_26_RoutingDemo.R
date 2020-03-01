@@ -665,7 +665,7 @@ server <- function(input, output, session) {
     #Layer control
     leaflet_map <- leaflet_map %>%
       addLayersControl(
-        overlayGroups = c("Heatmaps", "Defekte Fahrzeuge", "Lieferwege"),
+        overlayGroups = c("Heatmap", "Defekte Fahrzeuge", "Lieferwege"),
         options = layersControlOptions(collapsed = FALSE)
       )
     
