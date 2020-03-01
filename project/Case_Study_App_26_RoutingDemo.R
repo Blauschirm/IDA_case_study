@@ -84,7 +84,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
       @import url('//fonts.googleapis.com/css?family=Ubuntu|Cabin:400,700');
       
       h2 {
-        font-family: 'Ubuntu', cursive;
+        font-family: 'Ubuntu';
         font-weight: 500;
         line-height: 1.1;
         color: #428BCA;
@@ -427,7 +427,18 @@ server <- function(input, output, session) {
       gemeinden,
       options = list(
         lengthMenu = list(c(3, 6, 10, 20, 100, 1000), c('3', '6', '10', '20', '100', '1000')), # layout breaks with three digit numbers in the list
-        pageLength = 3
+        pageLength = 3,
+        
+        # Define German translaton of data table UI
+        language = list(
+          info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
+          paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zurück', `next` = 'Vor'),
+          infoEmpty = 'Keine Daten vorhanden',
+          loadingRecords = 'Lädt...',
+          processing = 'Ergebnisse werden geladen...',
+          lengthMenu = 'Zeige _MENU_ Ergebnisse',
+          infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
+          search = 'Suche:')
       ),
       rownames = FALSE
     )
@@ -462,7 +473,7 @@ server <- function(input, output, session) {
           processing = 'Ergebnisse werden geladen...',
           lengthMenu = 'Zeige _MENU_ Ergebnisse',
           infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
-          search = 'Suche nach betroffenen Bauteilen:')
+          search = 'Suche:')
       ),
       
       colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
@@ -736,7 +747,7 @@ server <- function(input, output, session) {
           processing = 'Ergebnisse werden geladen...',
           lengthMenu = 'Zeige _MENU_ Ergebnisse',
           infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
-          search = 'Suche nach betroffenen Bauteilen:')
+          search = 'Suche:')
       ),
       
       colnames = c('ID_Werk' = 'Werksnummer_Einzelteil',
