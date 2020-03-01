@@ -903,7 +903,7 @@ Als Output wird dargestellt:
 - welche Bauteile betroffen sind,
 - in welchem Werk die Bauteile hergestellt wurden.
 
-Bei fehlerhafter Eingabe der Fahrzeug-ID erscheint die Meldung "Fahrzeug-ID existiert nicht".
+Bei fehlerhafter Eingabe der Fahrzeug-ID erscheint die Meldung "Fahrzeug-ID existiert nicht". Die direkte Eingabe ohne Unterstützung von Shiny unterstützt hier den Datenschutz der anderen Autobesitzer.
 
 ### Graph für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge
 
@@ -951,7 +951,53 @@ Der Button "Position zurücksetzen" setzt die Ausrichtung und den Zoom der Karte
 
 ## Server-Funktionen
 
+Für die übersichtliche und Interaktive Darstellung und Auswertung wird Shiny verwendet. Shiny ist ein Paket für R, dass mit R vorbereitete Daten leicht präsentierbar macht. Mit einer Schnittstelle zu HTML über [Bootstraps](https://getbootstrap.com/docs/3.4/css/) Fluid-System bietet es eine gute Möglichkeit schnell eine responsive Website zu generieren. Diese lässt sich, mit Zuhilfename eines geeigneten Webservers nutzen der Zielgruppe die Daten ansprechend und einfach zu präsentieren.
+Gerade bei Datenauswertungen, wie der hier vorliegenden, die zur Aufklärung eines Problems verwendet werden sollen, spielt die Interaktivtät, Daten direkt in der Visuellen Ansicht filtern und vergleichen zu können eine große Rolle.
+Shiny bietet sogar seinen eigenen kleinen Webserver, falls kein anderer zur verfügung steht.
+
+Generell wird in Shiny die gesamte APP und in zwei Komponenten unterteilt:
+
+```{r Shiny Layout, eval = FALSE}
+# Nicht vollständig und ausführbar
+
+ui <- fluidPage(
+  dataTableOutput("tabelle_1")
+)
+
+server <- function(input, output, session) {
+  output$tabelle_1 <- renderDataTable(mtcars)
+  gefilterte_daten <- mtcars[input$tabelle_1_rows_selected]
+}
+
+shinyApp(ui, server)
+```
+
+Die UI wird als geschachtelte Kombination verschiedener bootstrap Elemente kombiniert. Interaktive Inhalte werden über die zwischen Server und Ui geteilten Listen *output* und *input* ausgetauscht. So lassen sich UI Elemente über *output* füllen und durch den User am Interface vorgenommene Auswahlen über *input* auslesen.
+
+Diese Funktionalität wird in der vorliegenden App für die Auswahl von Daten über die Tabellen und die Datumsauswahlt verwendet.
+
+Der in der Server Funktion platzierte Code wird im Falle von nicht lokal gehosteten webservern, auf dem Server statt bei dem Klienten im Browser ausgeführt. Daher bietet es sich beispielsweise auch an Datenintensive Aufgaben wie das durchsuchen des gesamten Datensatzes auf dem Server auszuführen, statt erst die gesamten Daten an den Klienten zu übertragen. Bei unserer App wurde darauf Wert gelegt, möglichst alle Kalkulationen auf Serverseite durchzuführen.
+
+
 ### Reaktive Funktionen
+
+Ein weiterer wichtiger Punkt für Interaktivität sind reaktive Funktionen. Diese reagieren auf vom User ausgelöste Events.
+Der untenstehende Codeblock zeigt unseren Code zum Zurücksetzen des Datumsfilters über einen Button mit der ID "reset_filters".
+
+```{r Reaktivität, eval = FALSE}
+  observeEvent(
+    input$reset_filters,
+    updateSliderInput(session, 'slider_zulassungsperiode',
+                      value = c(
+                        min(all_vehicles$Zulassungsdatum),
+                        max(all_vehicles$Zulassungsdatum)
+                      ))
+  )
+```
+
+### Visualisierung
+
+Die Visualisierung der Daten wird über ggplot2 und leaftlet realisiert.
 
 ### Leaflet
 
