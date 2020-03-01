@@ -1050,7 +1050,7 @@ Shiny bietet sogar seinen eigenen kleinen Webserver, falls kein anderer zur verf
 Generell wird in Shiny die gesamte APP und in zwei Komponenten unterteilt:
 
 ```{r Shiny Layout, eval = FALSE}
-# Nicht vollständig und ausführbar
+# Nicht vollständig oder ausführbar
 
 ui <- fluidPage(
   dataTableOutput("tabelle_1")
@@ -1077,6 +1077,8 @@ Ein weiterer wichtiger Punkt für Interaktivität sind reaktive Funktionen. Dies
 Der untenstehende Codeblock zeigt unseren Code zum Zurücksetzen des Datumsfilters über einen Button mit der ID "reset_filters".
 
 ```{r Reaktivität, eval = FALSE}
+# Nicht vollständig oder ausführbar
+
   observeEvent(
     input$reset_filters,
     updateSliderInput(session, 'slider_zulassungsperiode',
