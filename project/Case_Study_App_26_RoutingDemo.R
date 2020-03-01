@@ -475,7 +475,6 @@ server <- function(input, output, session) {
       group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
       summarise(
         'Einzelteile geliefert' = n(), 
-        
         'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
         Einzelteile = substring(str_c(glue('<br>{ID_Einzelteil}'),collapse = ""),5),
         Fehlerhaft = toString(factor(Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja')))
@@ -528,7 +527,7 @@ server <- function(input, output, session) {
       
       # Layer 2: fehlerhafte Fahrzeuge
       addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
-                 group = "Cluster Marker",
+                 group = "Defekte Fahrzeuge",
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
@@ -564,7 +563,7 @@ server <- function(input, output, session) {
       # Layer 4: Standorte
       
       # Add circles of facility
-      facitily_group_name = "Lieferwege"
+      facitily_group_name <- "Lieferwege"
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       leaflet_map <- leaflet_map %>%
         addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
@@ -620,10 +619,11 @@ server <- function(input, output, session) {
                    ),
                    popupOptions = popupOptions(minWidth = 320)
                    
-        )  %>%
-        
+        )
+        class(tier1_werke())
+        print(is.atomic((tier1_werke())))
         # Display tier2 facilities with custom icon
-        addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = 'Icon',# filtered_data_dots(), ~lat_via, ~lng_via,
+        leaflet_map <- addMarkers(leaflet_map, data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = 'Icon',# filtered_data_dots(), ~lat_via, ~lng_via,
                    group = facitily_group_name,
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
@@ -643,8 +643,7 @@ server <- function(input, output, session) {
         )
       # Add marker for car location
       filtered_vehicles_tmp <- filtered_parts_limited()
-
-      if(!is.null(filtered_parts_limited)){
+      if(!is.null(filtered_vehicles_tmp)){
         for(i in 1:nrow(filtered_vehicles_tmp)){
           leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
                                     group = "Lieferwege",
@@ -664,7 +663,7 @@ server <- function(input, output, session) {
     #Layer control
     leaflet_map <- leaflet_map %>%
       addLayersControl(
-        overlayGroups = c("Heatmaps", "Cluster Marker", "Lieferwege"),
+        overlayGroups = c("Heatmaps", "Defekte Fahrzeuge", "Lieferwege"),
         options = layersControlOptions(collapsed = FALSE)
       )
     
