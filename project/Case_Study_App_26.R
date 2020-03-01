@@ -51,25 +51,13 @@ if( !require(glue)){
 library(glue)
 
 # Load manufacturing info with geo data
-# Um mit der Console zu arbeiten muss man den Pfad ndern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
-#load("./project/Datensatz_tidy.RData")
 
-# Data preperation
-#
-# for debugging: reducing the amount of data to be loaded
-
-
-# Subset the data
+# Subset the data for debugging: reducing the amount of data to be loaded
 final_joined <- final_joined[c(sample(nrow(final_joined), 10000)),]
 
-radius_factor <- 40000 # 700
-
-# Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
+# Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge (used in both UI and Server)
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
-
-# save start and date of all zulassungen in a vector
-start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
 
 ui <- fluidPage(
 
@@ -232,26 +220,16 @@ ui <- fluidPage(
 # Shiny Server
 server <- function(input, output, session) {
   
-  # Render logos
-  
-  # QW_logo: Send a pre-rendered image, and don't delete the image after sending it
+  # Render QW_logo: Send a pre-rendered image, and don't delete the image after sending it
   output$Logo <- renderImage({
     # Return a list containining the filename
     list(src = './Zusaetzliche_Dateien/QW_logo.jpg')
   }, deleteFile = FALSE)
   
-  # maerker_icon: Send a pre-rendered image, and don't delete the image after sending it
-  output$Marker <- renderImage({
-    # Return a list containining the filename
-    list(src = './Zusaetzliche_Dateien/marker_icon.png')
-  }, deleteFile = FALSE)
+
   
-  # marker_icon: Send a pre-rendered image, and don't delete the image after sending it
-  output$Icon <- renderImage({
-    # Return a list containining the filename
-    list(src = './Zusaetzliche_Dateien/facility_icon.png')
-  }, deleteFile = FALSE)
-  
+  # save start and date of all zulassungen in a vector
+  start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
   
   # Filter parts with the three datatables
   filtered_parts <- reactive({
@@ -556,6 +534,8 @@ server <- function(input, output, session) {
       facitily_group_name = "Lieferwege"
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       leaflet_map <- leaflet_map %>%
+        
+        ###radius_factor <- 40000 # 700###
         # addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
         #            color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
         #            radius = tier1_werke()$'Einzelteile geliefert'*radius_factor,
@@ -737,18 +717,18 @@ server <- function(input, output, session) {
       output$result_text <- renderText({"Ihr Fahrzeug ist betroffen"})
 
       vehicle <- vehicle_parts[!duplicated(vehicle_parts$ID_Fahrzeug)]
-      vehicle_info_string <- glue("Ihr Fahrzeug ({vehicle$ID_Fahrzeug}), zugelassen am {vehicle$Zulassungsdatum} in {vehicle$PLZ} {vehicle$Gemeinde},
-wurde am {vehicle$Produktionsdatum_Fahrzeug} im Werk {vehicle$Werksnummer_Fahrzeug} gebaut.
+      vehicle_info_string <- glue("Ihr Fahrzeug (ID: {vehicle$ID_Fahrzeug}), zugelassen am {format(vehicle$Zulassungsdatum, '%d.%m.%Y')} in {vehicle$PLZ} {vehicle$Gemeinde},
+wurde am {format(vehicle$Produktionsdatum_Fahrzeug, '%d.%m.%Y')} im Werk {vehicle$Werksnummer_Fahrzeug} gebaut.
 Folgend finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den dafür verwendeten Einzelteilen
 zusammen mit den Werksnummern bei denen Ihre Servicewerkstatt Ersatzteile anfordern kann.")
       
       output$vehicle_info_text <- renderText(vehicle_info_string)
       
       # components
-      output$components_list <- renderTable(vehicle_parts[,c("ID_Komponente","Fehlerhaft_Komponente", "Werksnummer_Komponente")])
+      output$components_list <- renderTable(vehicle_parts[,c("ID_Komponente","Fehlerhaft_Komponente", "Werksnummer_Komponente")], digits = 0)
       
       # parts
-      output$parts_list <- renderTable(vehicle_parts[,c("ID_Einzelteil", "Fehlerhaft_Einzelteil", "Werksnummer_Einzelteil")])
+      output$parts_list <- renderTable(vehicle_parts[,c("ID_Einzelteil", "Fehlerhaft_Einzelteil", "Werksnummer_Einzelteil")], digits = 0)
       
     } else {
       output$result_text <- renderText({"ID exisitiert nicht."})
