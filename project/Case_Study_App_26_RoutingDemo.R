@@ -50,10 +50,6 @@ max <- 322075 # Number of observations
 n <-   3220
 radius_factor <- 20000 # 700
 
-beispiel <- floor(runif(6, min=1, max = n))
-#beispiel <- c(1:8)
-print("Beispiel Set: "); str(beispiel)
-
 #auswahl <- seq(x, n, by=x) # subset data
 
 #final_joined_error <- final_joined[c(n-1, n, n+1), ]
@@ -240,24 +236,22 @@ server <- function(input, output, session) {
       tmp <- tmp[input$datatable_bauteile_rows_selected,]
     }
     
-    print("                FILTERED PARTS:                      ")
-    print(str(tmp))
+    # print("                FILTERED PARTS:                      ")
+    # print(str(tmp))
     
     tmp
   })
   
   # Only draw the polylines and overlays for the first n parts
   filtered_parts_head <- reactive({
-    if(dim(filtered_parts())[1] < 50){
-      print("hello")
+    if(nrow(filtered_parts()) < 50){
       out <- filtered_parts()
     } else {
       out <- NULL
     }
+    # print("         FILTERED PARTS FOR OVERLAYS:                      ")
+    # print(str(out))
     out
-    print("         FILTERED PARTS FOR OVERLAYS:                      ")
-    print(dim(filtered_parts()))
-    print(str(out))
   })
   
   # Calculate the vehicles from the filteres parts
@@ -456,9 +450,10 @@ server <- function(input, output, session) {
   # 2. 
   # Not finished: Filter supply_routes data linked to table selections
   # supply_routes <- filtered_parts()
-  
   data_dots <- reactive({
-    if(length(filtered_parts_head())){
+    df = data.frame()
+    
+    if(!is.null(filtered_parts_head())){
       supply_routes <- filtered_parts_head()
       
       df = data.frame(id = 1:nrow(supply_routes), # 1:length(beispiel)
@@ -533,8 +528,8 @@ server <- function(input, output, session) {
     
     # Layer 3: Lieferwege
     # Render the polyroutes supply route
-    if(length(filtered_parts_head) > 0){
-      for (i in 1:length(filtered_data_dots)){
+    if(!is.null(filtered_data_dots)){
+      for (i in 1:nrow(filtered_data_dots)){
         leaflet_map <- addPolylines(leaflet_map, data = filtered_data_dots[i,],
                                     lng= ~ c(lng_begin, lng_via, lng_end),
                                     lat= ~ c(lat_begin, lat_via, lat_end),
@@ -626,20 +621,21 @@ server <- function(input, output, session) {
                    ),
                    popupOptions = popupOptions(minWidth = 360)
         )
-      
       # Add marker for car location
       filtered_vehicles_tmp <- filtered_parts_head()
-      for(i in 1:length(filtered_vehicles)){
-        leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
-                                  #display large amounts of markers as clusters
-                                  clusterOptions = markerClusterOptions(),
-                                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
-                                                 "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
-                                                 "ID_Sitz: ", ID_Komponente, "<br/>",
-                                                 "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
-                                                 "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
-                                                 "Zugelassen in: ", PLZ, " ", Gemeinde)
-        )
+      if(!is.null(filtered_parts_head)){
+        for(i in 1:nrow(filtered_vehicles_tmp)){
+          leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
+                                    #display large amounts of markers as clusters
+                                    clusterOptions = markerClusterOptions(),
+                                    popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
+                                                   "ID_Fahrzeug: ", ID_Fahrzeug, "<br/>",
+                                                   "ID_Sitz: ", ID_Komponente, "<br/>",
+                                                   "Baujahr: ", format(as.Date(Produktionsdatum_Fahrzeug),"%Y"), "<br/>",
+                                                   "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
+                                                   "Zugelassen in: ", PLZ, " ", Gemeinde)
+          )
+        }
       }
     }
     # return leaflet_map with all layers to render_leaflet
