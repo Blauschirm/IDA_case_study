@@ -136,7 +136,7 @@ qqcomp(list(p, p2, p3), legendtext = c("Weibull", "Lognormal", "Gamma"))
 ppcomp(list(p, p2, p3), legendtext = c("Weibull", "Lognormal", "Gamma"))
 ```
 
-Anhand der Graphen kann man ablesen, dass die Weibullverteilung nicht passt, denn die Punkte des QQ-Plots ergeben keine Gerade. Die anderen beiden Verteilungen repräsentieren die Daten aber ganz gut. Dies sieht man ganz gut am QQ-Plot, denn die Punkte beider Verteilungen ergeben eine Gerade. Beim Vergleich stellt sich heraus, dass die logarithmische Normalverteilung am besten passt, denn beim QQ-Plot sind die Punkte der logarithmischen Normalverteilung näher an der Geraden.
+Anhand der Graphen kann man ablesen, dass die Weibullverteilung nicht passt, denn die Punkte des QQ-Plots ergeben keine Gerade. Die anderen beiden Verteilungen repräsentieren die Daten aber ganz gut. Dies sieht man am QQ-Plot, denn die Punkte beider Verteilungen ergeben eine Gerade. Beim Vergleich stellt sich heraus, dass die logarithmische Normalverteilung am besten passt, denn beim QQ-Plot sind die Punkte der logarithmischen Normalverteilung näher an der Geraden.
 
 ### Teilaufgabe b
 
@@ -183,7 +183,7 @@ ggplot(Logistikverzug, aes(x = Verzug)) +
 
 **Warum ist es sinnvoll, die Ihnen bereitgestellten Daten in separaten Dateien abzulegen und nicht alles in einer riesigen Tabelle abzuspeichern?** 
 
-Damit dies zum einen Redundanz verhindert, denn wenn man alles in einer großen Tabelle abspeichert, dann werden viele Werte mehrfach in der Tabelle auftauchen. Und zum anderen ist die Laufzeit beim Suchen von Werten in einer großen, langen Tabelle sehr schlecht, denn angenommen man sucht einen Wert der als aller letztes in der Tabelle gespeichert ist, dann hätte man eine Laufzeit von n, wobei n die Anzahl der Einträge in der Tabelle sind. Dies könnte zu einem Problem bei großen n werden, denn dann hat man eine schlechte Laufzeit, nur um einen Wert zu extrahieren.
+Damit dies zum einen Redundanz verhindert, denn wenn man alles in einer großen Tabelle abspeichert, werden viele Werte mehrfach in der Tabelle auftauchen. Und zum anderen ist die Laufzeit beim Suchen von Werten in einer großen, langen Tabelle sehr schlecht, denn angenommen man sucht einen Wert der als aller letztes in der Tabelle gespeichert ist, dann hätte man eine Laufzeit von n, wobei n die Anzahl der Einträge in der Tabelle sind. Dies könnte zu einem Problem bei großen n werden, denn dann hat man eine schlechte Laufzeit, nur um einen Wert zu extrahieren.
 
 **Wie nennt sich das zugrunde liegende Datenbankkonzept?**
 
@@ -194,7 +194,8 @@ Dieses Konzept nennt sich Relationale Datenbank.
 
 **Wie viele der Komponenten K7 landeten in Fahrzeugen, die in Köln zugelassen wurden?**
 
-Da uns nur die Fahrzeuge interessieren, die in Köln zugelassen wurden, werden die Zulassungen nach der Gemeinde Köln gefiltert. Da nicht alle Komponenten in Fahrzeuge eingebaut wurden, müssen diese auch gefiltert werden. Dazu werden erstmal alle Bestandteile, die in Fahrzeugen verbaut wurden, in eine Tabelle zusammengefügt. Danach werden die Fahrzeuge gefiltert, indem nur Fahrzeuge, die eine K7 Komponente verbaut haben, bestehen bleiben. Zum Schluss müssen noch die Fahrzeugen und die Zulassungen in der Gemeinde Köln verknüpft werden. Dabei sollen nur die Fahrzeuge bleiben, die sowohl eine K7 Komponente verbaut haben als auch in Köln zugelassen wurden. Die Anzhal der Fahrzeuge, die die Bedingungen erfüllen, ergibt sich aus der Anzahl der Zeilen in der Tabelle.
+Da uns nur die Fahrzeuge interessieren, die in Köln zugelassen wurden, werden die Zulassungen nach der Gemeinde Köln gefiltert. Da nicht alle Komponenten in Fahrzeuge eingebaut wurden, müssen diese auch gefiltert werden. Dazu werden erstmal alle Bestandteile, die in Fahrzeugen verbaut wurden, in eine Tabelle zusammengefügt. Danach werden die Fahrzeuge gefiltert, indem nur Fahrzeuge, die eine K7 Komponente verbaut haben, bestehen bleiben. Zum Schluss müssen noch die Fahrzeuge und die Zulassungen in der Gemeinde Köln verknüpft werden. Dabei sollen nur die Fahrzeuge erhalten bleiben, die sowohl eine K7 Komponente verbaut haben als auch in Köln zugelassen wurden. Die Anzahl der Fahrzeuge, die die Bedingungen erfüllen, ergibt sich aus der Anzahl der Zeilen in der Tabelle.
+
 ```{r}
 #Zulassungen nach Koeln filtern
 zulassungen_koeln <- zulassungen_aller_Fahrzeuge %>%
@@ -232,7 +233,7 @@ Das Attribut von *Zulassung* hat den Datentypen *col_date*.
 
 **Sie wollen Ihre Applikation veröffentlichen. Warum ist es gerade dann sinnvoll die Datensätze auf der Datenbank eines Servers abzulegen? Warum können Sie die Datensätze nicht auf Ihrem persönlichen Computer ablegen?**
 
-Angenommen die Applikation würde auf diese Datensätze zugreifen müssen. Wenn diese Datensätze dann nur lokal auf meinem persönlichen Computer gespeichert sind, dann sind diese Datensätze nicht immer zugreifbar für die veröffentlichte Applikation, denn mein Computer ist nicht 24h lang aktiv.
+Angenommen die Applikation würde ständig auf die Datensätze zugreifen müssen: Wenn die Datensätze dann nur lokal auf einem persönlichen Computer gespeichert sind, sind sie für die veröffentlichte Applikation nicht jederzeit zugreifbar, da ein persönlicher Computer i.d.R. nicht dauerhaft aktiv ist bzw. kann ein dauerhafter Betrieb seltener gewährleistet werden.
 
 **Nennen Sie eine einfache Möglichkeit Ihre Applikation ihrem Kundenkreis zugänglich zu machen?**
 
@@ -243,7 +244,7 @@ Die Applikation kann auf einer Webseite oder in einem App-Store dem Kundenkreis 
 
 **Am 11.08.2010 hat es einen Unfall mit Fahrerflucht gegeben. Von dem Kennzeichen des Unfallwagens fehlt jede Spur. Die Polizei bittet Sie um Hilfe, da Sie für das Kraftfahrtbundesamt arbeiten und fragt, wo das Fahrzeug mit der Karosseriebauteilnummer „K4-112-1121-23“ zugelassen wurde.**
 
-Um das Bauteil zu finden, werden erstmal alle Bestandteile der Fahrzeuge in einer Tabelle zusammengefügt, damit diese nach dem gesuchten Bauteil gefiltert werden kann. Nun muss noch herausgefunden werden, wo das Fahrzeug mit dem gesuchten Bauteil zugelassen wurde. Da ein Bauteil nur in einem Fahrzeug verbaut sein kann, reicht es wenn man die Zulassungen aller Fahrzeuge mit dem zuvor gefilterten Daten zusammenfügt. Der Ort, an dem dieses Fahrzeug zugelassen wurden, steht in der Spalte *Gemeinden*. Jedoch sind die Characterstrings alle in Großbuchstaben geschrieben. Dies muss in die richtige Rechtschreibung konvertiert werden.
+Um das Bauteil zu finden, werden erst einmal alle Bestandteile der Fahrzeuge in einer Tabelle zusammengefügt, damit diese nach dem gesuchten Bauteil gefiltert werden kann. Nun muss noch herausgefunden werden, wo das Fahrzeug mit dem gesuchten Bauteil zugelassen wurde. Da ein Bauteil nur in einem Fahrzeug verbaut sein kann, reicht es, wenn man die Zulassungen aller Fahrzeuge mit den zuvor gefilterten Daten zusammenfügt. Der Ort, an dem dieses Fahrzeug zugelassen wurde, steht in der Spalte *Gemeinden*. Jedoch sind die Character-Strings der Gemeinde alle in Großbuchstaben geschrieben. Dies muss in die richtige Rechtschreibung konvertiert werden.
 
 ```{r}
 bestandteil_k4_112_1121_23 <- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %>%
