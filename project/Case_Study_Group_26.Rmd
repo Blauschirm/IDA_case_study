@@ -1,6 +1,7 @@
 ---
 title: "Case Study zur Analyse der Lieferkette defekter Fahrzeugkomponenten"
-author: 'Gruppe 26, Kurs: Introduction to Data Analytics with R, TU Berlin'
+subtitle: "Kurs: Introduction to Data Analytics with R, TU Berlin"
+author: "Gruppe 26 | Maximilian Botschen, Dejan Zinonjic, Jan Kursawe, Julia Scharz, Lin Cheung"
 date: "WS 19/20, 28.2.2020"
 output:
   html_document:
