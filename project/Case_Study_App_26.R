@@ -568,9 +568,9 @@ server <- function(input, output, session) {
                    radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor,
                    group = facitily_group_name) %>%
         
-        # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiÃŸ)
+        # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
         addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                   color = 'weiÃŸ', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+                   color = 'weiß', weight = 1, stroke=FALSE, fillOpacity = 0.3,
                    radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3,
                    group = facitily_group_name) %>%
         
