@@ -75,13 +75,10 @@ start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Z
 
 
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
-  
-  mainPanel(
-    width="100%",
-    # Link CSS file to main panel
-    #tags$link(rel = "stylesheet", type = "text/css", href = "bootstrap.min.css"),
-    
-    # header panel
+
+  mainPanel(width="100%", style='font-family: Arial;',
+   
+    # Header panel
     wellPanel(
       
       # working, when pre-rendered :)
@@ -106,9 +103,9 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
       )
     ),
     
-    # seperate user interface into two tabs for different user groups: owner and manufacturer
+    # Seperate user interface into two tabs for different user groups: owner and manufacturer
     tabsetPanel(type = "tabs",
-                # tab with ui for owners
+                # Tab with ui for owners
                 tabPanel("Für Fahrzeughalter",
                          wellPanel(
                            titlePanel("Ist mein Fahrzeug betroffen?"),
@@ -136,16 +133,16 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                            )
                          )
                 ),
-                # tab with ui for manufacturer
+                # Tab with ui for manufacturer
                 tabPanel("Für Fahrzeughersteller",
                          
-                         # bar plot for Zulassungsverlauf
+                         # Bar plot for Zulassungsverlauf
                          wellPanel(
                            titlePanel("Zeitlicher Zulassungsverlauf der betroffenen Fahrzeuge aufgeteilt nach OEM-Werken"),
                            plotOutput("plot_zulassungsverlauf"),
                          ),
                          
-                         # filter section for bar plot and heat map
+                         # Filter section for bar plot and heat map
                          wellPanel(  
                            
                            titlePanel("Suchfilter zum Anpassen des Balkendiagramms und der Karte"),
@@ -158,13 +155,13 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                              )
                            ),
                            
-                           # sliderinput filtering the time period for bar plot
+                           # Sliderinput filtering the time period for bar plot
                            sliderInput("slider_zulassungsperiode", "Wählen Sie den Zeitraum der Zulassungen aus",
                                        min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum),
                                        value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum))
                            ),
                            
-                           # fluidrow for gemeinden und bauteil datatables incl. search boxes
+                           # Fluidrow for gemeinden und bauteil datatables incl. search boxes
                            fluidRow(
                              column(4, 
                                     (h4("Betroffene Gemeinden")),
@@ -205,7 +202,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                                        choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
                              ),
                              # Reset map position
-                             column(3, 
+                             column(9, 
                                     offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                                     "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
                                     actionButton(inputId = "reset", "Position zurücksetzen")
