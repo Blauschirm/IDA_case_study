@@ -658,9 +658,16 @@ server <- function(input, output, session) {
                                                    "Zugelassen in: ", PLZ, " ", Gemeinde)
           )
         }
-
       }
     }
+    
+    #Layer control
+    leaflet_map <- leaflet_map %>%
+      addLayersControl(
+        overlayGroups = c("Heatmaps", "Cluster Marker", "Lieferwege"),
+        options = layersControlOptions(collapsed = FALSE)
+      )
+    
     # return leaflet_map with all layers to render_leaflet()
     leaflet_map
   })
