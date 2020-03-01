@@ -922,7 +922,7 @@ knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Fahrzeugsuche.pn
 
 ### Graph für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge
 
-Der Graph stellt dem Fahrzeughersteller den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in Form eines Barplots dar. Der Barplot repräsentiert die Häufigkeitsverteilung fehlerhafter Fahrzeuge über den ausgewählten Zulassungszeitraum. Die Höhe der Balken stellt dabei die absolute Anzahl betroffener Anzahl je Zulassungsmonat dar. Die einzelnen Balken sind nach den vier Fahrzeugherstellern (OEM) aufgegliedert, wobei jeder OEM durch eine feste Balkenfarbe repräsentiert wird.
+Der Graph stellt dem Fahrzeughersteller den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in Form eines Barplots dar. Der Barplot repräsentiert die Häufigkeitsverteilung fehlerhafter Fahrzeuge über den ausgewählten Zulassungszeitraum. Die Höhe der Balken stellt dabei die absolute Anzahl betroffener Anzahl je Zulassungsmonat dar. Die einzelnen Balken sind nach den vier Werken der Fahrzeughersteller (OEM) aufgegliedert, wobei jedes OEM-Werk durch eine feste Balkenfarbe repräsentiert wird.
 
 ```{r , echo=FALSE, fig.cap="Balkendiagramm Standardansicht", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/BarplotFULL.png")
@@ -1050,7 +1050,7 @@ Shiny bietet sogar seinen eigenen kleinen Webserver, falls kein anderer zur verf
 Generell wird in Shiny die gesamte APP und in zwei Komponenten unterteilt:
 
 ```{r Shiny Layout, eval = FALSE}
-# Nicht vollständig und ausführbar
+# Nicht vollständig oder ausführbar
 
 ui <- fluidPage(
   dataTableOutput("tabelle_1")
@@ -1077,6 +1077,8 @@ Ein weiterer wichtiger Punkt für Interaktivität sind reaktive Funktionen. Dies
 Der untenstehende Codeblock zeigt unseren Code zum Zurücksetzen des Datumsfilters über einen Button mit der ID "reset_filters".
 
 ```{r Reaktivität, eval = FALSE}
+# Nicht vollständig oder ausführbar
+
   observeEvent(
     input$reset_filters,
     updateSliderInput(session, 'slider_zulassungsperiode',
@@ -1111,11 +1113,17 @@ Aufgrund der Größe des Datensatzes entstanden Skalierungsprobleme mit der Verw
 
 # Ergebnis
 
-Die Zulassungshistorie zeigt, dass die Zahl der betroffenen Fahrzeuge zunimmt, insbesondere ab dem Zeitpunkt, an dem ein Wechsel der Produktionsstandorte erfolgte. 
- Die Fehler sind in den OEM-Werken 1 und 2 relativ konstant. Die Werke 3, 4 unterstützen die Produktion ab xx und übernehmen ab xx die gesamte Produktion vollständig. Es entstanden mehr mit als bei OEM 1 und 2 und es gab extremen Spitzen von fehlerhaften Fahrzeugen in einigen Monaten. 
+Die Zulassungshistorie zeigt, dass die Zahl der betroffenen Fahrzeuge zunimmt, insbesondere ab dem Zeitpunkt, an dem ein Wechsel der Produktionsstandorte erfolgte.
+
+Die Fehleranzahl beim Hersteller 2 der Werke OEM 21 und 22 sind relativ konstant. Ab Mai 2012 hat das Komponentenwerk auch an den Hersteller 1 mit den Werken OEM 11 und 12 defekte Sitze geliefert. Es entstanden ab diesem Zeitpunkt mehr als drei mal so viele Fehler als zu Zeiten der Zusammenarbeit mit OEM 2. Außerdem kam es in manchen Monaten zu extremen Spitzen von fehlerhaften Fahrzeugen.
+
 In der Heatmap-Darstellung ist sehr deutlich zu erkennen, dass es vor allem drei große Ballungsräume mit Schadensschwerpunkten gibt: das Ruhrgebiet, der Großraum München und das Land Sachsen.
-Die Darstellung der Lieferwege zeigt, dass es nur ein Komponentenwerk gibt, das relativ in der Mitte Deutschlands liegt. Dieses Werk bezieht Einzelteile aus 11 Werken für die Montage der Ledersitze.
+
+Die Darstellung der Lieferwege zeigt, dass es nur ein Komponentenwerk gibt, das relativ in der Mitte Deutschlands liegt. Dieses Werk bezieht Einzelteile aus 11 Werken für die Montage der Ledersitze, welche quer über Deutschland verteilt sind.
+
 Um die Logistik besser abzuwickeln, helfen die Lieferrouten, geeignete Transportwege zu identifizieren und Mehrteillieferungen und ggf. Lagerbestände zu organisieren.
+
+Durch das Altern der Ledersitze ist in den kommenden Jahren mit einem Sprung der Reklamationen zu rechnen. Darauf gilt es sich im Vorhinhein bestmöglich vorzubereiten um die Servicequalität und Liefertreue zu gewährleisten. 
 
 # Anhang
 
