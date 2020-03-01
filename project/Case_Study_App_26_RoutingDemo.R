@@ -606,13 +606,17 @@ server <- function(input, output, session) {
         print("circles")  
       
         #Display tier1 facilities with custom icon
-        leaflet_map <- addMarkers(leaflet_map, data = as.data.frame(tier1_werke()), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
-                   group = facitily_group_name,
+        tier1_werke_tmp <- as.data.frame(tier1_werke())
+        print("tier 1 werke tmp:")
+        print(str(tier1_werke_tmp))
+        print(tier1_werke_tmp$Längengrad_Einzelteil)
+        leaflet_map <- addMarkers(leaflet_map, data = tier1_werke_tmp, ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
+                   #group = facitily_group_name,
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
                    popup = ~paste(
                      "<center><h5>Einzelteil-Werk</h5></center>",
-                     popupTable(tier1_werke(), feature.id = FALSE, row.numbers = FALSE,
+                     popupTable(tier1_werke_tmp, feature.id = FALSE, row.numbers = FALSE,
                                 zcol = c(
                                   'Werksnummer_Einzelteil',
                                   'Einzelteile geliefert',
