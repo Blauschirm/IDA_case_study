@@ -937,12 +937,12 @@ Bei fehlerhafter Eingabe der Fahrzeug-ID erscheint die Meldung "Fahrzeug-ID exis
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Tab1ANSICHT.png")
 ```
 
-```{r , echo=FALSE, fig.cap="Die Fahrzeugsuche ist nicht enthalten: Fahrzeug nicht betroffen", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Die Fahrzeug-ID ist nicht enthalten: Fahrzeug ist nicht betroffen", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Tab1NICHTbetroffen.png")
 ```
 
 ```{r , echo=FALSE, fig.cap="Ausgabe, wenn Fahrzeug betroffen ist", out.width = '100%'}
-knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Tab1ANSICHT.png")
+knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Fahrzeugsuche.png")
 ```
 
 ### Graph für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge
@@ -1047,6 +1047,10 @@ knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/LieferPOPUP3.png
 Zur Überprüfung der Balkendiagramm- und Kartendarstellung wird der vollständige Datensatz mit allen relevanten Attributen in einer separaten Datentabelle abgebildet. 
 
 Zur Nutzerfreundlichkeit generiert diese Datentabelle ebenfalls die Lieferwege in der Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Bauteilsuche.
+
+```{r , echo=FALSE, fig.cap="Vollständiger Datensatz Standardansicht", out.width = '100%'}
+knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Datenbank.png")
+```
 
 ```{r , echo=FALSE, fig.cap="Auswahl eines Fahrzeugs aus vollständigem Datensatz und Lieferweg", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/AuswahlDATAFULL.png")
