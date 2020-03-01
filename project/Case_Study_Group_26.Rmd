@@ -966,7 +966,9 @@ Aufgrund der Größe des Datensatzes entstanden Skalierungsprobleme mit der Verw
 
 - Lieferwege
 
-
+```{r pressure, echo=FALSE, fig.cap="A caption", out.width = '100%'}
+knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/bargraph.png")
+```
 
 ```{r plot data}
 # a) Plot data 'zeitlichen Zulassungsverlauf'
