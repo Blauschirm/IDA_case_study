@@ -869,15 +869,27 @@ Die Visualisierung der Datenauswertung in der Shiny-App soll folgende Bestandtei
 - ein Suchfeld, das Fahrzeughaltern ermöglicht, anhand der Fahrzeug-ID zu überprüfen, ob ihr Auto betroffen ist
 - den vollständigen zugrundeliegenden Datensatz als Tabelle mit den notwendigen Attributen
 
-Zusätzlich soll die Auswahl und Ausgabe eines betroffenen Fahrzeugs für den Fahrzeughalter von den restlichen Informationen, die dem Fahrzeughersteller zur Verfügung stehen, aus Datenschutzgründen isoliert werden.
+Zusätzl ich soll die Auswahl und Ausgabe eines betroffenen Fahrzeugs für den Fahrzeughalter von den restlichen Informationen, die dem Fahrzeughersteller zur Verfügung stehen, aus Datenschutzgründen isoliert werden.
 
 ## User Interface
 
+Grundsätzlich gliedert sich das User-Interface in zwei Bestandteile, welche über Tabs voneinander getrennt sind:
+- ein Interface für Fahrzeughalter
+- ein Interface für Fahrzeughersteller
+
+Die Tabs dienen der anwenderspezifischen Isolierung der Datenauswertung.
+
+Das UI für Fahrzeughalter beinhaltet lediglich die Suche nach einzelnen, von defekten Ledersitzes des Herstellers "111" betroffenen Fahrzeugen. 
+
+Das UI für Fahrzeughalter ist umfangreicher und stellt sämtliche Daten zu allen Fahrzeugen, die von defekten Ledersitzen des Herstellers "111" betroffen sind, und deren Analyse dar. Es beinhaltet die folgenden Teilbereiche:
+- den Graphen
+- Auswahlfilter
+
+
 Layout und Aufbau (Header, Tabs, Plot, Filter, Kartendarstellung, Daten)
 Header, Logo und Schriftart
-Tabs zur anwenderspezifischen Isolierung der Datenauswertung
 
-### Auswahl betroffener Fahrzeuge für Fahrzeughalter
+### Suche nach betroffenen Fahrzeugen für Fahrzeughalter
 
 Eingabe der Fahrzeug ID über Suchfeld
 Output-Darstellung:
@@ -945,7 +957,7 @@ Lieferwege als Luftlinie abhängig von der Auswahl der Fahrzeuge bzw. Bauteile a
 - Gebäude-Icons stellen Einzeilteil- und Komponentenwerk dar, roter Geo-Icon stellt den Zielort, d.h. den Zulassungsort des Fahrzeugs dar
 - Kreise um Werke repräsentieren durch ihre jeweilige Größe die Anzahl der fehlerhaften Einzelteile und Komponenten, die aus dem jeweiligen Werk geliefert wurden
 - Popups beim Klicken auf den Werksstandort geben wesentliche Statistiken zu fehlerhaften Bauteilen aus
-- Mehrfachauswahl möglich, farbliche Unterscheidung zwischen den Lieferkette (eine Farbe pro Kette), beim Überfahren des Lieferweges mit der Maus wird die Linie gehighlightet
+- Mehrfachauswahl möglich, farbliche Unterscheidung zwischen den Lieferkette (eine Farbe pro Kette), beim Überfahren des Lieferweges mit der Maus wird die Linie farblich hervorgehoben und die Fahrzeug-ID angezeigt.
 
 Die Heatmap, Cluster-Marker sowie Lieferwege sind einzeln oder mehrfach aus- oder abwählbar.
 
