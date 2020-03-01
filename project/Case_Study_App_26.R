@@ -43,7 +43,7 @@ if( !require(glue)){
 library(glue)
 
 # Load manufacturing info with geo data
-# Um mit der Console zu arbeiten muss man den Pfad ändern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
+# Um mit der Console zu arbeiten muss man den Pfad ?ndern: load("./project/Datensatz_tidy.RData") oder getwd() versuchen
 load("Datensatz_tidy.RData")
 #load("./project/Datensatz_tidy.RData")
 
@@ -62,7 +62,7 @@ radius_factor <- 40000 # 700
 #final_joined_error <- final_joined[c(n-1, n, n+1), ]
 
 # Subset the data
-final_joined <- final_joined[c(sample(nrow(final_joined), 10000), beispiel),]
+final_joined <- final_joined[c(sample(nrow(final_joined), 10000)),]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
@@ -125,7 +125,7 @@ ui <- fluidPage(
     # Seperate user interface into two tabs for different user groups: owner and manufacturer
     tabsetPanel(type = "tabs",
                 # Tab with ui for owners
-                tabPanel("Für Fahrzeughalter",
+                tabPanel("FÃ¼r Fahrzeughalter",
                          wellPanel(
                            titlePanel("Ist mein Fahrzeug betroffen?"),
                            fluidRow(
@@ -153,7 +153,7 @@ ui <- fluidPage(
                          )
                 ),
                 # Tab with ui for manufacturer
-                tabPanel("Für Fahrzeughersteller",
+                tabPanel("FÃ¼r Fahrzeughersteller",
                          
                          # Bar plot for Zulassungsverlauf
                          wellPanel(
@@ -169,13 +169,13 @@ ui <- fluidPage(
                            fluidRow(
                              column(12, 
                                     offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                    "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen",
-                                    actionButton("reset_filters", "Alle Filter zurücksetzen"),
+                                    "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden ausw?hlen",
+                                    actionButton("reset_filters", "Alle Filter zur?cksetzen"),
                              )
                            ),
                            
                            # Sliderinput filtering the time period for bar plot
-                           sliderInput("slider_zulassungsperiode", "Wählen Sie den Zeitraum der Zulassungen aus",
+                           sliderInput("slider_zulassungsperiode", "W?hlen Sie den Zeitraum der Zulassungen aus",
                                        min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum),
                                        value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum))
                            ),
@@ -199,19 +199,19 @@ ui <- fluidPage(
                          
                          # heat map with check boxes and cluster markers and Lieferwege on map
                          wellPanel(
-                           titlePanel("Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile"),
+                           titlePanel("Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen f?r Ersatzteile"),
                            
                            fluidRow(
                              style = "margin-bottom: 16px;",
                              # Reset map position
                              column(6,
                                     align = 'right',
-                                    "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
+                                    "F?r mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
                                     style = "text-align: left"
                                     ),
                              column(6, 
                                     offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                    actionButton(inputId = "reset", "Position zurücksetzen")
+                                    actionButton(inputId = "reset", "Position zur?cksetzen")
                              )
                            ),
                            
@@ -327,7 +327,7 @@ server <- function(input, output, session) {
     zulassungen_out
   })
   
-  # Plot für zeitlichen Zulassungsverlauf vorbereiten
+  # Plot f?r zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
     
     # reactive function to get smaller breaks on x-axis when date range on sliderInput gets smaller
@@ -381,12 +381,12 @@ server <- function(input, output, session) {
         # Define German translaton of data table UI
         language = list(
           info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
-          paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zurück', `next` = 'Vor'),
+          paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zur?ck', `next` = 'Vor'),
           infoEmpty = 'Keine Daten vorhanden',
-          loadingRecords = 'Lädt...',
+          loadingRecords = 'L?dt...',
           processing = 'Ergebnisse werden geladen...',
           lengthMenu = 'Zeige _MENU_ Ergebnisse',
-          infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
+          infoFiltered =  '| Gefiltert von _MAX_ Eintr?gen',
           search = 'Suche:')
       ),
       rownames = FALSE
@@ -409,17 +409,17 @@ server <- function(input, output, session) {
         lengthMenu = list(c(3, 6, 10, 20, 100, 1000), c('3', '6', '10', '20', '100', '1000')),
         
         # Search wit regex Ja/Nein
-        search = list(regex = TRUE, caseInsensitive = FALSE, search = ""), # 'ä=ae, ö=oe, ü=ue'
+        search = list(regex = TRUE, caseInsensitive = FALSE, search = ""), # '?=ae, ?=oe, ?=ue'
         
         # Define German translaton of data table UI
         language = list(
           info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
-          paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zurück', `next` = 'Vor'),
+          paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zur?ck', `next` = 'Vor'),
           infoEmpty = 'Keine Daten vorhanden',
-          loadingRecords = 'Lädt...',
+          loadingRecords = 'L?dt...',
           processing = 'Ergebnisse werden geladen...',
           lengthMenu = 'Zeige _MENU_ Ergebnisse',
-          infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
+          infoFiltered =  '| Gefiltert von _MAX_ Eintr?gen',
           search = 'Suche:')
       ),
       
@@ -440,7 +440,7 @@ server <- function(input, output, session) {
   treshold_fehleranzahl <- 1 # recommended values: 1, 10, 20, 40, ...
   datapoints_heat <- reactive({
     subset(final_joined, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2]) %>%
-      group_by(Längengrad, Breitengrad) %>%
+      group_by(L?ngengrad, Breitengrad) %>%
       summarise(fehleranzahl = n())  %>%
       ungroup()  %>%
       #select(-Gemeinde)  %>%
@@ -459,9 +459,9 @@ server <- function(input, output, session) {
                       lat_begin = supply_routes$Breitengrad_Einzelteil,
                       lat_via = supply_routes$Breitengrad_Komponente,
                       lat_end = supply_routes$Breitengrad,
-                      lng_begin = supply_routes$Längengrad_Einzelteil,
-                      lng_via = supply_routes$Längengrad_Komponente,
-                      lng_end = supply_routes$Längengrad,
+                      lng_begin = supply_routes$L?ngengrad_Einzelteil,
+                      lng_via = supply_routes$L?ngengrad_Komponente,
+                      lng_end = supply_routes$L?ngengrad,
                       ID_Fahrzeug = supply_routes$ID_Fahrzeug)
       #df
     }
@@ -470,8 +470,8 @@ server <- function(input, output, session) {
   # Statistics for tier1 facility
   tier1_werke <- reactive({
     filtered_parts_limited() %>% 
-      select(ID_Fahrzeug, ID_Einzelteil, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
-      group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
+      select(ID_Fahrzeug, ID_Einzelteil, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, L?ngengrad_Einzelteil) %>%
+      group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, L?ngengrad_Einzelteil) %>%
       summarise(
         'Einzelteile geliefert' = n(), 
         
@@ -486,8 +486,8 @@ server <- function(input, output, session) {
   # Statistics for tier2 facility
   tier2_werke <- reactive({
     filtered_parts_limited() %>% 
-      select(ID_Fahrzeug, ID_Fahrzeug, ID_Komponente, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
-      group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
+      select(ID_Fahrzeug, ID_Fahrzeug, ID_Komponente, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, L?ngengrad_Komponente) %>%
+      group_by(Werksnummer_Komponente, Breitengrad_Komponente, L?ngengrad_Komponente) %>%
       summarise(
         'Einzelteile erhalten' = n(),
         'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
@@ -508,16 +508,16 @@ server <- function(input, output, session) {
     leaflet_map <- leaflet(final_joined) %>%
       setView(lng = 10.46, lat = 51.15, zoom = 6.25) %>% # centered to Germany map
       # do not use:
-      #fitBounds(min(final_joined$Längengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$Längengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>% # buggy after scaling
+      #fitBounds(min(final_joined$L?ngengrad, na.rm = TRUE),min(final_joined$Breitengrad, na.rm = TRUE),max(final_joined$L?ngengrad, na.rm = TRUE),max(final_joined$Breitengrad, na.rm = TRUE)) %>% # buggy after scaling
       addTiles() %>%
       
       # Layer 1: Heatmap
-      addHeatmap(data = datapoints_heat(), lng = ~Längengrad, lat = ~Breitengrad,
+      addHeatmap(data = datapoints_heat(), lng = ~L?ngengrad, lat = ~Breitengrad,
                  intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14, group = "Heatmap") %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
       
       
       # Layer 2: fehlerhafte Fahrzeuge
-      addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
+      addMarkers(data = filtered_vehicles(), ~L?ngengrad, ~Breitengrad,
                  group = "Cluster Marker",
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
@@ -557,43 +557,43 @@ server <- function(input, output, session) {
       facitily_group_name = "Lieferwege"
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       leaflet_map <- leaflet_map %>%
-        addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
+        addCircles(data = tier1_werke(), ~L?ngengrad_Einzelteil, ~Breitengrad_Einzelteil,
                    color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
                    radius = tier1_werke()$'Einzelteile geliefert'*radius_factor,
                    group = facitily_group_name) %>%
         
         # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
-        addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
+        addCircles(data = tier1_werke(), ~L?ngengrad_Einzelteil, ~Breitengrad_Einzelteil,
                    color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
                    radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor,
                    group = facitily_group_name) %>%
         
-        # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
-        addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                   color = 'weiß', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+        # Komponenten-Werk Number of production errors: Einzelteile hergestellt (wei?)
+        addCircles(data = tier2_werke(), ~L?ngengrad_Komponente, ~Breitengrad_Komponente,
+                   color = 'wei?', weight = 1, stroke=FALSE, fillOpacity = 0.3,
                    radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3,
                    group = facitily_group_name) %>%
         
         # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
-        addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+        addCircles(data = tier2_werke(), ~L?ngengrad_Komponente, ~Breitengrad_Komponente,
                    color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
                    radius = tier2_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor/3,
                    group = facitily_group_name) %>%
         
         # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
-        addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+        addCircles(data = tier2_werke(), ~L?ngengrad_Komponente, ~Breitengrad_Komponente,
                    stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
                    radius = tier2_werke()$'Defekte Sitze hergestellt'*radius_factor/3,
                    group = facitily_group_name) %>%
         
         # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
-        addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+        addCircles(data = tier2_werke(), ~L?ngengrad_Komponente, ~Breitengrad_Komponente,
                    stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
                    radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3,
                    group = facitily_group_name) %>%
         
         #Display tier1 facilities with custom icon
-        addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, group = facitily_group_name,
+        addMarkers(data = tier1_werke(), ~L?ngengrad_Einzelteil, ~Breitengrad_Einzelteil, group = facitily_group_name,
                    icon = ~ icons(
                      iconUrl = './Zusaetzliche_Dateien/facility_icon.png',
                      iconWidth = 40, iconHeight = 25,
@@ -616,7 +616,7 @@ server <- function(input, output, session) {
         )  %>%
         
         # Display tier2 facilities with custom icon
-        addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, group = facitily_group_name,
+        addMarkers(data = tier2_werke(), ~L?ngengrad_Komponente, ~Breitengrad_Komponente, group = facitily_group_name,
                    icon = ~ icons(
                      iconUrl = './Zusaetzliche_Dateien/facility_icon.png',
                      iconWidth = 40, iconHeight = 25,
@@ -641,7 +641,7 @@ server <- function(input, output, session) {
 
       if(!is.null(filtered_parts_limited)){
         for(i in 1:nrow(filtered_vehicles_tmp)){
-          leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, group = "Lieferwege",
+          leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~L?ngengrad, ~Breitengrad, group = "Lieferwege",
                                     icon = ~ icons(
                                       iconUrl = './Zusaetzliche_Dateien/marker_icon.png',
                                       iconWidth = 35, iconHeight = 40,
@@ -686,17 +686,17 @@ server <- function(input, output, session) {
         lengthMenu = list(c(3, 10, 20, 100, 1000, 10000), c('3', '10', '20', '100', '1000', '10000')),
         
         # Search wit regex Ja/Nein
-        search = list(regex = TRUE, caseInsensitive = FALSE, search = ""), # 'ä=ae, ö=oe, ü=ue'
+        search = list(regex = TRUE, caseInsensitive = FALSE, search = ""), # '?=ae, ?=oe, ?=ue'
         
         # Define German translaton of data table UI
         language = list(
           info = 'Zeige  _START_ bis _END_ von insgesamt _TOTAL_ Ergebnissen',
-          paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zurück', `next` = 'Vor'),
+          paginate = list(first = 'Erste', last = 'Letzte', previous = 'Zur?ck', `next` = 'Vor'),
           infoEmpty = 'Keine Daten vorhanden',
-          loadingRecords = 'Lädt...',
+          loadingRecords = 'L?dt...',
           processing = 'Ergebnisse werden geladen...',
           lengthMenu = 'Zeige _MENU_ Ergebnisse',
-          infoFiltered =  '| Gefiltert von _MAX_ Einträgen',
+          infoFiltered =  '| Gefiltert von _MAX_ Eintr?gen',
           search = 'Suche:')
       ),
       
@@ -728,7 +728,7 @@ server <- function(input, output, session) {
   )
   
   # Overview for car owner with infos about their vehicle and the defective parts
-  output$result_text <- renderText({"Geben Sie ihre Fahrzeug ID in die Suche ein um zu überprüfen ob ihr Fahrzeug betroffen ist."})
+  output$result_text <- renderText({"Geben Sie ihre Fahrzeug ID in die Suche ein um zu ?berpr?fen ob ihr Fahrzeug betroffen ist."})
   
   observeEvent(input$vehicle_filter_submit, {
     
@@ -739,7 +739,7 @@ server <- function(input, output, session) {
       vehicle <- vehicle_parts[!duplicated(vehicle_parts$ID_Fahrzeug)]
       vehicle_info_string <- glue("Ihr Fahrzeug ({vehicle$ID_Fahrzeug}), zugelassen am {vehicle$Zulassungsdatum} in {vehicle$PLZ} {vehicle$Gemeinde},
 wurde am {vehicle$Produktionsdatum_Fahrzeug} im Werk {vehicle$Werksnummer_Fahrzeug} gebaut.
-Folgend finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den dafür verwendeten Einzelteilen
+Folgend finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den daf?r verwendeten Einzelteilen
 zusammen mit den Werksnummern bei denen Ihre Servicewerkstatt Ersatzteile anfordern kann.")
       
       output$vehicle_info_text <- renderText(vehicle_info_string)

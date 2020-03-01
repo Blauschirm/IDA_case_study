@@ -415,8 +415,23 @@ summary {
 <li><a href="#finaler-datensatz">Finaler Datensatz</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#aufgabe-3">Aufgabe 3</a></li>
-<li><a href="#aufgabe-4">Aufgabe 4</a></li>
+<li><a href="#shiny-app">Shiny-App</a><ul>
+<li><a href="#anforderungen-an-die-fallbezogene-shiny-app">Anforderungen an die fallbezogene Shiny-App</a></li>
+<li><a href="#user-interface">User Interface</a><ul>
+<li><a href="#suche-nach-betroffenen-fahrzeugen-für-fahrzeughalter">Suche nach betroffenen Fahrzeugen für Fahrzeughalter</a></li>
+<li><a href="#barplot">Barplot</a></li>
+<li><a href="#auswahl-der-zulassungsdaten">Auswahl der Zulassungsdaten</a></li>
+<li><a href="#suchfilter-für-gemeinden-bauteile-und-den-vollständigen-datensatz">Suchfilter für Gemeinden, Bauteile und den vollständigen Datensatz</a></li>
+<li><a href="#reset-buttons">Reset-Buttons</a></li>
+<li><a href="#kartendarstellung">Kartendarstellung</a></li>
+</ul></li>
+<li><a href="#server-funktionen">Server-Funktionen</a><ul>
+<li><a href="#reaktive-funktionen">Reaktive Funktionen</a></li>
+<li><a href="#leaflet">Leaflet</a></li>
+<li><a href="#section"></a></li>
+</ul></li>
+<li><a href="#aufgetretene-schwierigkeiten">Aufgetretene Schwierigkeiten</a></li>
+</ul></li>
 <li><a href="#aufgabe-5">Aufgabe 5</a></li>
 <li><a href="#aufgabe-6">Aufgabe 6</a></li>
 </ul>
@@ -607,9 +622,7 @@ Bestandteile_Komponente_OEM2_Typ22.csv
 <h3>Vorgehensweise zur Importierung der Datensätze</h3>
 <p>Die zur Verfügung gestellten Dateien wurden mit dem readr-Package importiert. Die Daten lagen in unterschiedlichen Datei-Formaten (.txt und .csv) und unterschiedlichen Strukturen (verschiedene Delimiter und Spaltenanzahlen) vor.</p>
 <p>Die Schwierigkeit beim Import der Einzelteile “T11”, “T16” und “T20” sowie der Komponenten “K2LE1” und “K2LE2” lag zunächst im .txt-Format und in unregelmäßigen Delimitern zwischen den Spalten und Zeilen. Deshalb mussten die genannten Daten zunächst mit der Funktion read_file() als string eingelesen und in einem Objekt zwischengespeichert werden, um Performance-Probleme und Parsing-Fehler zu vermeiden. Danach wurden die Delimiter zwischen den Spalten mit für .csv-Dateien üblichen Delimitern ersetzt und dann der Delimiter zwischen den Zeilen mit einem Line-Break ertsetzt. Außerdem hat in den betroffenen Datensätzen jeweils die erste Variable gefehlt, während die Spalte jedoch mit Werten befüllt war, was beim Einlesen zu Parsing-Fehlern führen würde. Deshalb wurde mit paste() eine entsprechende Variable mit Namen “X1_1” oder “X2” an den Beginn des Datensatzes als Platzhalter eingefügt. Hinterher konnten die fertig vorbereiteten Datensätze mit read_delim() bzw. read_csv2() importiert werden. Die Platzhalterobjekte wurden im Anschluss gelöscht, um Speicherressourcen freizugeben.</p>
-<pre class="r"><code>## Import relevant Einzelteil data sets
-
-# read files with exotic delimiters in txt-files (T11, T16, T20) as string (for better performance)
+<pre class="r"><code># read relevant Einzelteil files with exotic delimiters in txt-files (T11, T16, T20) as string (for better performance)
 einzelteil_t11_string &lt;- read_file(&quot;Data/Einzelteil/Einzelteil_T11.txt&quot;)
 einzelteil_t16_string &lt;- read_file(&quot;Data/Einzelteil/Einzelteil_T16.txt&quot;)
 einzelteil_t20_string &lt;- read_file(&quot;Data/Einzelteil/Einzelteil_T20.txt&quot;)
@@ -641,11 +654,7 @@ einzelteil_t16_string &lt;- &quot;&quot;
 einzelteil_t20_string &lt;- &quot;&quot;
 gc()
 
-## Import revelant Komponente datasets
-
-# read Komponenete_K2LE1
-
-# read file and replace delim with single character delim
+# read file for Komponenete_K2LE1 and replace delim with single character delim
 tx  &lt;- read_file(&quot;Data/Komponente/Komponente_K2LE1.txt&quot;)
 tx2 &lt;- gsub(pattern = &quot;II&quot;, replace = &quot;;&quot;, x = tx, fixed = TRUE)
 # add column name 
@@ -656,12 +665,10 @@ out &lt;- gsub(pattern = &quot;&quot;, replace = &quot;\n&quot;, x = tx3, fixed
 myFile &lt;- tempfile()
 writeLines(out, con=myFile)
 
-# read Komponente
+# read final komponente_k2le1
 komponente_k2le1 &lt;- read_csv2(myFile, col_types = c(&quot;nncDnnnDncDnnnDn&quot;))
 
-# read Komponenete_K2LE2
-
-# read file because first column name is missing
+# read file for Komponenete_K2LE2 because first column name is missing
 temp1 &lt;- read_file(&quot;Data/Komponente/Komponente_K2LE2.txt&quot;)
 # add first column name
 temp2 &lt;- paste(&quot;X2&quot;, temp1, sep = &quot;\\&quot;)
@@ -669,7 +676,7 @@ temp2 &lt;- paste(&quot;X2&quot;, temp1, sep = &quot;\\&quot;)
 myFile2 &lt;- tempfile()
 writeLines(temp2, con=myFile2)
 
-# read file
+# read final komponente_k2le1
 komponente_k2le2 &lt;- read_delim(myFile2, delim = &quot;\\&quot;) 
 
 # remove unused objects and free memory
@@ -678,20 +685,14 @@ temp2 &lt;- &quot;&quot;
 myFile2 &lt;- &quot;&quot;
 gc()</code></pre>
 <p>Alle anderen Datensätze konnten ohne weitere Eingriffe entsprechend ihres Delimiters mit read_csv() (Delimiter “;”) oder read_csv2() (Delimiter “,”) importiert werden. Bei den Datensätzen “T15”, T16“,”K2LE1&quot; und den Geodaten mussten die Klassen für die einzelnen Variablen bzw. Spalten per col_types() vorgegeben werden, da es sonst aufgrund einer hohen Zahl fehlender Werte in diesen Datensätzen zu Parsing-Fehlern kam.</p>
-<pre class="r"><code>## Import Einzelteil data sets
-
-# read_csv2 (delim = &quot;;&quot;) and read_csv (delim = &quot;,&quot;), coerce col_type for t15 because data is split on several columns which causes parsing errors
+<pre class="r"><code># read_csv2 (delim = &quot;;&quot;) and read_csv (delim = &quot;,&quot;) for remaining relevant Einzelteil datasets, coerce col_type for t15 because data is split on several columns which causes parsing errors
 t19 &lt;- read_csv(&quot;Data/Einzelteil/Einzelteil_T19.csv&quot;)
 t14 &lt;- read_csv2(&quot;Data/Einzelteil/Einzelteil_T14.csv&quot;)
 t15 &lt;- read_csv2(&quot;Data/Einzelteil/Einzelteil_T15.csv&quot;, col_types = c(&quot;nncDnnnDncDnnnDn&quot;))
 
-## Import Bestandteile_Komponente sets as relation tables between Komponente and Einzelteil sets
-
 # read Bestandteile_Komponenten for relevant Kompenenten (K2LE1, K2LE2)
 bestandteile_k2le1 &lt;- read_csv2(&quot;Data/Komponente/Bestandteile_Komponente_K2LE1.csv&quot;)
 bestandteile_k2le2 &lt;- read_csv2(&quot;Data/Komponente/Bestandteile_Komponente_K2LE2.csv&quot;)
-
-## Import Fahrzeuge und deren Bestandteile
 
 # read Fahrzeuge, use right function for different delims (, and ;) 
 fahrzeug_oem1_typ11 &lt;- read_csv(&quot;Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv&quot;)
@@ -705,14 +706,9 @@ bestandteile_oem1_typ12 &lt;- read_csv2(&quot;Data/Fahrzeug/Bestandteile_Fahrzeu
 bestandteile_oem2_typ21 &lt;- read_csv2(&quot;Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv&quot;)
 bestandteile_oem2_typ22 &lt;- read_csv2(&quot;Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv&quot;)
 
-## Import Zulassungen and Geodaten
-
 # read zulassungen
 zulassungen &lt;- read_csv2(&quot;Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv&quot;)
 
-## Import Geodaten
-
-# 
 locale = locale(encoding = &#39;ISO-8859-1&#39;)
 
 # Import with readr
@@ -740,9 +736,7 @@ gemeinden &lt;- read_csv2(&quot;Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22
 <h3>Einzeilteile</h3>
 <p>Alle Einzelteil-Datensätze hatten jeweils zwei überflüssige Spalten mit den Variablen X1 und X1_1, deren Werte lediglich eine fortlaufende Nummerierung der Spalten darstellten. Diese Spalten wurden entsprechend entfernt. Die Spaltennamen für die IDs wurden als “Einzelteil_ID” für den späteren Join vereinheitlicht.</p>
 <p>Die Einzelteil-Datensätze lagen außerdem in zwei unterschiedlichen Strukturen vor. In den Tabellen “T11”, T14“,”T19&quot; und “T20” waren die Werte für das jeweilige Produktionsdatum über zwei Spalten verteilt: In der Spalte “Produktionsdatum_01011970_origin” als Anzahl von Tagen im integer-Format basierend auf dem Wert “01-01-1970” in der “origin”-Spalte im Date-Format. Die integer-Werte mussten deshalb entsprechend mit der mutate() Funktion auf das origin-Datum addiert, in einer neuen Variable “Produktionsdatum” gespeichert und die übrigen Spalten gelöscht werden.</p>
-<pre class="r"><code>## Clean and tidy Einzelteile datasets
-
-# Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
+<pre class="r"><code>## Produktionsdatum_Origin_01011970 (in T11, T14, T19, T20) is an integer representing days since origin date
 # Transform origin column into Class Date, use mutate to add Produktionsdatum_Origin_01011970 values to origin values
 t11 &lt;- t11 %&gt;% 
   mutate(Produktionsdatum = as.Date(origin, format = &quot;%d-%m-%Y&quot;) + Produktionsdatum_Origin_01011970) %&gt;% 
@@ -809,9 +803,7 @@ gc()</code></pre>
 <div id="relationstabelle-bestandteile_komponenten" class="section level3">
 <h3>Relationstabelle: Bestandteile_Komponenten</h3>
 <p>Die beiden relevanten Komponenten “K2LE1” und “K2LE2” stehen jeweils in Relation zu drei unterschiedlichen Einzelteilen, deren IDs in den “Bestandteile_Komponente”-Datensätzen jeweils als eine Spalte aufgeführt sind. Um alle Einzelteile in einer Spalte und damit eine Variable “ID_Einzelteil” unterzubringen und den späteren Join zu erleichtern, wurden die Datensätze jeweils nach den drei Einzelteilen aufgeteilt und deren Zeilen mittels bind_rows() zu einem Datensatz verbunden. Analog zu den Einzelteil-Datensätzen wurden unnütze Spalten entfernt und die ID in “ID_Komponente” unbenannt.</p>
-<pre class="r"><code>## Clean and tidy Bestandteile_Komponente datasets (relational table between einzelteile and komponenten)
-
-# tidy and transform: Rename &quot;ID_K2LE*&quot; columns to ID_Komponente in order to match with komponenten dataset and remove unnecessary columns
+<pre class="r"><code># tidy and transform: Rename &quot;ID_K2LE*&quot; columns to ID_Komponente in order to match with komponenten dataset and remove unnecessary columns
 bestandteile_k2le1 &lt;- bestandteile_k2le1 %&gt;%
   select(-X1, ID_Komponente = ID_K2LE1)
 bestandteile_k2le2 &lt;- bestandteile_k2le2 %&gt;%
@@ -849,10 +841,7 @@ gc()</code></pre>
 <h3>Komponenten</h3>
 <p>So wie bei den Einzelteil-Datensätzen “T15” und “T16” waren die Variablen im Komponenten-Datensatz “K2LE1” auf zwei Spalten aufgeteilt. Entsprechend wurde der Datensatz aufgeteilt und per bind_rows() zusammengeführt. In “K2LE2” war das Produktionsdatum ebenfalls auf zwei Variablen aufgeteilt und musste per mutate() zusammenaddiert werden.</p>
 <p>Überflüssige Spalten (X1 und X2) wurden gelöscht und eine Vergleichswert für die ID in der Variable “Komponente” für die spätere Prüfung der ID-Werte hinzugefügt.</p>
-<pre class="r"><code>## Clean and tidy Komponente datasets
-
-# remove irrevelant columns
-
+<pre class="r"><code># remove irrevelant columns
 komponente_k2le1 &lt;- select(komponente_k2le1, -X1, -X2)
 
 # variables in komponente_k2le1 are split into two parts,  split table in two (x and y)
@@ -913,9 +902,7 @@ komponente_k2le2 &lt;- komponente_k2le2 %&gt;%
 <h3>Fahrzeuge</h3>
 <p>In den “Fahrzeug”-Datensätzen wurden überflüssige Spalten (X1 und X1_1), welche wie bei den anderen Daten lediglich Zeilennummern darstellten, entfernt und der Anfangswert der ID_Fahrzeug in der Spalte “Fahrzeugtyp” für den späteren Vergleich gespeichert.</p>
 <p>Analog zu “K2LE2” war das Produktionsdatum in den Datensätzen der Fahrzeuge “Typ21” und “Typ22” über zwei Spalten verteilt und musste entsprechend zusammenaddiert werden.</p>
-<pre class="r"><code>## Clean Bestandteile_Fahrzeug dataset
-
-# select and rename columns
+<pre class="r"><code># select and rename columns
 bestandteile_oem1_typ11 &lt;- bestandteile_oem1_typ11 %&gt;%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
 bestandteile_oem1_typ12 &lt;- bestandteile_oem1_typ12 %&gt;%
@@ -924,8 +911,6 @@ bestandteile_oem2_typ21 &lt;- bestandteile_oem2_typ21 %&gt;%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
 bestandteile_oem2_typ22 &lt;- bestandteile_oem2_typ22 %&gt;%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
-
-## Tidy and clean Fahrzeug datasets
 
 # deselect irrelevant columns and mutate a type column for a later check
 # transform origin in date format and create Produktionsdatum
@@ -954,14 +939,10 @@ fahrzeug_oem2_typ22 &lt;- fahrzeug_oem2_typ22 %&gt;%
 <p>Nach dem Import wurden die Umlaute korrigiert und Postleitzahlen in PLZ umbenannt. Die Postleitzahlen wurden als nächstes normiert, indem eine anführende “0”-Ziffer eingefügt wurde, wenn die PLZ weniger als 5 Ziffern hatte.</p>
 <p>Nach der Erstellung des finalen Datensatzes wurde festgestellt, dass Daten für die Gemeinde “Seeg” im “Gemeinden”-Datensatz nicht enthalten waren, der Ort jedoch in den “Zulassungen”-Daten aufgeführt war. Der Ort “Seeg” musste demnach mitsamt PLZ und Koordinaten als weitere Beobachtung bzw. Zeile in den Gemeinden hinzugefügt werden.</p>
 <p>Zuletzt wurden leere Spalten gelöscht, die Koordinaten normiert und Spaltennamen geändert. Hier bestanden insbesondere Unregelmäßigkeiten im Format und der Ziffernanzahl der Längen- und Breitengrade. Dazu wurde die Funktion addZerosUntil8Digits() geschrieben, die den Koordinaten “0”-Ziffern anfügt, bis 8 Stellen erreicht sind, um alle Koordinaten später auf eine zweistellige Zahl mit Nachkommastellen dividieren zu können. Dabei ergab sich jedoch das Problem, dass manche Längengrade vor dem Komma einstellig sein müssen, da Deutschland zwischen ~6 und ~16°E liegt. Eine weitere Funktion chopBigLongitudes() diviert den Längegrad deshalb ein weiteres Mal durch 10, wenn er den Wert 20 vor dem Komma überschreitet.</p>
-<pre class="r"><code>## Clean and tidy Zulassungen
-
-# Clean ID from NA and rename columns in zulassungen
+<pre class="r"><code># Clean ID from NA and rename columns in zulassungen
 zulassungen &lt;- zulassungen %&gt;%
   drop_na(IDNummer) %&gt;%
   select(ID_Fahrzeug = IDNummer, Gemeinde = Gemeinden, Zulassungsdatum = Zulassung)
-
-## Clean and tidy Geodaten
 
 # Change ae to ä in Längengrad
 colnames(tier1)[5] &lt;- &quot;Längengrad&quot;
@@ -1029,9 +1010,7 @@ tier2_clean &lt;- tier2  %&gt;%
 <p>Weiterhin wurde der Datensatz “Bestandteile_Fahrzeuge”, welche sich aus unterschiedlichen Komponenten zusammensetzen, auf Komponenten-IDs beginnend mit “K2LE” gefiltert, damit nur noch die zu untersuchenden Ledersitze und ihre entsprechend zugeordneten Fahrzeuge angezeigt.</p>
 <p>Zur Überprüfung der ID-Spalten in den Einzelteil-, Komponente- und Fahrzeugdatensätzen wurden diese jeweils in ihre Bestandteile, “Herstellernummer”, “Werksnummer” und Typnummer (“Einzelteil”, “Komponente” und “Fahrzeugtyp”) aufgetrennt und mit den Werten der jeweils korrespondierenden Spalte nach Übereinstimmung verglichen und das Ergebnis als logischer Wert in der Spalte &quot;id_richtig_*&quot; gespeichert. Hierbei wurden keine Fehler detektiert, sodass die nun überflüssigen, dem Vergleich dienenden Spalten entfernt werden konnten.</p>
 <p>Die relationalen Tabellen wurden nach dem Join zusätzlich nach fehlenden Werten untersucht, wobei keine aufgetreten sind.</p>
-<pre class="r"><code>## Join Einzelteil datasets into one
-
-# use bind_rows(), seperate values in ID_Einzelteil column and test if it matches with the values of other columns
+<pre class="r"><code># use bind_rows(), seperate values in ID_Einzelteil column and test if it matches with the values of other columns
 all_einzelteile &lt;- bind_rows(t11, t14, t15, t16, t19, t20) %&gt;%
   mutate(id_richtig_einzel =
            isTRUE(
@@ -1052,8 +1031,6 @@ if(all(all_einzelteile$id_richtig_einzel == TRUE)) {
     select(-id_richtig_einzel, -Einzelteil)
 }
 
-## Join Bestandteile_Komponente datasets
-
 # relation table for all Komponenten and Einzelteile
 bestandteile_komponenten &lt;- bind_rows(bestandteile_k2le1_clean, bestandteile_k2le2_clean)
 
@@ -1061,8 +1038,6 @@ bestandteile_komponenten &lt;- bind_rows(bestandteile_k2le1_clean, bestandteile_
 if(any(is.na(bestandteile_komponenten))==TRUE) {
    filter_all(bestandteile_komponenten, any_vars(is.na(.)))
 }
-
-## Join Komponente data sets
 
 # bind tables into one and check if IDs are correct
 komponenten &lt;- bind_rows(komponente_k2le1, komponente_k2le2) %&gt;%
@@ -1084,8 +1059,6 @@ if(all(komponenten$id_richtig_komp == TRUE)){
   komponenten &lt;- komponenten %&gt;%
     select(-id_richtig_komp, -Komponente)
 }
-
-## Join Bestandteile_Fahrzeug datasets
 
 # bind Bestandteile together in one table and check if IDs correct
 fahrzeug_bestandteile &lt;- bind_rows(bestandteile_oem1_typ11, bestandteile_oem1_typ12) %&gt;%
@@ -1109,8 +1082,6 @@ if(all(fahrzeug_bestandteile$id_richtig_fahrz_bestandteile == TRUE)){
 if(any(is.na(fahrzeug_bestandteile))==TRUE) {
    filter_all(fahrzeug_bestandteile, any_vars(is.na(.)))
 }
-
-## Join Fahrzeug datasets
 
 # bind Fahrzeug data sets by row together in one table, check if IDs are correct
 all_fahrzeuge &lt;- bind_rows(fahrzeug_oem1_typ11, fahrzeug_oem1_typ12) %&gt;%
@@ -1137,14 +1108,10 @@ if(all(all_fahrzeuge$id_richtig_fahrzeuge == TRUE)){
 <h3>Joining mit relationalen Datensätzen und Transforming</h3>
 <p>Die “Einzelteil”-Datensätze sind mit den Komponenten über die relationalen Tabellen “Bestandteile_Komponenten” durch die Schlüsselvariable “ID_Einzelteile” verknüpft. Analog dazu sind die Komponenten mit den Fahrzeugen über “Fahrzeug_Bestandteile” durch die Variable “ID_Fahrzeug” verknüpft.</p>
 <p>Zur Zusammenführung wurde zunächst jeweils ein right_join() auf Einzelteile und Relationstabelle und Fahrzeuge mit Relationstabelle über die entsprechenden Schlüsselvariablen angewandt, um respektiv alle relevanten Komponenten (Ledesitze) und alle Fahrzeuge, die diese enthalten, zu behalten und die dazugehörigen Informationen zu Einzelteilen und Fahrzeugen zu erhalten. Zusätzlich wurden die Werte der Spalte “Produktionsdatum” und “Fehlerhaft_Datum” in ein einheitliches Date-Format transformiert.</p>
-<pre class="r"><code>## Join einzelteile with relational bestandteile_komponenten dataset
-
-# right_join to keep all relevant Komponenten (leather seats) and the related Einzelteile, transform dates in correct class and format
+<pre class="r"><code># right_join to keep all relevant Komponenten (leather seats) and the related Einzelteile, transform dates in correct class and format
 einzelteile_rel &lt;- right_join(all_einzelteile, bestandteile_komponenten, by = &quot;ID_Einzelteil&quot;) %&gt;%
   mutate(Produktionsdatum = as.Date(Produktionsdatum, format = &quot;%Y-%m-%d&quot;),
          Fehlerhaft_Datum = as.Date(Fehlerhaft_Datum, format = &quot;%Y-%m-%d&quot;))
-
-## Join fahrzeuge with relational fahrzeug_bestandteile dataset
 
 # right_join to keep all fahrzeuge with leather seats, transform dates in correct format
 fahrzeuge_rel &lt;- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = &quot;ID_Fahrzeug&quot;) %&gt;%
@@ -1157,9 +1124,7 @@ fahrzeuge_rel &lt;- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = &quot;
 <p>Für die Einzelteile und Komponenten wurde jeweils ein left_join() über die Schlüssevariable “Werksnummer” angewandt, um nur geografische Informationen zu Werken relevanter Bauteile beizubehalten. Da aus den gejointen Datensätzen für die spätere Analyse nur noch die ID, Werksnummer und die geografischen Koordinaten relevant sind, wurden die restlichen Spalten entfernt. Für die Komponenten war vorübergehend noch die Herstellernummer relevant, um diese später für unseren Anwendungsfall filtern zu können.</p>
 <p>Die Fahrzeug-Datensätze wurden ebenfalls per left_join() mit den Zulassungs- und Gemeinde-Daten, welche geografische Informationen zu den Zulassungsorten enthalten, über die Schlüsselvariable “ID_Fahrzeug” zusammengeführt, um alle bisher gefilterten Fahrzeuge und die dazu relevanten Zulassungsinformationen sowie Gemeindaten zu behalten. Informationen zu den OEM-Werken sind für die Auswertung nicht relevant.</p>
 <p>Bei der Suche nach fehlenden Werten wurden in den gejointen Fahrzeug-Zulassung-Gemeindedaten traten fehlende Gemeindedaten zu dem Zulassungsort “Seeg” auf, welche nachträglich im Gemeinden-Datensatz hinzugefügt wurden.</p>
-<pre class="r"><code>## Join datasets with Geodaten and Zulassungen
-
-# Join einzelteile_rel with respective geodata to get coordinates of each manufactory (&quot;Werk&quot;), left join to keep all einzelteile data and only relevant coordinates
+<pre class="r"><code># Join einzelteile_rel with respective geodata to get coordinates of each manufactory (&quot;Werk&quot;), left join to keep all einzelteile data and only relevant coordinates
 einzelteile_geo &lt;- left_join(einzelteile_rel, tier2_clean, by = &quot;Werksnummer&quot;) %&gt;%
   # remove columns irrelevant for final dataset
   select(-PLZ, -Ort, -Fehlerhaft_Datum, -Fehlerhaft_Fahrleistung, -Herstellernummer, -Produktionsdatum)
@@ -1190,9 +1155,7 @@ if(any(is.na(fahrzeuge_geo))==TRUE) {
 <p>Im letzten Abschnitt zum finalen Datensatz wurden die Einzelteile-Geodaten, Komponenten-Geodaten und Fahrzeuge-Geodaten nacheinander mittels full_join() über die Schlüsselvariable “ID_Komponente” verbunden, um alle Daten um die relevanten Komponenten herum zu erhalten. Da die drei Datensätze teilweise dieselben Spaltennamen hatten, mussten sie mittels suffix = c(&quot;_Einzelteil“,”_Komponente&quot;) unterschieden werden. Entsprechende Spaltennamen für die Fahrzeugdaten wurden nachträglich mittels der Funktion rename() kenntlich gemacht.</p>
 <p>Da wir nur Komponenten des Herstellers “111” auswerten, wurde der zusammengeführte Datensatz auf entsprechende Herstellernummer gefiltert. Laut Aufgabenstellung konnten entweder Komponenten oder Einzelteile als fehlerhaft markiert sein. Dabei galten Komponenten, die fehlerhafte Einzelteile enthalten, als ausgefallen, auch wie die Komponenten selbst nicht als fehlerhaft markiert sind. Deshalb wurde der Datensatz ebenfalls auf fehlerhafte Einzelteile und / oder fehlerhafte Komponenten mittels inklusivem OR-Operator gefiltert. Die Herstellernummer wurde hinterher nicht weiter benötigt und konnte entfernt werden.</p>
 <p>Zwecks Übersichtlichkeit wurden die Spalten im finalen Datensatz neu sortiert.</p>
-<pre class="r"><code>## Final join, filter and cleaning
-
-# Final join: einzelteile_, komponenten_, and fahrzeuge_clean by ID_Komponente column
+<pre class="r"><code># Final join: einzelteile_, komponenten_, and fahrzeuge_clean by ID_Komponente column
 final_join &lt;- full_join(einzelteile_geo, komponenten_geo, by = &quot;ID_Komponente&quot;, suffix = c(&quot;_Einzelteil&quot;, &quot;_Komponente&quot;)) %&gt;%
   full_join(., fahrzeuge_geo, by =&quot;ID_Komponente&quot;) %&gt;%
   rename(Produktionsdatum_Fahrzeug = Produktionsdatum, Werksnummer_Fahrzeug = Werksnummer)
@@ -1665,9 +1628,14 @@ Exklusiv als defekt markierte Einzelteile
 </div>
 </div>
 </div>
-<div id="aufgabe-3" class="section level1">
-<h1>Aufgabe 3</h1>
-<p>Entwickeln Sie eine Shiny-App welche folgende Kriterien erfüllt: Alle verwendeten Packages müssen auf der aktuellen R-Version lauffähig sein. Die Applikation muss ohne weitere Anpassungen aus dem Abgabeordner gestartet werden können. Es bietet sich an, dies vor Abgabe zu testen. Die Applikation soll sich nur auf einen einzelnen, von Ihnen erstellten Datensatz beziehen. Das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Unternehmensfarbe entsprechen. Die Farbe ihres Unternehmens ist TUB-Rot. Des Weiteren soll ein Logo in das Layout integriert werden. Es kann ein eigenes Logo erstellt werden, oder das Logo vom Fachgebiet Qualitätswissenschaft verwendet werden. Passen Sie die Schriftart ihrer Applikation nach Ihren wünschen an. Eine Anpassung ist obligatorisch.</p>
+<div id="shiny-app" class="section level1">
+<h1>Shiny-App</h1>
+<p>Shiny ist ein Werkzeug aus der R- und RStudio-Umgebung zur interaktiven Präsentation von Analyseergebnissen. Es erlaubt die Erstellung von interaktiven Web-Applikationen, welche durch die Ausgabe im HTML-Format u.a. online oder im firmeneigenen Netzwerk verteilt werden können. Durch die Bedienung vorgefertigter Widgets und die automatische Konvertierung in HTML-Format werden zwar grundsätzlich keine Vorkenntnisse zu HTML oder JavaScript benötigt, die Shiny-App ist jedoch beliebig mit CSS, HTML und JavaScript erweiterbar.</p>
+<p>Shiny-Applikationen setzen sich grundsätzlich aus vier Teilen zusammen: - Den Aufruf der Bibliothek mittels library(shiny) - Die Erstellung des HTML-User-Interfaces (UI) über ui &lt;- fluidPage() - Dem server zur Definition der Funktionen der im UI dargestellten Objekte - Der shinyApp, welche ui und server zur funktionsfähigen App kombiniert</p>
+<p>Im Kern nimmt das UI Inputs des Nutzers auf und gibt diese an den Server, welcher daraus reaktive Outputs erzeugt, weiter. Die Ergebnisse werden dann wiederum dem Nutzer im UI dargestellt.</p>
+<div id="anforderungen-an-die-fallbezogene-shiny-app" class="section level2">
+<h2>Anforderungen an die fallbezogene Shiny-App</h2>
+<p>Zur Darstellung der Ergebnisse dieser Fallstudie muss die Applikation folgende Kriterien erfüllen: - Alle verwendeten Packages müssen auf der aktuellen R-Version lauffähig sein - Die Applikation muss ohne weitere Anpassungen mit dem beigefügten Datensatz gestartet werden können - Die Applikation bezieht sich auf einen einzelnen aufbereiteten Datensatz - Das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Unternehmensfarbe (“TU Berlin-Rot”) entsprechen - Ein Logo des Fachgebiets Qualitätswissenschaft soll in das Layout integriert werden - Die Schriftart der Applikation soll angepasst werden</p>
 <pre class="r"><code>## Die Shiny App befindet sich in der .R Datei.
 
 # Shiny UI
@@ -1677,16 +1645,83 @@ Exklusiv als defekt markierte Einzelteile
 # Shiny App
 #runApp(&quot;Case_Study_App_26.r&quot;)</code></pre>
 <pre class="r"><code># profiler stats</code></pre>
+<p>Die Visualisierung der Datenauswertung in der Shiny-App soll folgende Bestandteile haben: - einen Graphen, der den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in den Gemeinden darstellt - eine Heatmapdarstellung zur Visualisierung von Schadensschwerpunkten - Popups in der Kartendarstellung, die Informationen zu den zugelassenen Fahrzeugen enthalten - der Lieferweg (als Luftlinie) für ein betroffenes Bauteil, welches vom Benutzer ausgewählt werden kann - ein Suchfeld, das Fahrzeughaltern ermöglicht, anhand der Fahrzeug-ID zu überprüfen, ob ihr Auto betroffen ist - den vollständigen zugrundeliegenden Datensatz als Tabelle mit den notwendigen Attributen</p>
+<p>Zusätzl ich soll die Auswahl und Ausgabe eines betroffenen Fahrzeugs für den Fahrzeughalter von den restlichen Informationen, die dem Fahrzeughersteller zur Verfügung stehen, aus Datenschutzgründen isoliert werden.</p>
 </div>
-<div id="aufgabe-4" class="section level1">
-<h1>Aufgabe 4</h1>
-<p>Visualisieren Sie folgendes in der Applikation a. Einen Graphen, der den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in den Gemeinden darstellt. Verwenden Sie zusätzlich eine Heatmapdarstellung zur Visualisierung von Schadensschwerpunkten. Integrieren Sie Popups in die Kartendarstellung, die Informationen zu den zugelassenen Fahrzeugen enthalten. b. Den Lieferweg (als Luftlinie) für ein betroffenes Bauteil, welches vom Benutzer ausgewählt werden kann. c. Den Fahrzeughaltern soll es möglich sein, (bspw. über ein Suchfeld) anhand der Fahrzeug-ID zu überprüfen, ob ihr Auto betroffen ist. d. Ihren zugrundeliegenden Datensatz als Tabelle, damit Sie Visualisiertes auch beweisen können. Denken Sie auch hier daran, nur die notwendigen Attribute anzuzeigen.</p>
+<div id="user-interface" class="section level2">
+<h2>User Interface</h2>
+<p>Grundsätzlich gliedert sich das User-Interface in zwei Bestandteile, welche über Tabs voneinander getrennt sind: - ein Interface für Fahrzeughalter - ein Interface für Fahrzeughersteller</p>
+<p>Die Tabs dienen der anwenderspezifischen Isolierung der Datenauswertung.</p>
+<p>Das UI für Fahrzeughalter beinhaltet lediglich die Suche nach einzelnen, von defekten Ledersitzes des Herstellers “111” betroffenen Fahrzeugen.</p>
+<p>Das UI für Fahrzeughalter ist umfangreicher und stellt sämtliche Daten zu allen Fahrzeugen, die von defekten Ledersitzen des Herstellers “111” betroffen sind, und deren Analyse dar. Es beinhaltet die folgenden Teilbereiche: - den Graphen - Auswahlfilter</p>
+<p>Layout und Aufbau (Header, Tabs, Plot, Filter, Kartendarstellung, Daten) Header, Logo und Schriftart</p>
+<div id="suche-nach-betroffenen-fahrzeugen-für-fahrzeughalter" class="section level3">
+<h3>Suche nach betroffenen Fahrzeugen für Fahrzeughalter</h3>
+<p>Eingabe der Fahrzeug ID über Suchfeld Output-Darstellung: - Fahrzeug betroffen - betroffen Teile - Werksnummer</p>
+</div>
+<div id="barplot" class="section level3">
+<h3>Barplot</h3>
+<p>stellt den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge dar. Barplot zur Darstellung der Häufigkeitsverteilung über die Monate in Anzahl der betroffenen Fahrzeugen</p>
+<p>kann zeitlich und nach Gemeinden gefiltert werden</p>
+</div>
+<div id="auswahl-der-zulassungsdaten" class="section level3">
+<h3>Auswahl der Zulassungsdaten</h3>
+<p>sliderInput() start = minimum, end = maximum Zulassungszeitspanne kann ausgewählt werden filtert Barplot und Kartendarstellung</p>
+</div>
+<div id="suchfilter-für-gemeinden-bauteile-und-den-vollständigen-datensatz" class="section level3">
+<h3>Suchfilter für Gemeinden, Bauteile und den vollständigen Datensatz</h3>
+<p>dataTableInput()</p>
+<p>Gemeinden- und Bauteilfilter sowie vollständiger Datensatz</p>
+<p>Genereller Suchfilter mit Texteingabe ermöglicht Suche nach PLZ oder Ort bzw. ID der Bauteile usw.</p>
+<p>Auswahl der Zeilen filtert die Daten, die im Output dargestellt werden</p>
+<p>Markierung der Auswahl als Highlights</p>
+<p>Mehrfachauswahl möglich</p>
+<p>einfache Abwahl durch erneutes Anklicken</p>
+<p>Gemeinden-Suche filter Barplot und Kartendarstellung und zeigt zusätzlich die Anzahl der zugelassenen betroffenen Fahrzeuge je Gemeinde an</p>
+<p>Bauteil-Suche filtern nur die Kartendarstellung, da sich der Barplot zur besseren Übersicht ausschließlich auf die zugelassenen Fahrzeuge nach OEM und Gemeinden beziehen soll</p>
+<p>Zur Nutzerfreundlichkeit filtert die DataTable, welche den vollständigen Datensatz enthält, ebenfalls die Kartendarstellung</p>
+</div>
+<div id="reset-buttons" class="section level3">
+<h3>Reset-Buttons</h3>
+<p>Über den “Filter zurücksetzen” Button werden die Filter für die Zulassungsdaten sowie den DataTables für die Gemeinden- und Bauteilauswahl und den vollständigen Datensatz auf ihren Anfangswert zurückgesetzt.</p>
+<p>Der Button “Position zurücksetzen” setzt die Ausrichtung und den Zoom der Kartendarstellung auf den Startwert zurück.</p>
+</div>
+<div id="kartendarstellung" class="section level3">
+<h3>Kartendarstellung</h3>
+<p>Open Street Map mit Darstellung der Deutschlandkarte</p>
+<p>Heatmap für Schadensschwerpunkte</p>
+<p>Cluster-Marker, die für jeweils ein betroffenes Fahrzeug repräsentieren und den genauen Zulassungsort auf der Karte markieren</p>
+<p>Popups auf den Cluster-Markern stellen folgende Infos zu den Fahrzeugen dar: - Fahrzeug-ID - …</p>
+<p>Lieferwege als Luftlinie abhängig von der Auswahl der Fahrzeuge bzw. Bauteile aus den Datentabellen - Lieferkette von defekten Bauteilen zum Komponentenhersteller und vom Komponentenhersteller zum Fahrzeughalter - Gebäude-Icons stellen Einzeilteil- und Komponentenwerk dar, roter Geo-Icon stellt den Zielort, d.h. den Zulassungsort des Fahrzeugs dar - Kreise um Werke repräsentieren durch ihre jeweilige Größe die Anzahl der fehlerhaften Einzelteile und Komponenten, die aus dem jeweiligen Werk geliefert wurden - Popups beim Klicken auf den Werksstandort geben wesentliche Statistiken zu fehlerhaften Bauteilen aus - Mehrfachauswahl möglich, farbliche Unterscheidung zwischen den Lieferkette (eine Farbe pro Kette), beim Überfahren des Lieferweges mit der Maus wird die Linie farblich hervorgehoben und die Fahrzeug-ID angezeigt.</p>
+<p>Die Heatmap, Cluster-Marker sowie Lieferwege sind einzeln oder mehrfach aus- oder abwählbar.</p>
+</div>
+</div>
+<div id="server-funktionen" class="section level2">
+<h2>Server-Funktionen</h2>
+<div id="reaktive-funktionen" class="section level3">
+<h3>Reaktive Funktionen</h3>
+</div>
+<div id="leaflet" class="section level3">
+<h3>Leaflet</h3>
+<p>äää???</p>
+</div>
+<div id="section" class="section level3">
+<h3></h3>
+</div>
+</div>
+<div id="aufgetretene-schwierigkeiten" class="section level2">
+<h2>Aufgetretene Schwierigkeiten</h2>
+<p>Aufgrund der Größe des Datensatzes entstanden Skalierungsprobleme mit der Verwendung selectizeInput(multiple = TRUE) als Datenfilter. Ab über 50.000 Dateneinträgen traten massive Performance-Probleme, die sich auch durch ein Serverside-Rendering nicht beheben lassen konnten, auf. Bei einem Wechsel zu dataTableInput() konnten wesentliche Funktionen beibehalten werden, wobei sich die App mit dem vollständigen Datensatz problemlos öffnen ließ. Aus diesem Grund wurden bis auf den sliderInput() für die Zulassungsdaten sämtliche Filterfunktionen mittels dataTableInput() umgesetzt.</p>
+<ul>
+<li>Lieferwege</li>
+</ul>
 <pre class="r"><code># a) Plot data &#39;zeitlichen Zulassungsverlauf&#39;
 ggplot()</code></pre>
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAAABlBMVEXr6+v///+HIERrAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAMUklEQVR4nO3UsQnAMBDAwM/+S7s3OBg1IXA3gSrNA0AyXwcA/JWBAkQGChAZKEBkoACRgQJEBgoQGShAZKAAkYECRAYKEBkoQGSgANE20AHgxEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIDJQgMhAASIDBYjeBwrALQMFiAwUIDJQgMhAASIDBYgMFCAyUIDIQAEiAwWIDBQgMlCAyEABIgMFiAwUIFoPiQHHEsDzcAAAAABJRU5ErkJggg==" width="672" /></p>
 <pre class="r"><code># b) Plot data &#39;Lieferweg (als Luftlinie) für ein betroffenes Bauteil&#39;
 # c) ID tracker
 # d) Print table</code></pre>
+</div>
 </div>
 <div id="aufgabe-5" class="section level1">
 <h1>Aufgabe 5</h1>
