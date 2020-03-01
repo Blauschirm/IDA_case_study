@@ -58,7 +58,7 @@ library(glue)
 load("Datensatz_tidy.RData")
 
 # Subset the data for debugging: reducing the amount of data to be loaded
-final_joined <- final_joined[c(sample(nrow(final_joined), 10000)),]
+final_joined <- final_joined[c(sample(nrow(final_joined), 1001)),] # must not be lower than filter limit ( nrow(filtered_parts()) <= 1000)
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge (used in both UI and Server)
 all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
@@ -92,16 +92,6 @@ ui <- fluidPage(
     # Header panel
     wellPanel(
       
-      # working, when pre-rendered :)
-      # imageOutput("Marker", height = 1),
-      # imageOutput("Icon", height = 1),
-      
-      # not working
-      # img(src="Zusaetzliche_Dateien/QW_logo.jpg", #filetype = "image/jpeg",
-      #     align = "right", height = 20),
-      # img(src='Zusaetzliche_Dateien/TU_logo.gif', #filetype = "image/gif",
-      #     align = "left"),
-      
       titlePanel("Case_Study_App_26"),
       fluidRow(
         column(11,
@@ -109,7 +99,7 @@ ui <- fluidPage(
                style='font-size: 36px; color: #c50e1f;'
         ),
         column(1,
-               imageOutput("Logo", height = 80)    
+               imageOutput("Logo", height = 1)    
         )
       )
     ),
@@ -124,7 +114,7 @@ ui <- fluidPage(
                              column(
                                4,
                                textInput(
-                                 'vehicle_id_input', "FahrzeugID eingeben um Details zu sehen", value = "", width = "100%",
+                                 'vehicle_id_input', "Fahrzeug ID eingeben um Details zu sehen", value = "", width = "100%",
                                  placeholder = 'Fahrzeug ID')
                              ),
                              column(
@@ -203,7 +193,7 @@ ui <- fluidPage(
                            
                            # Display the heatmap with car markers
                            leafletOutput(outputId = "map", width = '100%', height = 600),
-                           "Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"
+                           #"Bottombox: Zum Anzeigen von Fahrzeuginformationen hineinzoomen und/oder auf die Markierungen klicken"
                          ),
                          
                          # full dataset in a datatable
@@ -227,7 +217,9 @@ server <- function(input, output, session) {
   # Render QW_logo: Send a pre-rendered image, and don't delete the image after sending it
   output$Logo <- renderImage({
     # Return a list containining the filename
-    list(src = './Zusaetzliche_Dateien/QW_logo.jpg')
+    list(src = './Zusaetzliche_Dateien/QW_logo.png',
+         width = 76,
+         height = 56)
   }, deleteFile = FALSE)
   
 
@@ -260,7 +252,7 @@ server <- function(input, output, session) {
   
   # Only draw the polylines and overlays for the first n parts
   filtered_parts_limited <- reactive({
-    if(nrow(filtered_parts()) < 50){
+    if(nrow(filtered_parts()) <= 1000){
       out <- filtered_parts()
     } else {
       out <- NULL
@@ -415,10 +407,10 @@ server <- function(input, output, session) {
       )
   })
   
-  #### Data Preparation for the rendering of (1) heatmap with (2) markers and (3) supply routes (and circles)
+  #### Data Preparation for the rendering of (1) heatmap with (2) markers and (3) supply routes
   
   # 1. Create datapoints for the heatmap
-  treshold_fehleranzahl <- 1 # recommended values: 1, 10, 20, 40, ...
+  treshold_fehleranzahl <- 10 # recommended values: 1, 10, 20, 40, ...
   datapoints_heat <- reactive({
     subset(final_joined, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2]) %>%
       group_by(Längengrad, Breitengrad) %>%
@@ -456,9 +448,9 @@ server <- function(input, output, session) {
       summarise(
         'Einzelteile geliefert' = n(), 
         
-        'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
-        Einzelteile = substring(str_c(glue('<br>{ID_Einzelteil}'),collapse = ""),5),
-        Fehlerhaft = toString(factor(Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja')))
+        'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == 'Ja']),
+        Einzelteile = substring(str_c(glue('<br>{ID_Einzelteil}'),collapse = ""),5), 
+        Fehlerhaft = toString(Fehlerhaft_Einzelteil) # if not converted from boolean then: toString(ifelse(Fehlerhaft_Einzelteil == 1, 'Ja', 'Nein'))
       ) %>%
       ungroup() %>%
       arrange(Fehlerhaft)
@@ -471,11 +463,11 @@ server <- function(input, output, session) {
       group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
       summarise(
         'Einzelteile erhalten' = n(),
-        'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
+        'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == 'Ja']),
         'Defekte Sitze hergestellt' = sum(!duplicated(ID_Fahrzeug)),
-        'fehlerhaft laut Komponenten-Werk' = length(Fehlerhaft_Komponente[Fehlerhaft_Komponente == TRUE]),
+        'fehlerhaft laut Komponenten-Werk' = length(Fehlerhaft_Komponente[Fehlerhaft_Komponente == 'Ja']),
         Komponenten = substring(str_c(glue('<br>{ID_Komponente}'),collapse = ""),5),
-        Fehlerhaft = 'ja'
+        Fehlerhaft = toString(Fehlerhaft_Komponente) # if not converted from boolean then: toString(ifelse(Fehlerhaft_Komponente == 1, 'Ja', 'Nein'))
       ) %>%
       ungroup()
   })
@@ -494,7 +486,7 @@ server <- function(input, output, session) {
       
       # Layer 1: Heatmap
       addHeatmap(data = datapoints_heat(), lng = ~Längengrad, lat = ~Breitengrad,
-                 intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14, group = "Heatmap") %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
+                 intensity = ~fehleranzahl, blur = 12, max = 300, radius = 16, group = "Heatmap") %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
       
       
       # Layer 2: fehlerhafte Fahrzeuge
@@ -518,7 +510,7 @@ server <- function(input, output, session) {
                                       group = "Lieferwege",
                                       lng= ~ c(lng_begin, lng_via, lng_end),
                                       lat= ~ c(lat_begin, lat_via, lat_end),
-                                      color = colors_polyline[ifelse(i>10, i-10, i)], # 
+                                      color = colors_polyline[i%%10], # iterates the 10 colors over and over again
                                       weight = 4,
                                       opacity = 0.5,
                                       fillColor = "#c50e1",
@@ -532,48 +524,12 @@ server <- function(input, output, session) {
       }
     
       
-      # Layer 4: Standorte
+      # Layer 3: Lieferwege
       
       # Add circles of facility
       facitily_group_name = "Lieferwege"
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       leaflet_map <- leaflet_map %>%
-        
-        ###radius_factor <- 40000 # 700###
-        # addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
-        #            color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
-        #            radius = tier1_werke()$'Einzelteile geliefert'*radius_factor,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
-        # addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
-        #            color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
-        #            radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
-        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-        #            color = 'white', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-        #            radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
-        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-        #            color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-        #            radius = tier2_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor/3,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
-        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-        #            stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
-        #            radius = tier2_werke()$'Defekte Sitze hergestellt'*radius_factor/3,
-        #            group = facitily_group_name) %>%
-        # 
-        # # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
-        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-        #            stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
-        #            radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3,
-        #            group = facitily_group_name) %>%
         
         #Display tier1 facilities with custom icon
         addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, group = facitily_group_name,
@@ -594,7 +550,7 @@ server <- function(input, output, session) {
                                   "Fehlerhaft")
                      )
                    ),
-                   popupOptions = popupOptions(minWidth = 320)
+                   popupOptions = popupOptions(minWidth = 320, maxHeight = 500)
                    
         )  %>%
         
@@ -616,7 +572,7 @@ server <- function(input, output, session) {
                                                'Fehlerhaft')
                                   )
                    ),
-                   popupOptions = popupOptions(minWidth = 360)
+                   popupOptions = popupOptions(minWidth = 360, maxHeight = 500)
         )
       
       # Add marker for car location
@@ -643,14 +599,14 @@ server <- function(input, output, session) {
       }
     }
     
-    #Layer control
+    # Layer control
     leaflet_map <- leaflet_map %>%
       addLayersControl(
         overlayGroups = c("Heatmap", "Cluster Marker", "Lieferwege"),
         options = layersControlOptions(collapsed = FALSE)
       )
     
-    # return leaflet_map with all layers to render_leaflet()
+    # Return leaflet_map with all layers to render_leaflet()
     leaflet_map
   })
   
