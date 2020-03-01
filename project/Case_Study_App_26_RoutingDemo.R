@@ -277,20 +277,20 @@ server <- function(input, output, session) {
       tmp <- tmp[input$datatable_bauteile_rows_selected,]
     }
     
-    # print("                FILTERED PARTS:                      ")
+    # print("                   FILTERED PARTS:                         ")
     # print(str(tmp))
     
     tmp
   })
   
   # Only draw the polylines and overlays for the first n parts
-  filtered_parts_head <- reactive({
+  filtered_parts_limited <- reactive({
     if(nrow(filtered_parts()) < 50){
       out <- filtered_parts()
     } else {
       out <- NULL
     }
-    # print("         FILTERED PARTS FOR OVERLAYS:                      ")
+    # print("             FILTERED PARTS FOR OVERLAYS:                  ")
     # print(str(out))
     out
   })
@@ -328,12 +328,6 @@ server <- function(input, output, session) {
     zulassungen_out
   })
   
-  # reset sliderInput for zulassungen period
-  observeEvent(input$reset_filters,
-               updateSliderInput(session, 'slider_zulassungsperiode',
-                                 value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum)))
-  )
-  
   # Plot für zeitlichen Zulassungsverlauf vorbereiten
   output$plot_zulassungsverlauf <- renderPlot({
     
@@ -367,9 +361,7 @@ server <- function(input, output, session) {
   })
   
   # Render data tables: gemeinden / bauteile
-  # https://shiny.rstudio.com/reference/shiny/latest/renderTable.html
-  # https://shiny.rstudio.com/reference/shiny/0.12.1/tableOutput.html
-  
+
   gemeinden <- all_vehicles %>% 
     select(Gemeinde, PLZ, Werksnummer_Komponente) %>%
     group_by(Gemeinde, PLZ) %>%
@@ -377,37 +369,6 @@ server <- function(input, output, session) {
     arrange(Gemeinde) %>%
     ungroup()
   
-  # Statistics for tier1 facility
-  tier1_werke <- reactive({
-    filtered_parts_head() %>% 
-      select(ID_Fahrzeug, ID_Einzelteil, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
-      group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
-      summarise(
-        'Einzelteile geliefert' = n(), 
-        
-        'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
-        Einzelteile = substring(str_c(glue('<br>{ID_Einzelteil}'),collapse = ""),5),
-        Fehlerhaft = toString(factor(Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja')))
-      ) %>%
-      ungroup() %>%
-      arrange(Fehlerhaft)
-  })
-  
-  # Statistics for tier2 facility
-  tier2_werke <- reactive({
-    filtered_parts_head() %>% 
-      select(ID_Fahrzeug, ID_Fahrzeug, ID_Komponente, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
-      group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
-      summarise(
-        'Einzelteile erhalten' = n(),
-        'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
-        'Defekte Sitze hergestellt' = sum(!duplicated(ID_Fahrzeug)),
-        'fehlerhaft laut Komponenten-Werk' = length(Fehlerhaft_Komponente[Fehlerhaft_Komponente == TRUE]),
-        Komponenten = substring(str_c(glue('<br>{ID_Komponente}'),collapse = ""),5),
-        Fehlerhaft = toString(factor(Fehlerhaft_Komponente, c(0, 1), c('Nein', 'Ja')))
-      ) %>%
-      ungroup()
-  })
   
   # Render data table: gemeinden
   output$datatable_gemeinden <- renderDataTable({
@@ -492,8 +453,8 @@ server <- function(input, output, session) {
   data_dots <- reactive({
     df = data.frame()
     
-    if(!is.null(filtered_parts_head())){
-      supply_routes <- filtered_parts_head()
+    if(!is.null(filtered_parts_limited())){
+      supply_routes <- filtered_parts_limited()
       
       df = data.frame(id = 1:nrow(supply_routes), # 1:length(beispiel)
                       lat_begin = supply_routes$Breitengrad_Einzelteil,
@@ -505,6 +466,38 @@ server <- function(input, output, session) {
                       ID_Fahrzeug = supply_routes$ID_Fahrzeug)
       df
     }
+  })
+  
+  # Statistics for tier1 facility
+  tier1_werke <- reactive({
+    filtered_parts_limited() %>% 
+      select(ID_Fahrzeug, ID_Einzelteil, Fehlerhaft_Einzelteil, Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
+      group_by(Werksnummer_Einzelteil, Breitengrad_Einzelteil, Längengrad_Einzelteil) %>%
+      summarise(
+        'Einzelteile geliefert' = n(), 
+        
+        'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
+        Einzelteile = substring(str_c(glue('<br>{ID_Einzelteil}'),collapse = ""),5),
+        Fehlerhaft = toString(factor(Fehlerhaft_Einzelteil, c(0, 1), c('Nein', 'Ja')))
+      ) %>%
+      ungroup() %>%
+      arrange(Fehlerhaft)
+  })
+  
+  # Statistics for tier2 facility
+  tier2_werke <- reactive({
+    filtered_parts_limited() %>% 
+      select(ID_Fahrzeug, ID_Fahrzeug, ID_Komponente, Fehlerhaft_Einzelteil, Fehlerhaft_Komponente, Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
+      group_by(Werksnummer_Komponente, Breitengrad_Komponente, Längengrad_Komponente) %>%
+      summarise(
+        'Einzelteile erhalten' = n(),
+        'fehlerhaft laut Einzelteil-Werk' = length(Fehlerhaft_Einzelteil[Fehlerhaft_Einzelteil == TRUE]),
+        'Defekte Sitze hergestellt' = sum(!duplicated(ID_Fahrzeug)),
+        'fehlerhaft laut Komponenten-Werk' = length(Fehlerhaft_Komponente[Fehlerhaft_Komponente == TRUE]),
+        Komponenten = substring(str_c(glue('<br>{ID_Komponente}'),collapse = ""),5),
+        Fehlerhaft = toString(factor(Fehlerhaft_Komponente, c(0, 1), c('Nein', 'Ja')))
+      ) %>%
+      ungroup()
   })
   
   # Custom icons for markers of facilities
@@ -649,9 +642,9 @@ server <- function(input, output, session) {
                    popupOptions = popupOptions(minWidth = 360)
         )
       # Add marker for car location
-      filtered_vehicles_tmp <- filtered_parts_head()
+      filtered_vehicles_tmp <- filtered_parts_limited()
 
-      if(!is.null(filtered_parts_head)){
+      if(!is.null(filtered_parts_limited)){
         for(i in 1:nrow(filtered_vehicles_tmp)){
           leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
                                     group = "Lieferwege",
@@ -668,23 +661,9 @@ server <- function(input, output, session) {
 
       }
     }
-    # return leaflet_map with all layers to render_leaflet
+    # return leaflet_map with all layers to render_leaflet()
     leaflet_map
   })
-  
-  observeEvent(input$reset, {
-    
-    leafletProxy("map") %>%
-      setView(lng = 10.46, lat = 51.15, zoom = 6.25)
-    
-  })
-  
-  observe({
-    input$reset
-    leafletProxy("map") %>%
-      setView(lng = 10.46, lat = 51.15, zoom = 6.25)
-  })
-  
   
   # Render full database
   output$datatable_final_joined <- renderDataTable({
@@ -728,6 +707,21 @@ server <- function(input, output, session) {
       )
   })
   
+  # resetting map position
+  observe({
+    input$reset
+    leafletProxy("map") %>%
+      setView(lng = 10.46, lat = 51.15, zoom = 6.25)
+  })
+  
+  
+  # reset sliderInput for zulassungen period
+  observeEvent(input$reset_filters,
+               updateSliderInput(session, 'slider_zulassungsperiode',
+                                 value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum)))
+  )
+  
+  # Overview for car owner with infos about their vehicle and the defective parts
   output$result_text <- renderText({"Geben Sie ihre Fahrzeug ID in die Suche ein um zu überprüfen ob ihr Fahrzeug betroffen ist."})
   
   observeEvent(input$vehicle_filter_submit, {
@@ -735,27 +729,13 @@ server <- function(input, output, session) {
     vehicle_parts <- filter(final_joined, ID_Fahrzeug == input$vehicle_id_input)
     if (dim(vehicle_parts)[1] >= 1){
       output$result_text <- renderText({"Ihr Fahrzeug ist betroffen"})
-      # Welche Daten interessieren einen Fahrzeughalter?
-      
-      # Zulassungsdatum
-      # PLZ, Gemeinde
-      # Werksnummer_Fahrzeug
-      # Produktionsdatum_Fahrzeug
-      #
-      #
-      # ID_Einzelteil
-      # Werksnummer_Einzelteil
-      #
-      #
-      # ID_Komponente
-      # Werksnummer_Komponente
-      
-      # Fahrzeuginfos
+
       vehicle <- vehicle_parts[!duplicated(vehicle_parts$ID_Fahrzeug)]
       vehicle_info_string <- glue("Ihr Fahrzeug ({vehicle$ID_Fahrzeug}), zugelassen am {vehicle$Zulassungsdatum} in {vehicle$PLZ} {vehicle$Gemeinde},
 wurde am {vehicle$Produktionsdatum_Fahrzeug} im Werk {vehicle$Werksnummer_Fahrzeug} gebaut.
 Folgend finden sie die Auflistung zu der verbauten Sitzgruppe, sowie zu den dafür verwendeten Einzelteilen
 zusammen mit den Werksnummern bei denen Ihre Servicewerkstatt Ersatzteile anfordern kann.")
+      
       output$vehicle_info_text <- renderText(vehicle_info_string)
       
       # components
