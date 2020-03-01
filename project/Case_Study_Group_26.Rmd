@@ -59,13 +59,13 @@ library("rmdformats")
 
 # Einleitung
 
-Das Ziel dieser Case Study ist die Verdeutlichung und Aufklärung von und über Produktionsproblemen eines Unternehmens "111", das Ledersitze für Automobilhersteller aus eingekauften Einzelteilen zusammenbaut. Nach Hinweis durch den Automobilhersteller auf Kundenreklamationen sollen von allen beteiltigten Schritten der Kette vom Einzelteilhersteller bis zum Kunden Daten zu defekten Fahrzeugen zusammengetragen, aufbereitet und ausgewertet werden.
+Das Ziel dieser Case Study ist die Verdeutlichung und Aufklärung von und über Produktionsproblemen eines Unternehmens "111", das Ledersitze für Automobilhersteller aus eingekauften Einzelteilen zusammenbaut. Nach Hinweis durch den Automobilhersteller auf Kundenreklamationen sollen von allen beteiligten Schritten der Kette vom Einzelteilhersteller bis zum Kunden Daten zu defekten Fahrzeugen zusammengetragen, aufbereitet und ausgewertet werden.
 
 Zusätzlich soll ein Tool generiert werden mit dessen Hilfe Automobilbesitzer anhand ihrer Zulassungsnummer überprüfen können ob ihr Fahrzeug von den Defekten betroffen ist.
 
 
 
-# Benötigte Libraries
+## Benötigte Libraries
 
 ```{r libraries, message = FALSE, warning = FALSE}
 if(!require(knitr)){
@@ -97,13 +97,13 @@ library(readr)
 
 # Importieren der Daten
 
-### Auswahl der relevanten Daten
+## Auswahl der relevanten Daten
 
 Die Aufgabe bestand grundsätzlich darin, aus Sicht des Herstellers "111" für die Komponente Premium-Ledersitze alle Fahrzeuge mit fehlerhaften Komponenten des entsprechenden Typs bzw. fehlerhaften Einzelteilen, die in jenen Komponenten enthalten sind, zu identifizieren und Fahrzeughalter und -hersteller (OEM) zu isolieren und informieren.
 
-Dazu galt es zunächst, alle für die Analyse und Fehleridentifizierung relevanten Datzensätze zu importieren. Diese entsprechen der Komponente "K2LE1" mit den Einzelteilen "T11", "T14" und "T15" sowie "K2LE2" mit den Einzelteilen "T16", "T19" und "T20", den Fahrzeugen "Typ11" und "Typ12" des Herstellers "OEM1" sowie "Typ21" und "Typ22" des Herstellers "OEM2" und die entsprechenden Geodaten für Werke der "Tier2" (Einzelteile), "Tier1" (Komponenten) und "OEM". Für die Zuordnung zu Fahrzeughaltern und die spätere visuelle Darstellung der räumlichen Verteilung der Defekte waren die Datensätze "Zulassungen" mit den entsprechenden Geodaten "Gemeinden" relevant.
+Dazu galt es zunächst, alle für die Analyse und Fehleridentifizierung relevanten Datensätze zu importieren. Diese entsprechen der Komponente "K2LE1" mit den Einzelteilen "T11", "T14" und "T15" sowie "K2LE2" mit den Einzelteilen "T16", "T19" und "T20", den Fahrzeugen "Typ11" und "Typ12" des Herstellers "OEM1" sowie "Typ21" und "Typ22" des Herstellers "OEM2" und die entsprechenden Geodaten für Werke der "Tier2" (Einzelteile), "Tier1" (Komponenten) und "OEM". Für die Zuordnung zu Fahrzeughaltern und die spätere visuelle Darstellung der räumlichen Verteilung der Defekte waren die Datensätze "Zulassungen" mit den entsprechenden Geodaten "Gemeinden" relevant.
 
-Um die Datensätze zu einem zusammenfassen, standen die relationalen Tabellen "Bestandteile_Komponente" (für Einzeilteile und Komponenten) und "Bestandteile_Fahrzeug" (für Komponenten und Fahrzeuge) zur Verfügung.
+Um die Datensätze zu einem zusammenfassen, standen die relationalen Tabellen "Bestandteile_Komponente" (für Einzelteile und Komponenten) und "Bestandteile_Fahrzeug" (für Komponenten und Fahrzeuge) zur Verfügung.
 
 ```{r overview import, echo = FALSE, results = 'asis', cache=TRUE}
 # print overview of imported data as table in .Rmd document
@@ -121,7 +121,7 @@ kable(import, caption = "Importierte Daten")
 
 ```
 
-### Vorgehensweise zur Importierung der Datensätze
+## Vorgehensweise zur Importierung der Datensätze
 
 Die zur Verfügung gestellten Dateien wurden mit dem readr-Package importiert. Die Daten lagen in unterschiedlichen Datei-Formaten (.txt und .csv) und unterschiedlichen Strukturen (verschiedene Delimiter und Spaltenanzahlen) vor.
 
@@ -238,15 +238,15 @@ gemeinden <- read_csv2("Data/Geodaten/Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv
 
 Nach dem Importieren galt es die Daten aufzubereiten und in ein analysierbares Format zu bringen. Dazu wurde das "Tidy Data"-Prinzip mit Funktionen aus dem tidyverse-Package angewandt. Ein Datensatz gilt demnach als "tidy", wenn folgende Bedigungen erfüllt sind:
 
-- Jede Spalte ist eine Variable
-- Jede Zeile ist eine Beobachtung
-- Jede Zelle ist ein Wert
+- jede Spalte ist eine Variable
+- jede Zeile ist eine Beobachtung
+- jede Zelle ist ein Wert
 
 Außerdem mussten die Datensätze von unnützlichen Einträgen wie Zeilen oder Spalten, die keine Daten enthielten, bereinigt werden.
 
 Um einen Eindruck zur Datenstruktur zu erhalten, wurden die Funktionen str() (für die allgemeine Struktur und die Klassen der Variablen) sowie head() und tail() (für Einträge am Anfang und Ende des Datensatzes) angewandt.
 
-### Einzeilteile
+## Einzeilteile
 
 Alle Einzelteil-Datensätze hatten jeweils zwei überflüssige Spalten mit den Variablen X1 und X1_1, deren Werte lediglich eine fortlaufende Nummerierung der Spalten darstellten. Diese Spalten wurden entsprechend entfernt. Die Spaltennamen für die IDs wurden als "Einzelteil_ID" für den späteren Join vereinheitlicht. 
 
@@ -325,7 +325,7 @@ gc()
 
 ```
 
-### Relationstabelle: Bestandteile_Komponenten
+## Relationstabelle: Bestandteile_Komponenten
 
 Die beiden relevanten Komponenten "K2LE1" und "K2LE2" stehen jeweils in Relation zu drei unterschiedlichen Einzelteilen, deren IDs in den "Bestandteile_Komponente"-Datensätzen jeweils als eine Spalte aufgeführt sind. Um alle Einzelteile in einer Spalte und damit eine Variable "ID_Einzelteil" unterzubringen und den späteren Join zu erleichtern, wurden die Datensätze jeweils nach den drei Einzelteilen aufgeteilt und deren Zeilen mittels bind_rows() zu einem Datensatz verbunden. Analog zu den Einzelteil-Datensätzen wurden unnütze Spalten entfernt und die ID in "ID_Komponente" unbenannt.
 
@@ -366,7 +366,7 @@ gc()
 
 ```
 
-### Komponenten
+## Komponenten
 
 So wie bei den Einzelteil-Datensätzen "T15" und "T16" waren die Variablen im Komponenten-Datensatz "K2LE1" auf zwei Spalten aufgeteilt. Entsprechend wurde der Datensatz aufgeteilt und per bind_rows() zusammengeführt. In "K2LE2" war das Produktionsdatum ebenfalls auf zwei Variablen aufgeteilt und musste per mutate() zusammenaddiert werden.
 
@@ -428,11 +428,11 @@ komponente_k2le2 <- komponente_k2le2 %>%
 
 ```
 
-### Relationstabelle: Bestandteile_Fahrzeuge
+## Relationstabelle: Bestandteile_Fahrzeuge
 
 In den "Bestandteile_Fahrzeug"-Datensätzen mussten lediglich die Variablen der Spalten für den späteren Join umbenannten werden.
 
-### Fahrzeuge
+## Fahrzeuge
 
 In den "Fahrzeug"-Datensätzen wurden überflüssige Spalten (X1 und X1_1), welche wie bei den anderen Daten lediglich Zeilennummern darstellten, entfernt und der Anfangswert der ID_Fahrzeug in der Spalte "Fahrzeugtyp" für den späteren Vergleich gespeichert.
 
@@ -468,14 +468,15 @@ fahrzeug_oem2_typ22 <- fahrzeug_oem2_typ22 %>%
 
 ```
 
-### Zulassungen
+## Zulassungen
 
 In den "Zulassungen"-Daten wurden Beobachtungen mit fehlende ID-Werten gelöscht, da diese nicht verwertet werden können und Variablen umbenannt, um Joins zu erleichtern.
 
-### Geodaten
+## Geodaten
 
 Die Geodaten bringen besondere Anforderungen für die spätere Darstellung in der shiny-App mit sich:
-- Die Koordinaten sollten vom Typ double sein, um sie anschließend in der App von leaflet in der Kartendarstellung anzuzeigen
+
+- die Koordinaten sollten vom Typ double sein, um sie anschließend in der App von leaflet in der Kartendarstellung anzuzeigen
 - Postleitzahlen sollten 5 Zeichen und alle Gemeinden Deutschlands beinhalten
 
 Nach dem Import wurden die Umlaute korrigiert und Postleitzahlen in PLZ umbenannt. Die Postleitzahlen wurden als nächstes normiert, indem eine anführende "0"-Ziffer eingefügt wurde, wenn die PLZ weniger als 5 Ziffern hatte.
@@ -547,7 +548,7 @@ tier2_clean <- tier2  %>%
 
 ```
 
-## Erstellen des finalen Datensatzes für die Auswertung
+# Erstellen des finalen Datensatzes für die Auswertung
 
 Zu Erstellung des finalen Datensatzes mussten die Zusammenhänge zwischen den einzelnen Datensätze für die Auswertung relevanten Daten bekannt sein.
 
@@ -555,7 +556,7 @@ Die relationalen Tabellen verknüpfen die Einzelteile, Komponenten und Fahrzeug 
 
 Gegenstand der Analyse sind die Fahrzeuge, welche die Komponente "Ledersitze" (K2LE1 oder K2LE2) des Herstellers "111" sowie deren Einzelteile, die als fehlerhaft markiert sind, enthalten. Für die Auswertung und grafische Darstellung in der Shiny-App sind demnach entsprechende IDs zu den Fahrzeugen, Komponenten und Einzeiteilen, die Werksnummer und Koordinaten zu den Einzelteilen und Komponenten, Informationen, ob entsprechende Bauteile als fehlerhaft markiert sind oder nicht, sowie alle Zulassungsdaten für die Fahrzeuge relevant. Diese Informationen müssen für den finalen Datensatz anschließend auf den Komponentenhersteller "111" und Fahrzeuge, die entweder fehlerhafte Einzelteile oder Komponenten enthalten, gefiltert werden.
 
-### Zusammenführen der einzelnen Datensätze nach Kategorie
+## Zusammenführen der einzelnen Datensätze nach Kategorie
 
 Zunächst mussten die einzelnen Datensätze der Kategorien "Einzelteil", "Komponente" und "Fahrzeug" sowie deren relationalen Tabellen "Bestandteile_Komponente" und "Bestandteile_Fahrzeug" jeweils in einem Datensatz zusammengeführt werden. Da die Spaltennamen und -anzahlen in vorangegangen Schritten entsprechend vereinheitlicht wurden, konnte jeweils die Funktion bind_rows() angewandt werden. 
 
@@ -662,13 +663,11 @@ if(all(all_fahrzeuge$id_richtig_fahrzeuge == TRUE)){
 
 ```
 
-### Joining mit relationalen Datensätzen und Transforming
+## Joining mit relationalen Datensätzen und Transforming
 
 Die "Einzelteil"-Datensätze sind mit den Komponenten über die relationalen Tabellen "Bestandteile_Komponenten" durch die Schlüsselvariable "ID_Einzelteile" verknüpft. Analog dazu sind die Komponenten mit den Fahrzeugen über "Fahrzeug_Bestandteile" durch die Variable "ID_Fahrzeug" verknüpft.
 
 Zur Zusammenführung wurde zunächst jeweils ein right_join() auf Einzelteile und Relationstabelle und Fahrzeuge mit Relationstabelle über die entsprechenden Schlüsselvariablen angewandt, um respektiv alle relevanten Komponenten (Ledesitze) und alle Fahrzeuge, die diese enthalten, zu behalten und die dazugehörigen Informationen zu Einzelteilen und Fahrzeugen zu erhalten. Zusätzlich wurden die Werte der Spalte "Produktionsdatum" und "Fehlerhaft_Datum" in ein einheitliches Date-Format transformiert. 
-
-
 
 ```{r join relational tables, results = 'hide', message= FALSE, warning = FALSE, cache=TRUE}
 # right_join to keep all relevant Komponenten (leather seats) and the related Einzelteile, transform dates in correct class and format
@@ -683,7 +682,7 @@ fahrzeuge_rel <- right_join(all_fahrzeuge, fahrzeug_bestandteile, by = "ID_Fahrz
 
 ```
 
-### Joining der Datensätze mit Geodaten und Transforming
+## Joining der Datensätze mit Geodaten und Transforming
 
 Im nächsten Schritt galt es die Datensätze, die Werksinformationen (Einzelteile, Komponenten und Fahrzeuge) enthalten, mit den entsprechenden Geodaten zu verbinden.
 
@@ -722,7 +721,7 @@ if(any(is.na(fahrzeuge_geo))==TRUE) {
 
 ```
 
-### Finaler Datensatz
+## Finaler Datensatz
 
 Im letzten Abschnitt zum finalen Datensatz wurden die Einzelteile-Geodaten, Komponenten-Geodaten und Fahrzeuge-Geodaten nacheinander mittels full_join() über die Schlüsselvariable "ID_Komponente" verbunden, um alle Daten um die relevanten Komponenten herum zu erhalten. Da die drei Datensätze teilweise dieselben Spaltennamen hatten, mussten sie mittels suffix = c("_Einzelteil", "_Komponente") unterschieden werden. Entsprechende Spaltennamen für die Fahrzeugdaten wurden nachträglich mittels der Funktion rename() kenntlich gemacht.
 
@@ -828,22 +827,24 @@ Weitere Zusammenhänge sind im Zuge der grafischen Analyse mittels Shiny-App zu 
 Shiny ist ein Werkzeug aus der R- und RStudio-Umgebung zur interaktiven Präsentation von Analyseergebnissen. Es erlaubt die Erstellung von interaktiven Web-Applikationen, welche durch die Ausgabe im HTML-Format u.a. online oder im firmeneigenen Netzwerk verteilt werden können. Durch die Bedienung vorgefertigter Widgets und die automatische Konvertierung in HTML-Format werden zwar grundsätzlich keine Vorkenntnisse zu HTML oder JavaScript benötigt, die Shiny-App ist jedoch beliebig mit CSS, HTML und JavaScript erweiterbar.
 
 Shiny-Applikationen setzen sich grundsätzlich aus vier Teilen zusammen:
-- Den Aufruf der Bibliothek mittels library(shiny)
-- Die Erstellung des HTML-User-Interfaces (UI) über ui <- fluidPage()
-- Dem server zur Definition der Funktionen der im UI dargestellten Objekte
-- Der shinyApp, welche ui und server zur funktionsfähigen App kombiniert
+
+- den Aufruf der Bibliothek mittels library(shiny)
+- die Erstellung des HTML-User-Interfaces (UI) über ui <- fluidPage()
+- dem server zur Definition der Funktionen der im UI dargestellten Objekte
+- der shinyApp, welche ui und server zur funktionsfähigen App kombiniert
 
 Im Kern nimmt das UI Inputs des Nutzers auf und gibt diese an den Server, welcher daraus reaktive Outputs erzeugt, weiter. Die Ergebnisse werden dann wiederum dem Nutzer im UI dargestellt.
 
 ## Anforderungen an die fallbezogene Shiny-App
 
 Zur Darstellung der Ergebnisse dieser Fallstudie muss die Applikation folgende Kriterien erfüllen:
-- Alle verwendeten Packages müssen auf der aktuellen R-Version lauffähig sein
-- Die Applikation muss ohne weitere Anpassungen mit dem beigefügten Datensatz gestartet werden können
-- Die Applikation bezieht sich auf einen einzelnen aufbereiteten Datensatz
-- Das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Unternehmensfarbe ("TU Berlin-Rot") entsprechen
-- Ein Logo des Fachgebiets Qualitätswissenschaft soll in das Layout integriert werden
-- Die Schriftart der Applikation soll angepasst werden
+
+- alle verwendeten Packages müssen auf der aktuellen R-Version lauffähig sein
+- die Applikation muss ohne weitere Anpassungen mit dem beigefügten Datensatz gestartet werden können
+- die Applikation bezieht sich auf einen einzelnen aufbereiteten Datensatz
+- das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Unternehmensfarbe ("TU Berlin-Rot") entsprechen
+- ein Logo des Fachgebiets Qualitätswissenschaft soll in das Layout integriert werden
+- die Schriftart der Applikation soll angepasst werden
 
 ```{r shiny app}
 
@@ -862,6 +863,7 @@ Zur Darstellung der Ergebnisse dieser Fallstudie muss die Applikation folgende K
 ```
 
 Die Visualisierung der Datenauswertung in der Shiny-App soll folgende Bestandteile haben:
+
 - einen Graphen, der den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in den Gemeinden darstellt
 - eine Heatmapdarstellung zur Visualisierung von Schadensschwerpunkten
 - Popups in der Kartendarstellung, die Informationen zu den zugelassenen Fahrzeugen enthalten
@@ -874,6 +876,7 @@ Zusätzlich soll die Auswahl und Ausgabe eines betroffenen Fahrzeugs für den Fa
 ## User Interface
 
 Grundsätzlich gliedert sich das User-Interface in zwei Bestandteile, welche über Tabs voneinander getrennt sind:
+
 - ein Interface für Fahrzeughalter
 - ein Interface für Fahrzeughersteller
 
@@ -882,6 +885,7 @@ Die Tabs dienen der anwenderspezifischen Isolierung der Datenauswertung.
 Das UI für Fahrzeughalter beinhaltet lediglich die Suche nach einzelnen, von defekten Ledersitzes des Herstellers "111" betroffenen Fahrzeugen. 
 
 Das UI für Fahrzeughersteller ist hingegen umfangreicher und stellt sämtliche Daten zu allen Fahrzeugen, die von defekten Ledersitzen des Herstellers "111" betroffen sind, und deren Analyse dar. Es beinhaltet die folgenden vier Teilbereiche:
+
 - den Graphen für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge
 - Auswahlfilter für den Zulassungszeitraum, die Gemeinden und Bauteile
 - die interaktive Kartendarstellung mit Schadenschwerpunkten als Heatmap, geclusterten Markierungspunkten für die zugelassenen Fahrzeugen sowie Lieferketten von den Herstellern zum Zulassungsort
@@ -894,6 +898,7 @@ Die einzelnen Bestandteile des UI werden in folgenden Abschnitten näher beschri
 Mittels Eingabe der Fahrzeug-ID über das Suchfeld kann der Fahrzeughalter ermitteln, ob das Fahrzeug von defekten Ledersitzen der Herstellers "111" betroffen ist oder nicht.
 
 Als Output wird dargestellt:
+
 - ob das Fahrzeug betroffen ist,
 - welche Bauteile betroffen sind,
 - in welchem Werk die Bauteile hergestellt wurden.
@@ -924,7 +929,7 @@ Durch die Auswahl von Bauteilen wird die Darstellung der Lieferwege in der Karte
 
 Die "Open Street Map", für deren Anzeige eine bestehende Internetverbindung benötigt wird, stellt die Deutschlandkarte mit drei verschiedenen Schichten, die aus den ausgewählten Daten generiert werden, dar. Die Schichten sind im einzelnen über ein Auswahlfeld aus- und einblendbar.
 
-Die unterste Schicht bildet eine Heatmap mit den über das Bundesgebiet verteilten Schadensschwerpunkten ab. EIne rote Verfärbung stellt demnach eine räumlich hohe Konzentration von mit fehlerhaften Bauteilen betroffenen Fahrzeugen dar, während eine blaue Verfärbung eine räumlich niedrigere Konzentration bedeutet. In Regionen ohne Verfärbung befinden sich keine betroffenen Fahrzeuge.
+Die unterste Schicht bildet eine Heatmap mit den über das Bundesgebiet verteilten Schadensschwerpunkten ab. Eine rote Verfärbung stellt demnach eine räumlich hohe Konzentration von mit fehlerhaften Bauteilen betroffenen Fahrzeugen dar, während eine blaue Verfärbung eine räumlich niedrigere Konzentration bedeutet. In Regionen ohne Verfärbung befinden sich keine betroffenen Fahrzeuge.
 
 In der mittleren Schicht liegen Cluster-Marker. Die einzelnen Marker repräsentieren jeweils ein betroffenes Fahrzeug und markieren den genauen Zulassungsort auf der Karte. Je nach Zoom-Ausrichtung der Karte, werden mehrere Marker in Clustern zusammengefasst. Popups aus den einzelnen Markern stellen nach dem Anklicken relevante Zulassungs- und Bauteilinformationen zu den Fahrzeugen dar.
 
@@ -981,6 +986,7 @@ Ergebnis
 # Aufgabe 6
 
 Im Abgabeordner sollen folgende Dateien zu finden sein, XX ist mit der Gruppennummer zu ersetzen:
+
 - Final_Data_Group_XX
 - General_Tasks_Group_XX.rmd
 - General_Tasks_Group_XX.html
