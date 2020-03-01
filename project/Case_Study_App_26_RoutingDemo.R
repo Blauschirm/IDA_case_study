@@ -202,11 +202,15 @@ ui <- fluidPage(
                            titlePanel("Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile"),
                            
                            fluidRow(
-
+                             style = "margin-bottom: 16px;",
                              # Reset map position
-                             column(12, 
-                                    offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
+                             column(6,
+                                    align = 'right',
                                     "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
+                                    style = "text-align: left"
+                                    ),
+                             column(6, 
+                                    offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                                     actionButton(inputId = "reset", "Position zurücksetzen")
                              )
                            ),
