@@ -76,8 +76,27 @@ start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Z
 
 ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
 
-  mainPanel(width="100%", style='font-family: Arial;',
+
+  mainPanel(width="100%", #style='font-family: Arial;',
    
+  tags$head(
+    tags$style(HTML("
+      @import url('//fonts.googleapis.com/css?family=Ubuntu|Cabin:400,700');
+      
+      h2 {
+        font-family: 'Ubuntu', cursive;
+        font-weight: 500;
+        line-height: 1.1;
+        color: #428BCA;
+      }
+      
+      #DataTables_Table_1_paginate {
+        margin-top: 25px
+      }
+
+    "))
+  ),
+    
     # Header panel
     wellPanel(
       
@@ -173,8 +192,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                     (h4("Betroffene Bauteile")),
                                     
                                     # Display ID-search by ID_einzelteile & ID_Komponente
-                                    dataTableOutput('datatable_bauteile'),
-                                    style="#DataTables_Table_1_paginate{margin-top: 25px}" 
+                                    dataTableOutput('datatable_bauteile')
                                     
                                     # Select map type
                                     # selectizeInput(
