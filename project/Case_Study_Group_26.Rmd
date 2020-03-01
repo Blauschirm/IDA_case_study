@@ -23,6 +23,10 @@ output:
   p {
     font-size: 16px;
   }
+  
+  .caption {
+    font-style: italic;
+  }
 
   /* Header */
 
@@ -929,15 +933,15 @@ Als Output wird dargestellt:
 
 Bei fehlerhafter Eingabe der Fahrzeug-ID erscheint die Meldung "Fahrzeug-ID existiert nicht". Die direkte Eingabe ohne Unterstützung von Shiny unterstützt hier den Datenschutz der anderen Autobesitzer.
 
-```{r pressure, echo=FALSE, fig.cap="Fahrzeugsuche Standardansicht", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Fahrzeugsuche Standardansicht", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Tab1ANSICHT.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Die Fahrzeugsuche ist nicht enthalten: Fahrzeug nicht betroffen", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Die Fahrzeugsuche ist nicht enthalten: Fahrzeug nicht betroffen", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Tab1NICHTbetroffen.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Ausgabe, wenn Fahrzeug betroffen ist", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Ausgabe, wenn Fahrzeug betroffen ist", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Tab1ANSICHT.png")
 ```
 
@@ -945,7 +949,7 @@ knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Tab1ANSICHT.png"
 
 Der Graph stellt dem Fahrzeughersteller den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in Form eines Barplots dar. Der Barplot repräsentiert die Häufigkeitsverteilung fehlerhafter Fahrzeuge über den ausgewählten Zulassungszeitraum. Die Höhe der Balken stellt dabei die absolute Anzahl betroffener Anzahl je Zulassungsmonat dar. Die einzelnen Balken sind nach den vier Fahrzeugherstellern (OEM) aufgegliedert, wobei jeder OEM durch eine feste Balkenfarbe repräsentiert wird.
 
-```{r pressure, echo=FALSE, fig.cap="Balkendiagramm Standardansicht", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Balkendiagramm Standardansicht", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/BarplotFULL.png")
 ```
 
@@ -957,7 +961,7 @@ In der Kartendarstellung werden durch die Auswahl des Zulassungszeitraums ledigl
 
 Standardmäßig ist der gesamte Zulassungszeitraum aller Fahrzeugdaten festgelegt.
 
-```{r pressure, echo=FALSE, fig.cap="Balkendiagramm nach Filtern des Zulassungszeitraums", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Balkendiagramm nach Filtern des Zulassungszeitraums", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/BarplotDATUMFILTER.png")
 ```
 
@@ -965,23 +969,23 @@ knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/BarplotDATUMFILT
 
 In Form von DataTables wird separat nach Gemeinden und in betroffenen Fahrzeugen enthaltenten Bauteilen gesucht. Ein allgemeiner Suchfilter mit Texteingabe ermöglicht die Suche nach Postleitzahlen oder Gemeinden bzw. in der Bauteilsuche nach Einzelteil-, Komponenten- oder Fahrzeug-IDs. Eine Auswahl der Tabellenzeilen filtert die Daten, die ausgewertet und dargestellt werden. Hierbei ist eine Mehrfachauswahl möglich und die ausgewählten Zeilen werden farblich hervorgehoben. Die Abwahl der markierten Zeilen durch erneutes Anklicken hebt die Filter einzeln wieder auf.
 
-```{r pressure, echo=FALSE, fig.cap="Suchfilter Standardansicht", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Suchfilter Standardansicht", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/filterZURUECK.png")
 ```
 
 Eine Auswahl einzelner Gemeinden filtert die ausgewerteten Daten sowohl für das Balkendiagramm als auch die Kartendarstellung. In der Kartendarstellung werden durch die Auswahl von Gemeinden lediglich die dargestellten Cluster-Marker für Fahrzeugstandort beeinflusst. In der Tabelle wird für die jeweiligen Gemeinden zusätzlich die Anzahl der zugelassenen betroffenen Fahrzeuge angezeigt.
 
-```{r pressure, echo=FALSE, fig.cap="Auswahl einer Gemeinde: Aachen", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Auswahl einer Gemeinde: Aachen", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/AuswahlAACHEN.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Balkendiagramm nach Auswahl der Gemeinde Aachen", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Balkendiagramm nach Auswahl der Gemeinde Aachen", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/BarplotAACHEN.png")
 ```
 
 Durch die Auswahl von Bauteilen wird die Darstellung der Lieferwege in der Kartendarstellung generiert. Die Auswahl der Bauteile filtert lediglich die für die Kartendarstellung ausgewerteten Daten und nicht die des Balkendiagramms, da eine grafische Darstellung der Fahrzeugzulassungen nach einzelnen Bauteilen keine gewinnbringende Information liefert und Bauteile je Fahrzeug über die Datentabellen ermittelt werden können.
 
-```{r pressure, echo=FALSE, fig.cap="Auswahl mehrerer Bauteile", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Auswahl mehrerer Bauteile", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/AuswahlBAUTEIL.png")
 ```
 
@@ -989,27 +993,27 @@ knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/AuswahlBAUTEIL.p
 
 Die "Open Street Map", für deren Anzeige eine bestehende Internetverbindung benötigt wird, stellt die Deutschlandkarte mit drei verschiedenen Schichten, die aus den ausgewählten Daten generiert werden, dar. Die Schichten sind im einzelnen über ein Auswahlfeld aus- und einblendbar.
 
-```{r pressure, echo=FALSE, fig.cap="Kartendarstellung Standardansicht", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Kartendarstellung Standardansicht", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/KarteALL.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Karte mit Heatmap und Clustern gezoomt", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Karte mit Heatmap und Clustern gezoomt", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/KarteALLzoom.png")
 ```
 
 Die unterste Schicht bildet eine Heatmap mit den über das Bundesgebiet verteilten Schadensschwerpunkten ab. Eine rote Verfärbung stellt demnach eine räumlich hohe Konzentration von mit fehlerhaften Bauteilen betroffenen Fahrzeugen dar, während eine blaue Verfärbung eine räumlich niedrigere Konzentration bedeutet. In Regionen ohne Verfärbung befinden sich keine betroffenen Fahrzeuge.
 
-```{r pressure, echo=FALSE, fig.cap="Karte nur mit Heatmap", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Karte nur mit Heatmap", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/KarteHEATMAPonly.png")
 ```
 
 In der mittleren Schicht liegen Cluster-Marker. Die einzelnen Marker repräsentieren jeweils ein betroffenes Fahrzeug und markieren den genauen Zulassungsort auf der Karte. Je nach Zoom-Ausrichtung der Karte, werden mehrere Marker in Clustern zusammengefasst. Popups aus den einzelnen Markern stellen nach dem Anklicken relevante Zulassungs- und Bauteilinformationen zu den Fahrzeugen dar.
 
-```{r pressure, echo=FALSE, fig.cap="Karte nur mit Clustern", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Karte nur mit Clustern", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/KarteCLUSTERonly.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Marker für zugelassene Fahrzeuge mit Popup-Informationen", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Marker für zugelassene Fahrzeuge mit Popup-Informationen", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/KarteALLzoom2.png")
 ```
 
@@ -1017,23 +1021,23 @@ Die oberste Schicht stellt nach Auswahl von Bauteilen bzw. betroffenen Fahrzeuge
 
 Die Lieferkettendarstellung wird erst bei Auswahl mindestens eines Bauteils generiert.
 
-```{r pressure, echo=FALSE, fig.cap="Auswahl eines Bauteils und die generierte Lieferkette", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Auswahl eines Bauteils und die generierte Lieferkette", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/Lieferweg1.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Generierte Lieferketten aus mehrfacher Bauteilauswahl", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Generierte Lieferketten aus mehrfacher Bauteilauswahl", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/LieferwegMEHR2.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Popup-Informationen zum Komponentenhersteller", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Popup-Informationen zum Komponentenhersteller", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/LieferPOPUP.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Popup-Informationen zum Einzelteilhersteller", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Popup-Informationen zum Einzelteilhersteller", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/LieferPOPUP2.png")
 ```
 
-```{r pressure, echo=FALSE, fig.cap="Popup-Informationen zum Lieferziel: Fahrzeughalter", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Popup-Informationen zum Lieferziel: Fahrzeughalter", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/LieferPOPUP3.png")
 ```
 
@@ -1044,7 +1048,7 @@ Zur Überprüfung der Balkendiagramm- und Kartendarstellung wird der vollständi
 
 Zur Nutzerfreundlichkeit generiert diese Datentabelle ebenfalls die Lieferwege in der Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Bauteilsuche.
 
-```{r pressure, echo=FALSE, fig.cap="Auswahl eines Fahrzeugs aus vollständigem Datensatz und Lieferweg", out.width = '100%'}
+```{r , echo=FALSE, fig.cap="Auswahl eines Fahrzeugs aus vollständigem Datensatz und Lieferweg", out.width = '100%'}
 knitr::include_graphics("Zusaetzliche_Dateien/markdown_pictures/AuswahlDATAFULL.png")
 ```
 
@@ -1084,7 +1088,7 @@ Die UI wird als geschachtelte Kombination verschiedener bootstrap Elemente kombi
 
 Diese Funktionalität wird in der vorliegenden App für die Auswahl von Daten über die Tabellen und die Datumsauswahlt verwendet.
 
-Der in der Server Funktion platzierte Code wird im Falle von nicht lokal gehosteten webservern, auf dem Server statt bei dem Klienten im Browser ausgeführt. Daher bietet es sich beispielsweise auch an Datenintensive Aufgaben wie das durchsuchen des gesamten Datensatzes auf dem Server auszuführen, statt erst die gesamten Daten an den Klienten zu übertragen. Bei unserer App wurde darauf Wert gelegt, möglichst alle Kalkulationen auf Serverseite durchzuführen.
+Der in der Server Funktion platzierte Code wird im Falle von nicht lokal gehosteten webservern auf dem Server statt bei dem Klienten im Browser ausgeführt. Daher bietet es sich beispielsweise auch an Datenintensive Aufgaben wie das durchsuchen des gesamten Datensatzes auf dem Server auszuführen, statt erst die gesamten Daten an den Klienten zu übertragen. Bei unserer App wurde darauf Wert gelegt, möglichst alle Kalkulationen auf Serverseite durchzuführen.
 
 
 ### Reaktive Funktionen
@@ -1135,3 +1139,6 @@ Zur Ausführung der Shiny-Applikation werden folgende Dateien benötigt:
 
 - Final_Data_Group_26.RData
 - Case_study_App_26.r
+```{r, eval = FALSE}
+
+```
