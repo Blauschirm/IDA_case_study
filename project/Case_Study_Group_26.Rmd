@@ -57,6 +57,12 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+# set cran mirror for package installs
+local({r <- getOption("repos")
+  r["CRAN"] <- "http://cran.r-project.org" 
+  options(repos=r)
+})
+
 if(!require(rmdformats)){
   install.packages("rmdformats")
 }

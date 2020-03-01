@@ -1,3 +1,9 @@
+# set cran mirror for package installs
+local({r <- getOption("repos")
+  r["CRAN"] <- "http://cran.r-project.org" 
+  options(repos=r)
+})
+
 if (!require(shiny)) {
   install.packages("shiny")
 }
