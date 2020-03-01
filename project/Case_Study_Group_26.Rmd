@@ -15,8 +15,13 @@ output:
 
   /* Text */
   
-  font-family: "Latin Modern"
+  body, h1, h2, h3, h4, p {
+    font-family: "Helvetica";
+  }
   
+  p {
+    font-size: 16px;
+  }
 
   /* Header */
 
@@ -31,6 +36,9 @@ output:
   
   /* Tabellen */
   
+  table {
+    font-size: 14px;
+  }
   table thead {
     border-bottom-style: solid;
     border-bottom-width: 1px;
@@ -52,7 +60,7 @@ knitr::opts_chunk$set(echo = TRUE)
 if(!require(rmdformats)){
   install.packages("rmdformats")
 }
-library("rmdformats")
+library(rmdformats)
 
 ```
 
