@@ -121,7 +121,7 @@ import_table <- cbind(a,b,c,d)
 colnames(import_table) <- c("Einzelteile", "Komponenten und Fahrzeuge", "Relationale Tabellen", "Zulassungen und Geodaten")
 
 # print table in markdown
-kable(import, caption = "Importierte Daten")
+kable(import_table, caption = "Importierte Daten")
 
 ```
 
