@@ -57,6 +57,7 @@ library(glue)
 load("Datensatz_tidy.RData")
 
 # Subset the data for debugging: reducing the amount of data to be loaded
+
 # final_joined <- final_joined[c(sample(nrow(final_joined), 1001)), ] # shouldn't not be lower than filter limit for markers
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge (used in both UI and Server)
@@ -503,8 +504,8 @@ server <- function(input, output, session) {
   #### Data Preparation for the rendering of (1) heatmap with (2) markers and (3) supply routes
   
   # 1. Create datapoints for the heatmap
-  treshold_fehleranzahl <-
-    10 # recommended values: 1, 10, 20, 40, ...
+
+  threshold_fehleranzahl <- 10 # recommended values: 1, 10, 20, 40, ...
   datapoints_heat <- reactive({
     subset(
       final_joined,
@@ -515,7 +516,7 @@ server <- function(input, output, session) {
       summarise(fehleranzahl = n())  %>%
       ungroup()  %>%
       #select(-Gemeinde)  %>%
-      filter(fehleranzahl > treshold_fehleranzahl)
+      filter(fehleranzahl > threshold_fehleranzahl)
   })
   
   # 2.
@@ -629,7 +630,7 @@ server <- function(input, output, session) {
         lat = ~ Breitengrad,
         intensity = ~ fehleranzahl,
         blur = 12,
-        max = 300,
+        max = 500,
         radius = 16,
         group = "Heatmap"
       ) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
