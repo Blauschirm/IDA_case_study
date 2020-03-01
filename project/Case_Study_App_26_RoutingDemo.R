@@ -56,7 +56,7 @@ load("Datensatz_tidy.RData")
 #n <- 15679 # Test size
 max <- 322075 # Number of observations
 n <-   3220
-radius_factor <- 20000 # 700
+radius_factor <- 40000 # 700
 
 
 #final_joined_error <- final_joined[c(n-1, n, n+1), ]
@@ -202,14 +202,9 @@ ui <- fluidPage(
                            titlePanel("Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile"),
                            
                            fluidRow(
-                             # check boxes for different visualisations on the map
-                             column(3,
-                                    checkboxGroupInput("checkbox_fahrzeuge", "Kartenebenen auswählen", 
-                                                       inline = FALSE,
-                                                       choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
-                             ),
+
                              # Reset map position
-                             column(9, 
+                             column(12, 
                                     offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                                     "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
                                     actionButton(inputId = "reset", "Position zurücksetzen")
@@ -603,8 +598,11 @@ server <- function(input, output, session) {
                    group = facitily_group_name) %>%
         
         #Display tier1 facilities with custom icon
-        addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
-                   group = facitily_group_name,
+        addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, group = facitily_group_name,
+                   icon = ~ icons(
+                     iconUrl = './Zusaetzliche_Dateien/facility_icon.png',
+                     iconWidth = 40, iconHeight = 25,
+                   ),
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
                    popup = ~paste(
@@ -623,11 +621,12 @@ server <- function(input, output, session) {
         )  %>%
         
         # Display tier2 facilities with custom icon
-        addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = 'Icon',# filtered_data_dots(), ~lat_via, ~lng_via,
-                   group = facitily_group_name,
-                   #display large amounts of markers as clusters
-                   #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
-                   popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
+        addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, group = facitily_group_name,
+                   icon = ~ icons(
+                     iconUrl = './Zusaetzliche_Dateien/facility_icon.png',
+                     iconWidth = 40, iconHeight = 25,
+                   ),
+                  popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
                                   popupTable(tier2_werke(), feature.id = FALSE, row.numbers = FALSE,
                                              zcol = c(
                                                'Werksnummer_Komponente',
@@ -641,13 +640,18 @@ server <- function(input, output, session) {
                    ),
                    popupOptions = popupOptions(minWidth = 360)
         )
+      
       # Add marker for car location
       filtered_vehicles_tmp <- filtered_parts_limited()
 
       if(!is.null(filtered_parts_limited)){
         for(i in 1:nrow(filtered_vehicles_tmp)){
-          leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
-                                    group = "Lieferwege",
+          leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, group = "Lieferwege",
+                                    icon = ~ icons(
+                                      iconUrl = './Zusaetzliche_Dateien/marker_icon.png',
+                                      iconWidth = 35, iconHeight = 40,
+                                      iconAnchorX = 17, iconAnchorY = 40
+                                    ),
                                     #display large amounts of markers as clusters
                                     clusterOptions = markerClusterOptions(),
                                     popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
@@ -664,7 +668,7 @@ server <- function(input, output, session) {
     #Layer control
     leaflet_map <- leaflet_map %>%
       addLayersControl(
-        overlayGroups = c("Heatmaps", "Cluster Marker", "Lieferwege"),
+        overlayGroups = c("Heatmap", "Cluster Marker", "Lieferwege"),
         options = layersControlOptions(collapsed = FALSE)
       )
     
