@@ -1,6 +1,7 @@
 ---
 title: "Case Study zur Analyse der Lieferkette defekter Fahrzeugkomponenten"
-author: 'Gruppe 26, Kurs: Introduction to Data Analytics with R, TU Berlin'
+subtitle: "Kurs: Introduction to Data Analytics with R, TU Berlin"
+author: "Gruppe 26 | Maximilian Botschen, Dejan Zinonjic, Jan Kursawe, Julia Scharz, Lin Cheung"
 date: "WS 19/20, 28.2.2020"
 output:
   html_document:
@@ -15,8 +16,13 @@ output:
 
   /* Text */
   
-  font-family: "Latin Modern"
+  body, h1, h2, h3, h4, p {
+    font-family: "Helvetica";
+  }
   
+  p {
+    font-size: 16px;
+  }
 
   /* Header */
 
@@ -31,6 +37,9 @@ output:
   
   /* Tabellen */
   
+  table {
+    font-size: 14px;
+  }
   table thead {
     border-bottom-style: solid;
     border-bottom-width: 1px;
@@ -49,10 +58,16 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+# set cran mirror for package installs
+local({r <- getOption("repos")
+  r["CRAN"] <- "http://cran.r-project.org" 
+  options(repos=r)
+})
+
 if(!require(rmdformats)){
   install.packages("rmdformats")
 }
-library("rmdformats")
+library(rmdformats)
 
 ```
 
