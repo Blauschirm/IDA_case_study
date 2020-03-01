@@ -603,7 +603,7 @@ server <- function(input, output, session) {
                    group = facitily_group_name) %>%
         
         #Display tier1 facilities with custom icon
-        addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
+        addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,# icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
                    group = facitily_group_name,
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
@@ -623,7 +623,7 @@ server <- function(input, output, session) {
         )  %>%
         
         # Display tier2 facilities with custom icon
-        addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = 'Icon',# filtered_data_dots(), ~lat_via, ~lng_via,
+        addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,# icon = 'Icon',# filtered_data_dots(), ~lat_via, ~lng_via,
                    group = facitily_group_name,
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
