@@ -58,13 +58,10 @@ max <- 322075 # Number of observations
 n <-   3220
 radius_factor <- 20000 # 700
 
-#auswahl <- seq(x, n, by=x) # subset data
 
 #final_joined_error <- final_joined[c(n-1, n, n+1), ]
 
 # Subset the data
-#final_joined <- final_joined[beispiel, ]
-#final_joined <- final_joined[c(beispiel, 1:(n-8)), ]
 final_joined <- final_joined[c(sample(nrow(final_joined), 10000), beispiel),]
 
 # Filter rows to display only distinct ID_Fahrzeug values: fahrzeuge
@@ -73,16 +70,19 @@ all_vehicles <- final_joined[!duplicated(final_joined$ID_Fahrzeug), ]
 # save start and date of all zulassungen in a vector
 start_end_dates <- c( min(all_vehicles$Zulassungsdatum) - 28, max(all_vehicles$Zulassungsdatum) + 28 )
 
+ui <- fluidPage(
 
-ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerulean"),
 
-
-  mainPanel(width="100%", #style='font-family: Arial;',
+  mainPanel(width="100%",
    
   tags$head(
     tags$style(HTML("
       @import url('//fonts.googleapis.com/css?family=Ubuntu|Cabin:400,700');
       
+      body {
+        font-family: 'Ubuntu';
+      }
+     
       h2 {
         font-family: 'Ubuntu';
         font-weight: 500;
@@ -456,7 +456,7 @@ server <- function(input, output, session) {
     if(!is.null(filtered_parts_limited())){
       supply_routes <- filtered_parts_limited()
       
-      df = data.frame(id = 1:nrow(supply_routes), # 1:length(beispiel)
+      df = data.frame(id = 1:nrow(supply_routes),
                       lat_begin = supply_routes$Breitengrad_Einzelteil,
                       lat_via = supply_routes$Breitengrad_Komponente,
                       lat_end = supply_routes$Breitengrad,
