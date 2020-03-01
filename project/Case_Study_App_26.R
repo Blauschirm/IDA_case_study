@@ -229,25 +229,22 @@ server <- function(input, output, session) {
   
   # Filter parts with the three datatables
   filtered_parts <- reactive({
-    tmp <- final_joined
     
-    # subset on dataset based on chosen period in sliderInput for Zulassungensdatum
-    tmp <- subset(tmp, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
+    # the selections of the tables add to the filtered dataset
+    gemeinden_filtered <- filter(final_joined, (PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ))
+    bigtable_filtered <- final_joined[input$datatable_final_joined_rows_selected,]
+    bauteiltable_filtered <- final_joined[input$datatable_bauteile_rows_selected,]
     
-    if(length(input$datatable_gemeinden_rows_selected)){
-      tmp <- filter(tmp, (PLZ %in% gemeinden[input$datatable_gemeinden_rows_selected,]$PLZ))
+    final_filtered <- bind_rows(gemeinden_filtered, bigtable_filtered, bauteiltable_filtered)
+    
+    if (nrow(final_filtered) == 0){
+      final_filtered <- final_joined
+    } else {
+      # finally the filtered dataset is reduced by the time slider
+      final_filtered <- subset(final_filtered, Zulassungsdatum >= input$slider_zulassungsperiode[1] & Zulassungsdatum <= input$slider_zulassungsperiode[2])
     }
-    if(length(input$datatable_final_joined_rows_selected)){
-      tmp <- tmp[input$datatable_final_joined_rows_selected,]
-    }
-    if(length(input$datatable_bauteile_rows_selected)){
-      tmp <- tmp[input$datatable_bauteile_rows_selected,]
-    }
     
-    # print("                   FILTERED PARTS:                         ")
-    # print(str(tmp))
-    
-    tmp
+    final_filtered
   })
   
   # Only draw the polylines and overlays for the first n parts
