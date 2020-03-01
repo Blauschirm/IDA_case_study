@@ -821,7 +821,8 @@ server <- function(input, output, session) {
       addLayersControl(
         overlayGroups = c("Heatmap", "Cluster Marker", "Lieferwege"),
         options = layersControlOptions(collapsed = FALSE)
-      )
+      ) %>%
+      hideGroup("Heatmap")
     
     # Return leaflet_map with all layers to render_leaflet()
     leaflet_map
