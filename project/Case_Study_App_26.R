@@ -201,16 +201,10 @@ ui <- fluidPage(
                          wellPanel(
                            titlePanel("Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile"),
                            
-                           fluidRow(
-                             style = "margin-bottom: 16px;",
-                             # Reset map position
-                             column(6,
-                                    align = 'right',
+                           fluidRow( style = "margin-bottom: 10px;",
+                             # Reset map position 
+                             column(12, offset= 0, align = 'right',
                                     "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
-                                    style = "text-align: left"
-                                    ),
-                             column(6, 
-                                    offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                                     actionButton(inputId = "reset", "Position zurücksetzen")
                              )
                            ),
@@ -562,40 +556,40 @@ server <- function(input, output, session) {
       facitily_group_name = "Lieferwege"
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       leaflet_map <- leaflet_map %>%
-        addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
-                   color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
-                   radius = tier1_werke()$'Einzelteile geliefert'*radius_factor,
-                   group = facitily_group_name) %>%
-        
-        # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
-        addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
-                   color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
-                   radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor,
-                   group = facitily_group_name) %>%
-        
-        # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
-        addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                   color = 'white', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-                   radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3,
-                   group = facitily_group_name) %>%
-        
-        # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
-        addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                   color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-                   radius = tier2_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor/3,
-                   group = facitily_group_name) %>%
-        
-        # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
-        addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                   stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
-                   radius = tier2_werke()$'Defekte Sitze hergestellt'*radius_factor/3,
-                   group = facitily_group_name) %>%
-        
-        # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
-        addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
-                   stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
-                   radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3,
-                   group = facitily_group_name) %>%
+        # addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
+        #            color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
+        #            radius = tier1_werke()$'Einzelteile geliefert'*radius_factor,
+        #            group = facitily_group_name) %>%
+        # 
+        # # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
+        # addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
+        #            color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
+        #            radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor,
+        #            group = facitily_group_name) %>%
+        # 
+        # # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
+        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+        #            color = 'white', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+        #            radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3,
+        #            group = facitily_group_name) %>%
+        # 
+        # # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
+        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+        #            color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
+        #            radius = tier2_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor/3,
+        #            group = facitily_group_name) %>%
+        # 
+        # # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
+        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+        #            stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
+        #            radius = tier2_werke()$'Defekte Sitze hergestellt'*radius_factor/3,
+        #            group = facitily_group_name) %>%
+        # 
+        # # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
+        # addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
+        #            stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
+        #            radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3,
+        #            group = facitily_group_name) %>%
         
         #Display tier1 facilities with custom icon
         addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, group = facitily_group_name,
