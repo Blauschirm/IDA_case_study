@@ -495,7 +495,7 @@ fahrzeug_oem2_typ22 <- fahrzeug_oem2_typ22 %>%
 
 ## Zulassungen
 
-In den "Zulassungen"-Daten wurden Beobachtungen mit fehlende ID-Werten gelöscht, da diese nicht verwertet werden können, und Variablen umbenannt, um Joins zu erleichtern.
+In den "Zulassungen"-Daten wurden Beobachtungen mit fehlenden ID-Werten gelöscht, da diese nicht verwertet werden können, und Variablen umbenannt, um Joins zu erleichtern.
 
 ## Geodaten
 
@@ -864,31 +864,6 @@ Shiny-Applikationen setzen sich grundsätzlich aus vier Teilen zusammen:
 Im Kern nimmt das UI Inputs des Nutzers auf und gibt diese an den Server, welcher daraus reaktive Outputs erzeugt, weiter. Die Ergebnisse werden dann wiederum dem Nutzer im UI dargestellt.
 
 ## Anforderungen an die fallbezogene Shiny-App
-
-Zur Darstellung der Ergebnisse dieser Fallstudie muss die Applikation folgende Kriterien erfüllen:
-
-- alle verwendeten Packages müssen auf der aktuellen R-Version lauffähig sein
-- die Applikation muss ohne weitere Anpassungen mit dem beigefügten Datensatz gestartet werden können
-- die Applikation bezieht sich auf einen einzelnen aufbereiteten Datensatz
-- das Layout der Applikation soll auf die Zielgruppe angepasst sein und der Unternehmensfarbe ("TU Berlin-Rot") entsprechen
-- ein Logo des Fachgebiets Qualitätswissenschaft soll in das Layout integriert werden
-- die Schriftart der Applikation soll angepasst werden
-
-```{r shiny app}
-
-## Die Shiny App befindet sich in der .R Datei.
-
-# Shiny UI
-
-# Shiny Server
-
-# Shiny App
-#runApp("Case_Study_App_26.r")
-```
-
-```{r run previous}
-# profiler stats
-```
 
 Die Visualisierung der Datenauswertung in der Shiny-App soll folgende Bestandteile haben:
 
