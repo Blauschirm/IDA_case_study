@@ -59,15 +59,17 @@ library("rmdformats")
 
 # Einleitung
 
-Das Ziel dieser Case Study ist die Verdeutlichung und Aufklärung von und über Produktionsproblemen eines Unternehmens "111", das Ledersitze für Automobilhersteller aus eingekauften Einzelteilen zusammenbaut. Nach Hinweis durch den Automobilhersteller auf Kundenreklamationen sollen von allen beteiligten Schritten der Kette vom Einzelteilhersteller bis zum Kunden Daten zu defekten Fahrzeugen zusammengetragen, aufbereitet und ausgewertet werden.
+Das Ziel dieser Case Study ist die Verdeutlichung und Aufklärung von und über Produktionsproblemen eines Komponentenherstellers "111", das Ledersitze für Fahrzeughersteller aus eingekauften Einzelteilen zusammenbaut. Nach Hinweis durch den Fahrzeughersteller auf Kundenreklamationen sollen von allen beteiligten Schritten der Kette vom Einzelteilhersteller bis zum Kunden Daten zu defekten Fahrzeugen zusammengetragen, aufbereitet und ausgewertet werden.
 
-Zusätzlich soll ein Tool generiert werden mit dessen Hilfe Automobilbesitzer anhand ihrer Zulassungsnummer überprüfen können ob ihr Fahrzeug von den Defekten betroffen ist.
-
-
+Zusätzlich soll ein Tool generiert werden mit dessen Hilfe Fahrzeughalter anhand ihrer Fahrzeugnummer überprüfen können ob ihr Fahrzeug von den Defekten betroffen ist.
 
 ## Benötigte Libraries
 
 ```{r libraries, message = FALSE, warning = FALSE}
+
+# check if needed packages are installed on the using machine. Install them, if not.
+# load packages with library()
+
 if(!require(knitr)){
   install.packages("knitr")
 }
@@ -94,7 +96,6 @@ if(!require(readr)){
 library(readr)
 ```
 
-
 # Importieren der Daten
 
 ## Auswahl der relevanten Daten
@@ -106,7 +107,8 @@ Dazu galt es zunächst, alle für die Analyse und Fehleridentifizierung relevant
 Um die Datensätze zu einem zusammenfassen, standen die relationalen Tabellen "Bestandteile_Komponente" (für Einzelteile und Komponenten) und "Bestandteile_Fahrzeug" (für Komponenten und Fahrzeuge) zur Verfügung.
 
 ```{r overview import, echo = FALSE, results = 'asis', cache=TRUE}
-# print overview of imported data as table in .Rmd document
+
+# create table for overview of imported data as table
 a <- c("Einzelteil_T11.txt", "Einzelteil_T14.csv", "Einzelteil_T15.csv", "Einzelteil_T16.txt", "Einzelteil_T19.csv", "Einzelteil_T20.txt")
 
 b <- c("Komponente_K2LE1.txt", "Komponente_K2LE2.txt", "Fahrzeuge_OEM1_Typ11.csv", "Fahrzeuge_OEM1_Typ12.csv", "Fahrzeuge_OEM1_Typ21.csv", "Fahrzeuge_OEM1_Typ22.csv")
@@ -115,9 +117,11 @@ c <- c("Bestandteile_Komponente_K2LE1.csv","Bestandteile_Komponente_K2LE2.csv", 
 
 d <- c("Zulassungen_alle_Fahrzeuge.csv", "Tier1_Werke_2017-07-11_v1.2_TrR.csv", "Tier2_Werke_2017-07-11_v1.2_TrR.csv", "OEM_Werke_2017-07-04_TrR.csv", "Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", "")
 
-import <- cbind(a,b,c,d)
-colnames(import) <- c("Einzelteile", "Komponenten und Fahrzeuge", "Relationale Tabellen", "Zulassungen und Geodaten")
-kable(import, caption = "Importierte Daten")
+import_table <- cbind(a,b,c,d)
+colnames(import_table) <- c("Einzelteile", "Komponenten und Fahrzeuge", "Relationale Tabellen", "Zulassungen und Geodaten")
+
+# print table in markdown
+kable(import_table, caption = "Importierte Daten")
 
 ```
 
@@ -220,9 +224,10 @@ bestandteile_oem2_typ22 <- read_csv2("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM2_
 # read zulassungen
 zulassungen <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
 
+# set encoding standard for parsing columns with geographic values
 locale = locale(encoding = 'ISO-8859-1')
 
-# Import with readr
+# Import with readr, coerce col_types
 tier1 <- read_csv2("Data/Geodaten/Tier1_Werke_2017-07-11_v1.2_TrR.csv",
                    locale = locale, col_types = "ccnnn")
 tier2 <- read_csv2("Data/Geodaten/Tier2_Werke_2017-07-11_v1.2_TrR.csv",
@@ -286,6 +291,7 @@ t15 <- select(t15, -X1, -X1_1)
 t16 <- select(t16, -X1, -X1_1)
 
 # variables in t15 / t16 tables are distributed over two / three parts, split table into two / three tables
+# filter for missing values and select relevant columns in order to split the table
 t15_part1 <- filter(t15, !is.na(ID_T15.x)) %>% 
   select(c(-8:-14))
 t15_part2 <- filter(t15, !is.na(ID_T15.y)) %>%
@@ -306,7 +312,7 @@ colnames(t16_part3) <- c("ID_Einzelteil", "Produktionsdatum", "Herstellernummer"
 colnames(t16_part2) <- colnames(t16_part3)
 colnames(t16_part1) <- colnames(t16_part3)
 
-# Bind the two (or three) datasets each into one dataset, respectively
+# Bind the two (or three) tables each into one dataset, respectively
 t15 <- bind_rows(t15_part1, t15_part2) %>% 
   # Move column Produktionsdatum to the last position in order to get the same structure for all Einzelteil datasets
   select(-Produktionsdatum, Produktionsdatum) %>%
@@ -316,6 +322,7 @@ t16 <- bind_rows(t16_part1, t16_part2, t16_part3) %>%
   select(-Produktionsdatum, Produktionsdatum) %>%
   mutate(Einzelteil="16")
 
+# delete unused objects
 t15_part1 <- ""
 t15_part2 <- ""
 t16_part1 <- ""
@@ -376,7 +383,7 @@ So wie bei den Einzelteil-Datensätzen "T15" und "T16" waren die Variablen im Ko
 # remove irrevelant columns
 komponente_k2le1 <- select(komponente_k2le1, -X1, -X2)
 
-# variables in komponente_k2le1 are split into two parts,  split table in two (x and y)
+# variables in komponente_k2le1 are split into two parts, split table in two (x and y)
 komponente_k2le1.x <- komponente_k2le1 %>%
   select(1:7) %>%
   # filter out those where ID is na
@@ -393,7 +400,7 @@ komponente_k2le1.x <- komponente_k2le1 %>%
 
 komponente_k2le1.y <- komponente_k2le1 %>%
   select(8:14) %>%
-  # filter out those where ID is na
+  # filter out those where ID is missing
   filter(!is.na(ID_Sitze.y)) %>%
   rename(
     ID_Komponente = ID_Sitze.y,
@@ -449,7 +456,7 @@ bestandteile_oem2_typ21 <- bestandteile_oem2_typ21 %>%
 bestandteile_oem2_typ22 <- bestandteile_oem2_typ22 %>%
   select(ID_Komponente = ID_Sitze, ID_Fahrzeug)
 
-# deselect irrelevant columns and mutate a type column for a later check
+# deselect irrelevant columns and mutate a Fahrzeugtyp column for a later check
 # transform origin in date format and create Produktionsdatum
 fahrzeug_oem1_typ11 <- fahrzeug_oem1_typ11 %>%
   select(-X1, -X1_1) %>%
@@ -470,11 +477,11 @@ fahrzeug_oem2_typ22 <- fahrzeug_oem2_typ22 %>%
 
 ## Zulassungen
 
-In den "Zulassungen"-Daten wurden Beobachtungen mit fehlende ID-Werten gelöscht, da diese nicht verwertet werden können und Variablen umbenannt, um Joins zu erleichtern.
+In den "Zulassungen"-Daten wurden Beobachtungen mit fehlende ID-Werten gelöscht, da diese nicht verwertet werden können, und Variablen umbenannt, um Joins zu erleichtern.
 
 ## Geodaten
 
-Die Geodaten bringen besondere Anforderungen für die spätere Darstellung in der shiny-App mit sich:
+Die Geodaten bringen besondere Anforderungen für die spätere Darstellung in der Shiny-App mit sich:
 
 - die Koordinaten sollten vom Typ double sein, um sie anschließend in der App von leaflet in der Kartendarstellung anzuzeigen
 - Postleitzahlen sollten 5 Zeichen und alle Gemeinden Deutschlands beinhalten
@@ -530,8 +537,10 @@ tier1_clean <- tier1  %>%
   rowwise() %>%
   mutate(Breitengrad = addZerosUntil8Digits(Breitengrad))  %>%
   mutate(Längengrad = addZerosUntil8Digits(Längengrad)) %>%
+  # divide coordinates by 1000000 down to two digit values with decimals
   mutate(Breitengrad = Breitengrad/1000000) %>%
   mutate(Längengrad = Längengrad/1000000) %>%
+  # use chopping function in case longitude is out of range and get one-digit longitude
   mutate(Längengrad = chopBigLongitudes(Längengrad)) %>%
   rename(Werksnummer = Werk, Ort = ORT)
 
@@ -645,7 +654,7 @@ all_fahrzeuge <- bind_rows(fahrzeug_oem1_typ11, fahrzeug_oem1_typ12) %>%
   bind_rows(fahrzeug_oem2_typ21) %>%
   bind_rows(fahrzeug_oem2_typ22) %>%
   mutate(id_richtig_fahrzeuge = isTRUE(
-              #check if ID-Herstellernr and Herstellernr match
+              #check if ID-Fahrzeug and Herstellernr match
               substring(ID_Fahrzeug, 4, 4) == Herstellernummer && 
               #check if ID-Werksnr and Werksnr match
               substring(ID_Fahrzeug, 6, 7) == Werksnummer &&
@@ -744,8 +753,8 @@ final_filtered <- final_join %>%
 # reorder columns
 final_order <- final_filtered[c(1:3,5,6,4,7:11,13,12,15,14,16,18,17)]
 
+# final dataset
 final_joined <- final_order
-str(final_joined)
 
 ```
 
@@ -753,7 +762,7 @@ Der finale Datensatz beinhaltet nun alle Fahrzeuge mit fehlerhaften Komponenten 
 
 ```{r print head final, echo = FALSE, results = 'asis'}
 
-# print head of final dataset
+# print head of final dataset (in three parts for better formatting in document)
 kable(final_joined[1:5, 1:5], caption = "Finaler Datensatz Teil 1 - Einzelteile")
 kable(final_joined[1:5, 6:10], caption = "Finaler Datensatz Teil 2 - Komponenten (Ledersitze) des Herstellers '111'")
 kable(final_joined[1:5, 11:18], caption = "Finaler Datensatz Teil 3 - Fahrzeuge")
@@ -815,6 +824,7 @@ final_data_table_excl <- cbind(defective_components_excl, defective_parts_excl)
 
 colnames(final_data_table_excl) <- c("Exklusiv als defekt markierte Komponenten", "Exklusiv als defekt markierte Einzelteile")
 
+# print table in markdown document
 kable(final_data_table_excl, caption = "Exklusiv defekte Komponenten und Einzelteile")
  
 ```
