@@ -1,8 +1,16 @@
 library(shiny)
 library(ggplot2)
-library(DT)
+
+if (!require(stringr)){
+  install.packages("stringr")
+}
 library(stringr)
-# scales to be able to use dates as ggplot limits
+
+if (!require(DT)){
+  install.packages("DT")
+}
+library(DT)
+
 if (!require(scales)){
   install.packages("scales")
 }
@@ -94,17 +102,24 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
     # header panel
     wellPanel(
       
-      img(src="Zusaetzliche_Dateien/QW_logo.jpg", #filetype = "image/jpeg",
-          align = "right"),
-      img(src='Zusaetzliche_Dateien/TU_logo.gif', #filetype = "image/gif",
-          align = "left"),
-      titlePanel("Case_Study_App_26"),
+      # working, when pre-rendered :)
+      # imageOutput("Marker", height = 1),
+      # imageOutput("Icon", height = 1),
       
+      # not working
+      # img(src="Zusaetzliche_Dateien/QW_logo.jpg", #filetype = "image/jpeg",
+      #     align = "right", height = 20),
+      # img(src='Zusaetzliche_Dateien/TU_logo.gif', #filetype = "image/gif",
+      #     align = "left"),
+      
+      titlePanel("Case_Study_App_26"),
       fluidRow(
-        column(12,
+        column(11,
                "Schadensschwerpunkte und Lieferwege von betroffenen Bauteilen",
-               style='font-size: 32px; color: #c50e1f;'
-               # CSS no linebrake in data table column
+               style='font-size: 36px; color: #c50e1f;'
+        ),
+        column(1,
+               imageOutput("Logo", height = 80)    
         )
       )
     ),
@@ -150,17 +165,19 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                          
                          # filter section for bar plot and heat map
                          wellPanel(  
+                           
+                           titlePanel("Suchfilter zum Anpassen des Balkendiagramms und der Karte"),
                            # Reset all filters
                            fluidRow(
                              column(12, 
                                     offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                    "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen.",
+                                    "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen",
                                     actionButton("reset_filters", "Alle Filter zurücksetzen"),
                              )
                            ),
                            
                            # sliderinput filtering the time period for bar plot
-                           sliderInput("slider_zulassungsperiode", "Wählen Sie die Zulassungsperiode",
+                           sliderInput("slider_zulassungsperiode", "Wählen Sie den Zeitraum der Zulassungen aus",
                                        min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum),
                                        value = c(min(all_vehicles$Zulassungsdatum), max(all_vehicles$Zulassungsdatum))
                            ),
@@ -195,7 +212,7 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                          
                          # heat map with check boxes and cluster markers and Lieferwege on map
                          wellPanel(
-                           titlePanel("Interaktive Karte mit Gemeinde-Suche und Bauteilsuche"),
+                           titlePanel("Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile"),
                            
                            fluidRow(
                              # check boxes for different visualisations on the map
@@ -205,9 +222,9 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                                        choices = c('Heatmap (Schadensschwerpunkte)', "fehlerhafte Fahrzeuge", "Lieferwege", "Standorte (Lieferwege)")),
                              ),
                              # Reset map position
-                             column(9, 
+                             column(3, 
                                     offset = 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
-                                    "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken.",
+                                    "Für mehr Informationen hineinzoomen und/oder auf die Markierungen klicken",
                                     actionButton(inputId = "reset", "Position zurücksetzen")
                              )
                            ),
@@ -234,6 +251,26 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
 
 # Shiny Server
 server <- function(input, output, session) {
+  
+  # Render logos
+  
+  # QW_logo: Send a pre-rendered image, and don't delete the image after sending it
+  output$Logo <- renderImage({
+    # Return a list containining the filename
+    list(src = './Zusaetzliche_Dateien/QW_logo.jpg')
+  }, deleteFile = FALSE)
+  
+  # maerker_icon: Send a pre-rendered image, and don't delete the image after sending it
+  output$Marker <- renderImage({
+    # Return a list containining the filename
+    list(src = './Zusaetzliche_Dateien/marker_icon.png')
+  }, deleteFile = FALSE)
+  
+  # marker_icon: Send a pre-rendered image, and don't delete the image after sending it
+  output$Icon <- renderImage({
+    # Return a list containining the filename
+    list(src = './Zusaetzliche_Dateien/facility_icon.png')
+  }, deleteFile = FALSE)
   
   
   # Filter parts with the three datatables
@@ -391,7 +428,7 @@ server <- function(input, output, session) {
     datatable(
       gemeinden,
       options = list(
-        lengthMenu = list(c(3, 6, 20, 50), c('3', '6', '20', '50')), # layout breaks with three digit numbers in the list
+        lengthMenu = list(c(3, 6, 10, 20, 100, 1000), c('3', '6', '10', '20', '100', '1000')), # layout breaks with three digit numbers in the list
         pageLength = 3
       ),
       rownames = FALSE
@@ -601,7 +638,7 @@ server <- function(input, output, session) {
                    radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3) %>%
         
         #Display tier1 facilities with custom icon
-        addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = tier1Icon, # filtered_data_dots(), ~lat_via, ~lng_via,
+        addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
                    
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
@@ -621,7 +658,7 @@ server <- function(input, output, session) {
         )  %>%
         
         # Display tier2 facilities with custom icon
-        addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = tier1Icon,# filtered_data_dots(), ~lat_via, ~lng_via,
+        addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = 'Icon',# filtered_data_dots(), ~lat_via, ~lng_via,
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
                    popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
@@ -640,6 +677,7 @@ server <- function(input, output, session) {
         )
       # Add marker for car location
       filtered_vehicles_tmp <- filtered_parts_head()
+
       if(!is.null(filtered_parts_head)){
         for(i in 1:nrow(filtered_vehicles_tmp)){
           leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
@@ -653,6 +691,7 @@ server <- function(input, output, session) {
                                                    "Zugelassen in: ", PLZ, " ", Gemeinde)
           )
         }
+
       }
     }
     # return leaflet_map with all layers to render_leaflet
