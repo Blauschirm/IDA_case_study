@@ -193,17 +193,6 @@ ui <- fluidPage( # theme = "bootstrap.min.css" # shinythemes::shinytheme("cerule
                                     
                                     # Display ID-search by ID_einzelteile & ID_Komponente
                                     dataTableOutput('datatable_bauteile')
-                                    
-                                    # Select map type
-                                    # selectizeInput(
-                                    #   'e1', 'Wählen Sie den Kartentyp aus',
-                                    #   choices = c("Fahrzeuginfo", "Lieferweg des Bauteils")
-                                    # ),
-                                    
-                                    
-                                    #verbatimTextOutput("value"),
-                                    #checkboxInput("lieferwege", "Lieferwege anzeigen", FALSE),
-                                    #verbatimTextOutput("value2")
                              )
                            )
                          ),
@@ -455,8 +444,6 @@ server <- function(input, output, session) {
     datatable(
       final_joined[ ,c('ID_Einzelteil', 'Werksnummer_Einzelteil', 'Fehlerhaft_Einzelteil', 'ID_Komponente', 'Fehlerhaft_Komponente', 'ID_Fahrzeug')], 
       
-      #filter = list(position = 'bottom', clear = TRUE),
-      
       options = list(
         pageLength = 3,
         lengthMenu = list(c(3, 6, 10, 20, 100, 1000), c('3', '6', '10', '20', '100', '1000')),
@@ -487,16 +474,6 @@ server <- function(input, output, session) {
       )
   })
   
-  # filtered_data_dots <- reactive({
-  #   if(length(input$datatable_gemeinden_rows_selected)){
-  #     data_dots[beispiel, ] %>%
-  #       filter(lng_begin %in% gemeinden[input$datatable_gemeinden_rows_selected,]$Längengrad_Einzelteil)
-  #   } else {
-  #     data_dots
-  #   }
-  # })
-  
-  
   #### Data Preparation for the rendering of (1) heatmap with (2) markers and (3) supply routes (and circles)
   
   # 1. Create datapoints for the heatmap
@@ -511,8 +488,7 @@ server <- function(input, output, session) {
   })
   
   # 2. 
-  # Not finished: Filter supply_routes data linked to table selections
-  # supply_routes <- filtered_parts()
+  # NFilter supply_routes data linked to table selections
   data_dots <- reactive({
     df = data.frame()
     
@@ -531,10 +507,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # Altenate displayed routes
-  # Not finished: Filter supply_routes data linked to table selections
-  selected_routes <- beispiel # <- Hier einfügen: Gefilterte Auwahl der Tabellenauswahl
-  
   # Custom icons for markers of facilities
   tier1Icon <- makeIcon(
     iconUrl = "https://pngimage.net/wp-content/uploads/2018/05/facility-png-2.png",
@@ -547,22 +519,6 @@ server <- function(input, output, session) {
   # Colors for the supply routes
   colors_polyline <- c("#c50e1f", "#7CAE00", "#00BFC4", "#C77CFF")
   
-  #output$value <- renderText({ input$all_vehicles })
-  #output$value1 <- renderText({ input$lieferwege })
-  
-  # Conditionally adding markers to map
-  # Select supply route 
-  
-  # if(input$map == checkbox_fahrzeuge){
-  #   mapdata = data1
-  #   mapcol = rgb(215,48,39, max = 255)
-  # }
-  # if(input$map == "2"){
-  #   mapdata = data2
-  #   mapcol = rgb(....blah)
-  # }
-  
-  
   # Render map
   output$map <- renderLeaflet({
     filtered_data_dots <- data_dots()
@@ -574,11 +530,12 @@ server <- function(input, output, session) {
       
       # Layer 1: Heatmap
       addHeatmap(data = datapoints_heat(), lng = ~Längengrad, lat = ~Breitengrad,
-                 intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14) %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
-      # END Layer 1
+                 intensity = ~fehleranzahl, blur = 12, max = 100, radius = 14, group = "Heatmap") %>% # intensity = ~fehleranzahl, blur = 14, max = 60, radius = 12) %>%
+      
       
       # Layer 2: fehlerhafte Fahrzeuge
       addMarkers(data = filtered_vehicles(), ~Längengrad, ~Breitengrad,
+                 group = "Cluster Marker",
                  #display large amounts of markers as clusters
                  clusterOptions = markerClusterOptions(),
                  popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
@@ -588,24 +545,25 @@ server <- function(input, output, session) {
                                 "Zulassung am: ", format(as.Date(Zulassungsdatum),"%d.%m.%Y"), "<br/>",
                                 "Zugelassen in: ", PLZ, " ", Gemeinde)
       )
-    
-    # Layer 3: Lieferwege
-    # Render the polyroutes supply route
-    if(!is.null(filtered_data_dots)){
-      for (i in 1:nrow(filtered_data_dots)){
-        leaflet_map <- addPolylines(leaflet_map, data = filtered_data_dots[i,],
-                                    lng= ~ c(lng_begin, lng_via, lng_end),
-                                    lat= ~ c(lat_begin, lat_via, lat_end),
-                                    color = colors_polyline[1],
-                                    weight = 4,
-                                    opacity = 0.5,
-                                    fillColor = "#c50e1",
-                                    fillOpacity = 0.5,
-                                    smoothFactor = 1,
-                                    popup = ~ID_Fahrzeug,
-                                    label = ~ID_Fahrzeug,
-                                    #labelOptions = NULL, options = pathOptions(),
-                                    highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
+      
+      # Layer 3: Lieferwege
+      # Render the polyroutes supply route
+      if(!is.null(filtered_data_dots)){
+        for (i in 1:nrow(filtered_data_dots)){
+          leaflet_map <- addPolylines(leaflet_map, data = filtered_data_dots[i,],
+                                      group = "Lieferwege",
+                                      lng= ~ c(lng_begin, lng_via, lng_end),
+                                      lat= ~ c(lat_begin, lat_via, lat_end),
+                                      color = colors_polyline[1],
+                                      weight = 4,
+                                      opacity = 0.5,
+                                      fillColor = "#c50e1",
+                                      fillOpacity = 0.5,
+                                      smoothFactor = 1,
+                                      popup = ~ID_Fahrzeug,
+                                      label = ~ID_Fahrzeug,
+                                      #labelOptions = NULL, options = pathOptions(),
+                                      highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
         )
       }
     
@@ -613,42 +571,47 @@ server <- function(input, output, session) {
       # Layer 4: Standorte
       
       # Add circles of facility
-      
+      facitily_group_name = "Lieferwege"
       # Einzelteil-Werk: Number of production errors Einzelteile hergestellt (schwarz)
       leaflet_map <- leaflet_map %>%
         addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
                    color = 'black', weight = 0, stroke=FALSE, fillOpacity = 0.5,
-                   radius = tier1_werke()$'Einzelteile geliefert'*radius_factor) %>%
+                   radius = tier1_werke()$'Einzelteile geliefert'*radius_factor,
+                   group = facitily_group_name) %>%
         
         # Einzelteil-Werk: Number of production errors Einzelteile fehlerhaft (rot)
         addCircles(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil,
                    color = 'red', stroke=TRUE, fillOpacity = 0.5, weight = 5, opacity = 0.1,
-                   
-                   radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor) %>%
+                   radius = tier1_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor,
+                   group = facitily_group_name) %>%
         
         # Komponenten-Werk Number of production errors: Einzelteile hergestellt (weiß)
         addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
                    color = 'weiß', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-                   radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3) %>%
+                   radius = tier2_werke()$'Einzelteile erhalten'*radius_factor/3,
+                   group = facitily_group_name) %>%
         
         # Komponenten-Werk Number of production errors: Einzelteile fehlerhaft (rot)
         addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
                    color = 'blue', weight = 1, stroke=FALSE, fillOpacity = 0.3,
-                   radius = tier2_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor/3) %>%
+                   radius = tier2_werke()$'fehlerhaft laut Einzelteil-Werk'*radius_factor/3,
+                   group = facitily_group_name) %>%
         
         # Komponenten-Werk Number of production errors: Sitze hergestellt (schwarz)
         addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
                    stroke=FALSE, fillOpacity = 0.5, color = 'black', weight = 1,
-                   radius = tier2_werke()$'Defekte Sitze hergestellt'*radius_factor/3) %>%
+                   radius = tier2_werke()$'Defekte Sitze hergestellt'*radius_factor/3,
+                   group = facitily_group_name) %>%
         
         # Komponenten-Werk Number of production errors: Sitze fehlerhaft (rot)
         addCircles(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente,
                    stroke=TRUE, fillOpacity = 0.5, color = 'red', weight = 5, opacity = 0.1,
-                   radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3) %>%
+                   radius = tier2_werke()$'fehlerhaft laut Komponenten-Werk'*radius_factor/3,
+                   group = facitily_group_name) %>%
         
         #Display tier1 facilities with custom icon
         addMarkers(data = tier1_werke(), ~Längengrad_Einzelteil, ~Breitengrad_Einzelteil, icon = 'Icon', # filtered_data_dots(), ~lat_via, ~lng_via,
-                   
+                   group = facitily_group_name,
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 7),
                    popup = ~paste(
@@ -668,6 +631,7 @@ server <- function(input, output, session) {
         
         # Display tier2 facilities with custom icon
         addMarkers(data = tier2_werke(), ~Längengrad_Komponente, ~Breitengrad_Komponente, icon = 'Icon',# filtered_data_dots(), ~lat_via, ~lng_via,
+                   group = facitily_group_name,
                    #display large amounts of markers as clusters
                    #clusterOptions = markerClusterOptions(freezeAtZoom = 2),
                    popup = ~paste("<center><h5>Komponenten-Werk</h5></center>",
@@ -690,6 +654,7 @@ server <- function(input, output, session) {
       if(!is.null(filtered_parts_head)){
         for(i in 1:nrow(filtered_vehicles_tmp)){
           leaflet_map <- addMarkers(leaflet_map, data = filtered_vehicles_tmp[i, ], ~Längengrad, ~Breitengrad, icon = carIcon,
+                                    group = "Lieferwege",
                                     #display large amounts of markers as clusters
                                     clusterOptions = markerClusterOptions(),
                                     popup = ~paste("<center><h5>Betroffenes Fahrzeug</h5></center>",
