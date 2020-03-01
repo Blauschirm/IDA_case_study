@@ -1124,14 +1124,17 @@ Die Cluster-Markierungen geben Auskunft über die Ballungsräume mit häufigen S
 Die Anzeige der Lieferwege ist auf 1000 Verbindungen begrenzt, um einen Absturz der Anwendung zu verhindern. Die Lieferwege lassen sich mithilfe der Tabelle 'betroffene Bauteile' oder der Tabelle 'Datenbank' an- und abwählen.
 Es wird pro ausgewähltem Einzelteil genau ein Lieferweg angezeigt. Dieser besteht aus drei Markern für die beiden Werke (Symbol einer Fabrik) und für das betroffenes Fahrzeug (Marker in rot) und einer Verbindungslinie jenen Markern. Für jede Lieferroute wird eine Verbindungslinie zwischen einem der Einzelteilwerke, dem Komponenten-Werk und dem Standort des Fahrzeugs (bzw. der Koordinaten der jeweiligen Gemeinde) gezogen. Durch Anklicken der Marker können Werks- und Fahrzeugsdetails abgerufen werden.
 
-
 ## Aufgetretene Schwierigkeiten
 
 Aufgrund der Größe des Datensatzes entstanden Skalierungsprobleme mit der Verwendung selectizeInput(multiple = TRUE) als Datenfilter. Ab über 50.000 Dateneinträgen traten massive Performance-Probleme, die sich auch durch ein Serverside-Rendering nicht beheben lassen konnten, auf. Bei einem Wechsel zu dataTableInput() konnten wesentliche Funktionen beibehalten werden, wobei sich die App mit dem vollständigen Datensatz problemlos öffnen ließ. Aus diesem Grund wurden bis auf den sliderInput() für die Zulassungsdaten sämtliche Filterfunktionen mittels dataTableInput() umgesetzt.
 
 # Ergebnis
 
-Beschreiben Sie Ihren Datenanalyseprozess schrittweise und diskutieren Sie das Ergebnis anhand aussagekräftiger Graphiken aus Ihrer entwickelten App
+Die Zulassungshistorie zeigt, dass die Zahl der betroffenen Fahrzeuge zunimmt, insbesondere ab dem Zeitpunkt, an dem ein Wechsel der Produktionsstandorte erfolgte. 
+ Die Fehler sind in den OEM-Werken 1 und 2 relativ konstant. Die Werke 3, 4 unterstützen die Produktion ab xx und übernehmen ab xx die gesamte Produktion vollständig. Es entstanden mehr mit als bei OEM 1 und 2 und es gab extremen Spitzen von fehlerhaften Fahrzeugen in einigen Monaten. 
+In der Heatmap-Darstellung ist sehr deutlich zu erkennen, dass es vor allem drei große Ballungsräume mit Schadensschwerpunkten gibt: das Ruhrgebiet, der Großraum München und das Land Sachsen.
+Die Darstellung der Lieferwege zeigt, dass es nur ein Komponentenwerk gibt, das relativ in der Mitte Deutschlands liegt. Dieses Werk bezieht Einzelteile aus 11 Werken für die Montage der Ledersitze.
+Um die Logistik besser abzuwickeln, helfen die Lieferrouten, geeignete Transportwege zu identifizieren und Mehrteillieferungen und ggf. Lagerbestände zu organisieren.
 
 # Anhang
 
