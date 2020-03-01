@@ -910,7 +910,7 @@ Standardmäßig ist der gesamte Zulassungszeitraum aller Daten festgelegt.
 
 ### Suchfilter für Gemeinden und Bauteile
 
-In Form von DataTables wird separat nach Gemeinden und in betroffenen Fahrzeugen enthaltenten Bauteilen gesucht. Ein allgemeiner Suchfilter mit Texteingabe ermöglicht die Suche nach Postleitzahlen oder Ort bzw. ID der Bauteile usw.
+In Form von DataTables wird separat nach Gemeinden und in betroffenen Fahrzeugen enthaltenten Bauteilen gesucht. Ein allgemeiner Suchfilter mit Texteingabe ermöglicht die Suche nach Postleitzahlen oder Ort bzw. ID der Bauteile usw. 
 
 Auswahl der Zeilen filtert die Daten, die im Output dargestellt werden
 
