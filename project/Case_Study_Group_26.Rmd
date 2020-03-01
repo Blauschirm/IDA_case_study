@@ -898,6 +898,8 @@ Als Output wird dargestellt:
 - welche Bauteile betroffen sind,
 - in welchem Werk die Bauteile hergestellt wurden.
 
+Bei fehlerhafter Eingabe der Fahrzeug-ID erscheint die Meldung "Fahrzeug-ID existiert nicht".
+
 ### Graph für den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge
 
 Der Graph stellt dem Fahrzeughersteller den zeitlichen Zulassungsverlauf der betroffenen Fahrzeuge in Form eines Barplots dar. Der Barplot repräsentiert die Häufigkeitsverteilung fehlerhafter Fahrzeuge über den ausgewählten Zulassungszeitraum. Die Höhe der Balken stellt dabei die absolute Anzahl betroffener Anzahl je Zulassungsmonat dar. Die einzelnen Balken sind nach den vier Fahrzeugherstellern (OEM) aufgegliedert, wobei jeder OEM durch eine feste Balkenfarbe repräsentiert wird.
@@ -914,40 +916,25 @@ Standardmäßig ist der gesamte Zulassungszeitraum aller Fahrzeugdaten festgeleg
 
 In Form von DataTables wird separat nach Gemeinden und in betroffenen Fahrzeugen enthaltenten Bauteilen gesucht. Ein allgemeiner Suchfilter mit Texteingabe ermöglicht die Suche nach Postleitzahlen oder Gemeinden bzw. in der Bauteilsuche nach Einzelteil-, Komponenten- oder Fahrzeug-IDs. Eine Auswahl der Tabellenzeilen filtert die Daten, die ausgewertet und dargestellt werden. Hierbei ist eine Mehrfachauswahl möglich und die ausgewählten Zeilen werden farblich hervorgehoben. Die Abwahl der markierten Zeilen durch erneutes Anklicken löst die Filter einzeln wieder auf.
 
-Eine Auswahl einzelner Gemeinden filtert die ausgewerteten Daten sowohl für das Balkendiagramm als auch die Kartendarstellung. In der Kartendarstellung In der Tabelle wird für die jeweiligen Gemeinden zusätzlich die Anzahl der zugelassenen betroffenen Fahrzeuge angezeigt.
+Eine Auswahl einzelner Gemeinden filtert die ausgewerteten Daten sowohl für das Balkendiagramm als auch die Kartendarstellung. In der Kartendarstellung werden durch die Auswahl von Gemeinden lediglich die dargestellten Cluster-Marker für Fahrzeugstandort beeinflusst. In der Tabelle wird für die jeweiligen Gemeinden zusätzlich die Anzahl der zugelassenen betroffenen Fahrzeuge angezeigt.
 
-Die Auswahl der Bauteile filtert lediglich die für die Kartendarstellung ausgewerteten Daten, da eine grafische Darstellung der Fahrzeugzulassungen nach einzelnen Bauteilen keine gewinnbringende Information liefert und Bauteile je Fahrzeug über die Datentabellen ermittelt werden können.
-
-In der Kartendarstellung wird durch die Auswahl von Gemeinden bzw. Bauteilen lediglich die Darstellung der Lieferwege generiert.
+Durch die Auswahl von Bauteilen wird die Darstellung der Lieferwege in der Kartendarstellung generiert. Die Auswahl der Bauteile filtert lediglich die für die Kartendarstellung ausgewerteten Daten und nicht die des Balkendiagramms, da eine grafische Darstellung der Fahrzeugzulassungen nach einzelnen Bauteilen keine gewinnbringende Information liefert und Bauteile je Fahrzeug über die Datentabellen ermittelt werden können.
 
 ### Interaktive Karte mit Schadensschwerpunkten, betroffenen Fahrzeugen und Lieferwegen für Ersatzteile
 
+Die "Open Street Map", für deren Anzeige eine bestehende Internetverbindung benötigt wird, stellt die Deutschlandkarte mit drei verschiedenen Schichten, die aus den ausgewählten Daten generiert werden, dar. Die Schichten sind im einzelnen über ein Auswahlfeld aus- und einblendbar.
 
+Die unterste Schicht bildet eine Heatmap mit den über das Bundesgebiet verteilten Schadensschwerpunkten ab. EIne rote Verfärbung stellt demnach eine räumlich hohe Konzentration von mit fehlerhaften Bauteilen betroffenen Fahrzeugen dar, während eine blaue Verfärbung eine räumlich niedrigere Konzentration bedeutet. In Regionen ohne Verfärbung befinden sich keine betroffenen Fahrzeuge.
 
-Open Street Map mit Darstellung der Deutschlandkarte
+In der mittleren Schicht liegen Cluster-Marker. Die einzelnen Marker repräsentieren jeweils ein betroffenes Fahrzeug und markieren den genauen Zulassungsort auf der Karte. Je nach Zoom-Ausrichtung der Karte, werden mehrere Marker in Clustern zusammengefasst. Popups aus den einzelnen Markern stellen nach dem Anklicken relevante Zulassungs- und Bauteilinformationen zu den Fahrzeugen dar.
 
-Heatmap für Schadensschwerpunkte
-
-Cluster-Marker, die für jeweils ein betroffenes Fahrzeug repräsentieren und den genauen Zulassungsort auf der Karte markieren
-
-Popups auf den Cluster-Markern stellen folgende Infos zu den Fahrzeugen dar:
-- Fahrzeug-ID
-- ...
-
-Lieferwege als Luftlinie abhängig von der Auswahl der Fahrzeuge bzw. Bauteile aus den Datentabellen
-- Lieferkette von defekten Bauteilen zum Komponentenhersteller und vom Komponentenhersteller zum Fahrzeughalter
-- Gebäude-Icons stellen Einzeilteil- und Komponentenwerk dar, roter Geo-Icon stellt den Zielort, d.h. den Zulassungsort des Fahrzeugs dar
-- Kreise um Werke repräsentieren durch ihre jeweilige Größe die Anzahl der fehlerhaften Einzelteile und Komponenten, die aus dem jeweiligen Werk geliefert wurden
-- Popups beim Klicken auf den Werksstandort geben wesentliche Statistiken zu fehlerhaften Bauteilen aus
-- Mehrfachauswahl möglich, farbliche Unterscheidung zwischen den Lieferkette (eine Farbe pro Kette), beim Überfahren des Lieferweges mit der Maus wird die Linie farblich hervorgehoben und die Fahrzeug-ID angezeigt.
-
-Die Heatmap, Cluster-Marker sowie Lieferwege sind einzeln oder mehrfach aus- oder abwählbar.
+Die oberste Schicht stellt nach Auswahl von Bauteilen bzw. betroffenen Fahrzeugen in den Datentabellen die Wege der Lieferketten als Luftlinie dar. Die Lieferkette wird durch die Wege von defekten Bauteilen zum Komponentenhersteller und vom Komponentenhersteller zum Fahrzeughalter definiert. Gebäude-Icons stellen zusätzlich die Einzeilteil- und Komponentenwerke dar und ein roter Geo-Icon den Zielort, d.h. den Zulassungsort des Fahrzeugs dar. Popups beim Anklicken des Werksstandorts geben wesentliche Informationen und Statistiken zu fehlerhaften Bauteilen aus in diesem Werk aus. Die Anzahl gelieferter fehlerhafter Bauteile wird zusätzlich grafisch durch gefüllte Kreise, deren Größe von der Anzahl abhängt, für einen qualitativen Vergleich zwischen den Werken veranschaulicht. Duch Mehrfachauswahl von Fahrzeugen oder Bauteilen werden mehrere Lieferwege mit farblich unterschiedlichen Luftlinien angezeigt. Beim Drüberfahren eines Lieferweges mit dem Mauszeiger wird der Lieferweg farblich hervorgehoben und die Fahrzeug-ID angezeigt.
 
 ### Vollständiger Datensatz mit Filterfunktion
 
 Zur Überprüfung der Balkendiagramm- und Kartendarstellung wird der vollständige Datensatz mit allen relevanten Attributen in einer separaten Datentabelle abgebildet. 
 
-Zur Nutzerfreundlichkeit filtert die Datentabelle ebenfalls die Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Datentabellen.
+Zur Nutzerfreundlichkeit generiert diese Datentabelle ebenfalls die Lieferwege in der Kartendarstellung. Die Suche und Auswahl der Daten erfolgt analog zu den o.g. Bauteilsuche. Eine Auswahl hebt bereits getätigte Auswahlen aus der Bauteil-Datentabelle auf.
 
 ### Reset-Buttons
 
