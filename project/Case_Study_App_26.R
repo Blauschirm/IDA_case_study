@@ -60,7 +60,7 @@ if (!require(glue)) {
 library(glue)
 
 # Load manufacturing info with geo data
-load("Datensatz_tidy.RData")
+load("Final_Data_Group_26.RData")
 
 # Subset the data for debugging: reducing the amount of data to be loaded
 
@@ -821,7 +821,8 @@ server <- function(input, output, session) {
       addLayersControl(
         overlayGroups = c("Heatmap", "Cluster Marker", "Lieferwege"),
         options = layersControlOptions(collapsed = FALSE)
-      )
+      ) %>%
+      hideGroup("Heatmap")
     
     # Return leaflet_map with all layers to render_leaflet()
     leaflet_map
