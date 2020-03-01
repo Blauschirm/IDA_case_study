@@ -171,6 +171,7 @@ ui <- fluidPage(
                                     offset= 0, align = 'right', #style = 'border: 1px solid lightgray; border-radius: 3px',
                                     "Zum Filtern der Ergebnisse Bautteile und/oder Gemeinden auswählen",
                                     actionButton("reset_filters", "Alle Filter zurücksetzen"),
+                                    verbatimTextOutput("filter_tooltip")
                              )
                            ),
                            
